@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import servicesData from '../data/services.json';
 import ServiceCard from '../components/ServiceCard';
+import heroImage from '../assets/images/hero-city.jpeg';
 import {
   isValidString,
   isValidLocation
 } from '../utils/validateInput';
-
 import {
   FaSearch,
   FaMapMarkerAlt,
@@ -17,7 +17,6 @@ import {
   FaThumbsUp
 } from 'react-icons/fa';
 
-// Simulated lat/lng → city mapping
 const getCityFromCoords = (lat, lng) => {
   if (lat >= 6 && lat <= 7 && lng >= 3 && lng <= 4) return 'Lagos';
   if (lat >= 4 && lat <= 5 && lng >= 7 && lng <= 8) return 'Port Harcourt';
@@ -39,7 +38,6 @@ const Home = () => {
   const allCities = ['Lagos', 'Abuja', 'Port Harcourt', 'Benin'];
   const allCategories = [...new Set(servicesData.map((s) => s.name))];
 
-  // Get user location on mount
   useEffect(() => {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported.');
@@ -55,11 +53,12 @@ const Home = () => {
         const city = getCityFromCoords(latitude, longitude);
         setUserCity(city);
 
-        const filtered = servicesData.filter((service) =>
-          isValidString(service.name) &&
-          isValidString(service.description) &&
-          isValidLocation(service.location) &&
-          service.location === city
+        const filtered = servicesData.filter(
+          (service) =>
+            isValidString(service.name) &&
+            isValidString(service.description) &&
+            isValidLocation(service.location) &&
+            service.location === city
         );
 
         setAllServices(filtered.length ? filtered : servicesData);
@@ -76,7 +75,6 @@ const Home = () => {
     );
   }, []);
 
-  // Dynamic filtering based on search, category, city
   useEffect(() => {
     const keyword = searchTerm.toLowerCase();
 
@@ -100,65 +98,47 @@ const Home = () => {
   }, [searchTerm, selectedCategory, selectedCity, userCity, allServices]);
 
   return (
-    <section className="p-6 md:p-10 space-y-16">
-      <div className="max-w-7xl mx-auto space-y-16">
+    <section>
+      <div>
 
-        {/* 🚀 Hero Section */}
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
-            Find Trusted Local Service Experts
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Whether you need a reliable tailor, plumber, or electrician,
-            <span className="font-semibold"> FixFinder</span> connects you to verified professionals in{' '}
-            <span className="text-blue-600 font-medium">{selectedCity || userCity || 'your area'}</span>.
-          </p>
-          <div className="flex justify-center mt-4">
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-xl shadow hover:bg-blue-700 transition-all duration-200">
-              Browse Services
-            </button>
+        {/* 🚀 Hero Section with Background */}
+        <div className="relative overflow-hidden shadow-xl h-[500px] md:h-[600px] flex items-center justify-center text-center bg-black/50">
+          <img
+            src={heroImage}
+            alt="Find trusted service professionals"
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-80"
+          />
+          <div className="relative z-10 text-white px-6 md:px-12 space-y-6 max-w-3xl">
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
+              Find Trusted Local Service Experts
+            </h1>
+          <p className="text-lg md:text-xl text-gray-100 font-normal">
+              Whether you need a reliable tailor, plumber, or electrician,
+              <span className="font-semibold text-white"> FixFinder</span> connects you to verified professionals in{' '}
+              <span className="text-blue-600 font-medium">{selectedCity || userCity || 'your area'}</span>.
+            </p>
+            <div className="flex justify-center">
+              <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-full text-white font-medium shadow-lg">
+                Browse Services
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 🔄 How It Works */}
-        <div className="grid md:grid-cols-4 gap-6 text-center">
-          <div>
-            <div className="text-blue-600 text-3xl mb-2"><FaSearch /></div>
-            <h3 className="font-semibold text-lg">Search</h3>
-            <p className="text-sm text-gray-500">Find services by category or city.</p>
-          </div>
-          <div>
-            <div className="text-blue-600 text-3xl mb-2"><FaMapMarkerAlt /></div>
-            <h3 className="font-semibold text-lg">Connect</h3>
-            <p className="text-sm text-gray-500">Contact nearby verified professionals.</p>
-          </div>
-          <div>
-            <div className="text-blue-600 text-3xl mb-2"><FaTools /></div>
-            <h3 className="font-semibold text-lg">Get Service</h3>
-            <p className="text-sm text-gray-500">Get the help you need quickly.</p>
-          </div>
-          <div>
-            <div className="text-blue-600 text-3xl mb-2"><FaStar /></div>
-            <h3 className="font-semibold text-lg">Review</h3>
-            <p className="text-sm text-gray-500">Leave feedback to help others.</p>
-          </div>
-        </div>
-
-        {/* 🔍 Filters + Service Cards */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Explore Nearby Services</h2>
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {/* 🔍 Floating Search Bar */}
+        <div className="-mt-20 z-20 relative px-4 md:px-0">
+          <div className="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search service (e.g. tailor)"
-              className="p-3 border border-gray-300 rounded-lg shadow-sm w-full"
+              placeholder="Search e.g. electrician"
+              className="p-3 border border-gray-300 rounded-lg w-full"
             />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="p-3 border border-gray-300 rounded-lg shadow-sm w-full"
+              className="p-3 border border-gray-300 rounded-lg w-full"
             >
               <option value="">All Categories</option>
               {allCategories.map((cat) => (
@@ -168,7 +148,7 @@ const Home = () => {
             <select
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="p-3 border border-gray-300 rounded-lg shadow-sm w-full"
+              className="p-3 border border-gray-300 rounded-lg w-full"
             >
               <option value="">Use My Location</option>
               {allCities.map((city) => (
@@ -176,39 +156,111 @@ const Home = () => {
               ))}
             </select>
           </div>
-
-          {error && <p className="text-red-500 mb-4">{error}</p>}
-
-          {loading ? (
-            <p>Loading nearby services...</p>
-          ) : services.length ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {services.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-500">No matching services found.</p>
-          )}
         </div>
 
+        {/* 🔄 How It Works */}
+        
+        <div className="px-4 md:px-12 py-16 bg-white text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-gray-800">
+            Explore millions of services tailored to your local needs
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div>
+              <p className="text-4xl font-extrabold text-blue-600">1,000+</p>
+              <p className="text-sm text-gray-600 mt-2">Verified Professionals</p>
+            </div>
+            <div>
+              <p className="text-4xl font-extrabold text-blue-600">500+</p>
+              <p className="text-sm text-gray-600 mt-2">Local Categories</p>
+            </div>
+            <div>
+              <p className="text-4xl font-extrabold text-blue-600">100K+</p>
+              <p className="text-sm text-gray-600 mt-2">Happy Users</p>
+            </div>
+            <div>
+              <p className="text-4xl font-extrabold text-blue-600">250+</p>
+              <p className="text-sm text-gray-600 mt-2">Cities Covered</p>
+            </div>
+          </div>
+        </div>
+
+
+        {/* 🧭 Popular Categories Carousel */}
+        <div className="py-10 p-10 space-y-6">
+          <h2 className="text-2xl font-semibold text-center">Popular Categories</h2>
+          <div className="overflow-x-auto">
+            <div className="flex gap-6 px-4 md:px-0 max-w-6xl mx-auto">
+              {[
+                { icon: <FaTools />, label: 'Electrician' },
+                { icon: <FaMapMarkerAlt />, label: 'Plumber' },
+                { icon: <FaStar />, label: 'Tailor' },
+                { icon: <FaThumbsUp />, label: 'Hair Stylist' },
+                { icon: <FaClock />, label: 'Generator Repair' },
+                { icon: <FaCheckCircle />, label: 'AC Technician' },
+              ].map((cat, idx) => (
+                <div
+                  key={idx}
+                  className="min-w-[150px] bg-white border rounded-xl shadow p-4 text-center hover:scale-105 transition transform cursor-pointer"
+                >
+                  <div className="text-blue-600 text-3xl mb-2">{cat.icon}</div>
+                  <p className="text-sm font-medium text-gray-700">{cat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 🔍 Service Cards */}
+        <div className="px-4 md:px-12 py-16 bg-white">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
+                Discover Your Next Local Service
+              </h2>
+              <p className="text-center text-gray-500 mb-10 text-sm md:text-base">
+                Explore top-ranking categories to connect with trusted professionals near you.
+              </p>
+
+              {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+
+              {loading ? (
+                <p className="text-center">Loading nearby services...</p>
+              ) : services.length ? (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {services.map((service) => (
+                    <div key={service.id} className="border rounded-xl shadow-md overflow-hidden group hover:shadow-lg transition-all">
+                      <img
+                        src={`/assets/images/services/${service.name.toLowerCase().replace(/\s+/g, '-')}.jpg`}
+                        alt={service.name}
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                      />
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg text-gray-800 mb-2">
+                          {service.name}
+                        </h3>
+                        <p className="text-sm text-gray-500 line-clamp-2">{service.description}</p>
+                        <Link
+                          to={`/services/${service.name.toLowerCase()}`}
+                          className="text-blue-600 text-sm mt-3 inline-block hover:underline"
+                        >
+                          View More →
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500">No matching services found.</p>
+              )}
+</div>
+
+
         {/* 🌟 Testimonials */}
-        <div className="bg-gray-50 py-10 px-6 rounded-xl">
+        <div className="bg-gray-50  py-10 px-6 rounded-xl">
           <h2 className="text-2xl font-semibold text-center mb-6">What Our Users Say</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              {
-                name: 'Sandra',
-                review: 'FixFinder helped me find a professional tailor within 30 minutes!',
-              },
-              {
-                name: 'Emeka',
-                review: 'I booked a plumber in my area fast — the reviews were very helpful!',
-              },
-              {
-                name: 'Fatima',
-                review: 'As a vendor, FixFinder helps me get more jobs every week.',
-              },
+              { name: 'Sandra', review: 'FixFinder helped me find a professional tailor within 30 minutes!' },
+              { name: 'Emeka', review: 'I booked a plumber in my area fast — the reviews were very helpful!' },
+              { name: 'Fatima', review: 'As a vendor, FixFinder helps me get more jobs every week.' }
             ].map((t, i) => (
               <div key={i} className="p-4 border rounded-lg shadow-sm bg-white">
                 <p className="text-gray-600 italic">"{t.review}"</p>
@@ -218,32 +270,14 @@ const Home = () => {
           </div>
         </div>
 
-        {/* 💡 Why Choose Us */}
-        <div className="py-10">
-          <h2 className="text-2xl font-semibold text-center mb-6">Why Choose FixFinder?</h2>
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div>
-              <div className="text-blue-600 text-3xl mb-2"><FaCheckCircle /></div>
-              <h3 className="font-semibold">Verified Experts</h3>
-              <p className="text-sm text-gray-500">We only show trusted professionals in your area.</p>
-            </div>
-            <div>
-              <div className="text-blue-600 text-3xl mb-2"><FaClock /></div>
-              <h3 className="font-semibold">Fast & Reliable</h3>
-              <p className="text-sm text-gray-500">Connect and hire in minutes with confidence.</p>
-            </div>
-            <div>
-              <div className="text-blue-600 text-3xl mb-2"><FaThumbsUp /></div>
-              <h3 className="font-semibold">User Reviewed</h3>
-              <p className="text-sm text-gray-500">Real reviews from people like you.</p>
-            </div>
-          </div>
-        </div>
+       
 
         {/* 📢 CTA Section */}
         <div className="bg-blue-600 text-white text-center py-10 px-4 rounded-2xl shadow-lg">
           <h2 className="text-3xl font-bold mb-4">Ready to find or offer a service?</h2>
-          <p className="mb-6 text-blue-100">Join thousands using FixFinder to find help or grow their business.</p>
+          <p className="mb-6 text-blue-100">
+            Join thousands using FixFinder to find help or grow their business.
+          </p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Link
               to="/services"
@@ -252,13 +286,14 @@ const Home = () => {
               Find a Service
             </Link>
             <Link
-              to="/post-job"
+              to="/add-service"
               className="bg-blue-800 text-white px-6 py-3 rounded-xl hover:bg-blue-900 transition-all"
             >
               Become a Provider
             </Link>
           </div>
         </div>
+
       </div>
     </section>
   );
