@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "name": "Electrician",
+    "description": "Handles electrical wiring, installations, repairs, and maintenance for homes and offices.",
+    "location": "Lagos"
+  },
+  {
+    "id": 2,
+    "name": "Plumber",
+    "description": "Fixes leaking pipes, installs water systems, and provides general plumbing repairs.",
+    "location": "Abuja"
+  },
+  {
+    "id": 3,
+    "name": "Tailor",
+    "description": "Sews, adjusts, and repairs clothes to fit perfectly and look stylish.",
+    "location": "Port Harcourt"
+  },
+  {
+    "id": 4,
+    "name": "Hair Stylist",
+    "description": "Offers braiding, haircuts, coloring, and professional hair styling for all hair types.",
+    "location": "Lagos"
+  },
+  {
+    "id": 5,
+    "name": "Barber",
+    "description": "Provides haircuts, beard trims, and grooming services for men and boys.",
+    "location": "Benin"
+  },
+  {
+    "id": 6,
+    "name": "AC Technician",
+    "description": "Specializes in installation, maintenance, and repair of air conditioning units.",
+    "location": "Abuja"
+  },
+  {
+    "id": 7,
+    "name": "Carpenter",
+    "description": "Builds and repairs furniture, doors, wardrobes, and other wooden structures.",
+    "location": "Port Harcourt"
+  },
+  {
+    "id": 8,
+    "name": "Painter",
+    "description": "Paints homes, offices, gates, and interiors with a smooth, professional finish.",
+    "location": "Lagos"
+  },
+  {
+    "id": 9,
+    "name": "Mechanic",
+    "description": "Repairs and services cars, bikes, and generators, offering diagnostics and maintenance.",
+    "location": "Benin"
+  },
+  {
+    "id": 10,
+    "name": "Generator Repairer",
+    "description": "Fixes and maintains small and large generators for homes and businesses.",
+    "location": "Lagos"
+  },
+  {
+    "id": 11,
+    "name": "Dry Cleaner",
+    "description": "Offers washing, dry cleaning, ironing, and folding services with doorstep delivery.",
+    "location": "Abuja"
+  },
+  {
+    "id": 12,
+    "name": "Makeup Artist",
+    "description": "Provides professional makeup services for weddings, birthdays, and special events.",
+    "location": "Port Harcourt"
+  },
+  {
+    "id": 13,
+    "name": "Caregiver",
+    "description": "Assists the elderly or sick with daily tasks, medical routines, and companionship.",
+    "location": "Lagos"
+  }
+]

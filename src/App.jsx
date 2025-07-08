@@ -19,6 +19,7 @@ import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
+import CategoryPage from "./pages/CategoryPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -29,6 +30,7 @@ const router = createBrowserRouter(
         <Route path="/" element={<RootLayout />}>
           <Route index element={<Home />} />
           <Route path="services" element={<Services />} />
+          <Route path="/services/:category" element={<CategoryPage />} />
           <Route path="add-service" element={<AddService />} />
           <Route path="join" element={<Join />} />
           <Route path="admin" element={<AdminDashboard />} />

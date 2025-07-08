@@ -1,0 +1,236 @@
+[
+  {
+    "id": 1,
+    "name": "John Electric",
+    "category": "Electrician",
+    "rating": 4.6,
+    "location": "Lagos",
+    "phone": "08012345678",
+    "image": "/assets/pros/electrician1.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Faith Sparks",
+    "category": "Electrician",
+    "rating": 4.8,
+    "location": "Lagos",
+    "phone": "08087654321",
+    "image": "/assets/pros/electrician2.jpg"
+  },
+  {
+    "id": 3,
+    "name": "Musa Pipes",
+    "category": "Plumber",
+    "rating": 4.5,
+    "location": "Abuja",
+    "phone": "08111222333",
+    "image": "/assets/pros/plumber1.jpg"
+  },
+  {
+    "id": 4,
+    "name": "Fatima Flow",
+    "category": "Plumber",
+    "rating": 4.7,
+    "location": "Abuja",
+    "phone": "08099887766",
+    "image": "/assets/pros/plumber2.jpg"
+  },
+  {
+    "id": 5,
+    "name": "Joy Threads",
+    "category": "Tailor",
+    "rating": 4.6,
+    "location": "Port Harcourt",
+    "phone": "08055667788",
+    "image": "/assets/pros/tailor1.jpg"
+  },
+  {
+    "id": 6,
+    "name": "Stan Stitch",
+    "category": "Tailor",
+    "rating": 4.9,
+    "location": "Port Harcourt",
+    "phone": "08133445566",
+    "image": "/assets/pros/tailor2.jpg"
+  },
+  {
+    "id": 7,
+    "name": "Ada Stylez",
+    "category": "Hair Stylist",
+    "rating": 4.8,
+    "location": "Lagos",
+    "phone": "08011223344",
+    "image": "/assets/pros/hairstylist1.jpg"
+  },
+  {
+    "id": 8,
+    "name": "Ngozi Beauty",
+    "category": "Hair Stylist",
+    "rating": 4.6,
+    "location": "Lagos",
+    "phone": "08033445566",
+    "image": "/assets/pros/hairstylist2.jpg"
+  },
+  {
+    "id": 9,
+    "name": "Ben Trims",
+    "category": "Barber",
+    "rating": 4.4,
+    "location": "Benin",
+    "phone": "08112233445",
+    "image": "/assets/pros/barber1.jpg"
+  },
+  {
+    "id": 10,
+    "name": "Oscar Fade",
+    "category": "Barber",
+    "rating": 4.7,
+    "location": "Benin",
+    "phone": "08066554433",
+    "image": "/assets/pros/barber2.jpg"
+  },
+  {
+    "id": 11,
+    "name": "AC Boss",
+    "category": "AC Technician",
+    "rating": 4.5,
+    "location": "Abuja",
+    "phone": "08120030040",
+    "image": "/assets/pros/ac1.jpg"
+  },
+  {
+    "id": 12,
+    "name": "CoolFix",
+    "category": "AC Technician",
+    "rating": 4.9,
+    "location": "Abuja",
+    "phone": "08033447788",
+    "image": "/assets/pros/ac2.jpg"
+  },
+  {
+    "id": 13,
+    "name": "Shola Wood",
+    "category": "Carpenter",
+    "rating": 4.6,
+    "location": "Port Harcourt",
+    "phone": "08128888999",
+    "image": "/assets/pros/carpenter1.jpg"
+  },
+  {
+    "id": 14,
+    "name": "Frank Nails",
+    "category": "Carpenter",
+    "rating": 4.7,
+    "location": "Port Harcourt",
+    "phone": "08012223344",
+    "image": "/assets/pros/carpenter2.jpg"
+  },
+  {
+    "id": 15,
+    "name": "Painter Jide",
+    "category": "Painter",
+    "rating": 4.5,
+    "location": "Lagos",
+    "phone": "08060060060",
+    "image": "/assets/pros/painter1.jpg"
+  },
+  {
+    "id": 16,
+    "name": "Color King",
+    "category": "Painter",
+    "rating": 4.8,
+    "location": "Lagos",
+    "phone": "08099882211",
+    "image": "/assets/pros/painter2.jpg"
+  },
+  {
+    "id": 17,
+    "name": "Mechanic Mike",
+    "category": "Mechanic",
+    "rating": 4.7,
+    "location": "Benin",
+    "phone": "08118882222",
+    "image": "/assets/pros/mechanic1.jpg"
+  },
+  {
+    "id": 18,
+    "name": "AutoFix Dan",
+    "category": "Mechanic",
+    "rating": 4.5,
+    "location": "Benin",
+    "phone": "08055443322",
+    "image": "/assets/pros/mechanic2.jpg"
+  },
+  {
+    "id": 19,
+    "name": "Jenny Gen",
+    "category": "Generator Repairer",
+    "rating": 4.8,
+    "location": "Lagos",
+    "phone": "08021212121",
+    "image": "/assets/pros/gen1.jpg"
+  },
+  {
+    "id": 20,
+    "name": "Power Pro",
+    "category": "Generator Repairer",
+    "rating": 4.7,
+    "location": "Lagos",
+    "phone": "08077778888",
+    "image": "/assets/pros/gen2.jpg"
+  },
+  {
+    "id": 21,
+    "name": "Mrs. Clean",
+    "category": "Dry Cleaner",
+    "rating": 4.5,
+    "location": "Abuja",
+    "phone": "08033221144",
+    "image": "/assets/pros/dryclean1.jpg"
+  },
+  {
+    "id": 22,
+    "name": "SoftWash",
+    "category": "Dry Cleaner",
+    "rating": 4.6,
+    "location": "Abuja",
+    "phone": "08111224455",
+    "image": "/assets/pros/dryclean2.jpg"
+  },
+  {
+    "id": 23,
+    "name": "GlamBee",
+    "category": "Makeup Artist",
+    "rating": 4.9,
+    "location": "Port Harcourt",
+    "phone": "08044556677",
+    "image": "/assets/pros/makeup1.jpg"
+  },
+  {
+    "id": 24,
+    "name": "FaceBoss",
+    "category": "Makeup Artist",
+    "rating": 4.8,
+    "location": "Port Harcourt",
+    "phone": "08112223344",
+    "image": "/assets/pros/makeup2.jpg"
+  },
+  {
+    "id": 25,
+    "name": "Aunty Rose",
+    "category": "Caregiver",
+    "rating": 4.7,
+    "location": "Lagos",
+    "phone": "08199887766",
+    "image": "/assets/pros/caregiver1.jpg"
+  },
+  {
+    "id": 26,
+    "name": "Mama Peace",
+    "category": "Caregiver",
+    "rating": 4.8,
+    "location": "Lagos",
+    "phone": "08044332211",
+    "image": "/assets/pros/caregiver2.jpg"
+  }
+]
