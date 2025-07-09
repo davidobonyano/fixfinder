@@ -38,7 +38,7 @@ const JoinAsPro = () => {
       <div className="absolute inset-0 bg-[url('/images/join-bg.jpeg')] bg-cover bg-center opacity-5 z-0" />
       
       <div className="relative z-10">
-        <h2 className="text-4xl font-extrabold text-center text-[#003366] mb-4">
+        <h2 className="text-4xl font-extrabold text-center text-gray-800 leading-tight mb-4">
           Become a Verified Pro on FixFinder
         </h2>
         <p className="text-center text-gray-600 mb-10">

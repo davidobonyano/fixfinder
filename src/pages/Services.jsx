@@ -33,42 +33,56 @@ const Services = () => {
   }, [search, category, city, allServices]);
 
   return (
-    <section className="px-4 md:px-12 py-12 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center text-gray-800">
-        Find Local Services
-      </h1>
+    <section className="px-4 md:px-12 py-16   bg-gray-100 bg-gradient-to-br from-white via-gray-50 to-gray-100 min-h-screen">
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">
+          Explore Verified Local Services
+        </h1>
+        <p className="text-gray-500 text-lg mt-3 max-w-xl mx-auto">
+          Find trusted professionals near you, filtered by skill and city.
+        </p>
+      </div>
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Filter Sidebar */}
-        <FilterSidebar
-          search={search}
-          setSearch={setSearch}
-          category={category}
-          setCategory={setCategory}
-          city={city}
-          setCity={setCity}
-          allCategories={allCategories}
-          allCities={allCities}
-        />
+        <div className="lg:w-1/4">
+          <FilterSidebar
+            search={search}
+            setSearch={setSearch}
+            category={category}
+            setCategory={setCategory}
+            city={city}
+            setCity={setCity}
+            allCategories={allCategories}
+            allCities={allCities}
+          />
+        </div>
 
-        {/* Service Cards Section */}
-        <div className="flex-1">
+        {/* Services Grid */}
+        <div className="lg:w-3/4">
           {filteredServices.length ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredServices.map((service) => (
-                <ServiceCard key={service.id || service.name} service={service} />
+                <div
+                  key={service.id || service.name}
+                  className="transition-all duration-300 transform hover:scale-105"
+                >
+                  <ServiceCard service={service} />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="text-center mt-10 text-gray-500">
+            <div className="text-center mt-16 text-gray-600">
               <img
                 src="/images/empty.png"
-                alt="No services found"
-                className="mx-auto w-32 h-32 mb-4 opacity-70"
+                alt="No services"
+                className="mx-auto w-40 h-40 mb-6 opacity-60"
               />
-              <p className="text-lg">No matching services found</p>
+              <h2 className="text-2xl font-semibold mb-2">
+                No matching services found
+              </h2>
               <p className="text-sm text-gray-400">
-                Try adjusting your search or filters.
+                Try adjusting your search terms or filters.
               </p>
             </div>
           )}

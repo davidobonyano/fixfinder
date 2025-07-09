@@ -60,7 +60,7 @@
     "rating": 4.8,
     "location": "Lagos",
     "phone": "08011223344",
-    "image": "/pro/hairstylist1.jpg"
+    "image": "/pro/hairstylist1.jpeg"
   },
   {
     "id": 8,
@@ -69,7 +69,7 @@
     "rating": 4.6,
     "location": "Lagos",
     "phone": "08033445566",
-    "image": "/pro/hairstylist2.jpg"
+    "image": "/pro/hairstylist2.jpeg"
   },
   {
     "id": 9,
@@ -78,7 +78,7 @@
     "rating": 4.4,
     "location": "Benin",
     "phone": "08112233445",
-    "image": "/pro/barber1.jpg"
+    "image": "/pro/barber1.jpeg"
   },
   {
     "id": 10,
@@ -87,7 +87,7 @@
     "rating": 4.7,
     "location": "Benin",
     "phone": "08066554433",
-    "image": "/pro/barber2.jpg"
+    "image": "/pro/barber2.jpeg"
   },
   {
     "id": 11,
@@ -96,7 +96,7 @@
     "rating": 4.5,
     "location": "Abuja",
     "phone": "08120030040",
-    "image": "/pro/ac1.jpg"
+    "image": "/pro/actechnician1.jpeg"
   },
   {
     "id": 12,
@@ -105,7 +105,7 @@
     "rating": 4.9,
     "location": "Abuja",
     "phone": "08033447788",
-    "image": "/pro/ac2.jpg"
+    "image": "/pro/actechnician2.jpeg"
   },
   {
     "id": 13,
@@ -114,7 +114,7 @@
     "rating": 4.6,
     "location": "Port Harcourt",
     "phone": "08128888999",
-    "image": "/pro/carpenter1.jpg"
+    "image": "/pro/carpenter1.jpeg"
   },
   {
     "id": 14,
@@ -123,7 +123,7 @@
     "rating": 4.7,
     "location": "Port Harcourt",
     "phone": "08012223344",
-    "image": "/pro/carpenter2.jpg"
+    "image": "/pro/carpenter2.jpeg"
   },
   {
     "id": 15,
@@ -132,7 +132,7 @@
     "rating": 4.5,
     "location": "Lagos",
     "phone": "08060060060",
-    "image": "/pro/painter1.jpg"
+    "image": "/pro/painter1.jpeg"
   },
   {
     "id": 16,
@@ -141,7 +141,7 @@
     "rating": 4.8,
     "location": "Lagos",
     "phone": "08099882211",
-    "image": "/pro/painter2.jpg"
+    "image": "/pro/painter2.jpeg"
   },
   {
     "id": 17,
@@ -150,7 +150,7 @@
     "rating": 4.7,
     "location": "Benin",
     "phone": "08118882222",
-    "image": "/pro/mechanic1.jpg"
+    "image": "/pro/mechanic1.jpeg"
   },
   {
     "id": 18,
@@ -159,7 +159,7 @@
     "rating": 4.5,
     "location": "Benin",
     "phone": "08055443322",
-    "image": "/pro/mechanic2.jpg"
+    "image": "/pro/mechanic2.jpeg"
   },
   {
     "id": 19,
@@ -168,7 +168,7 @@
     "rating": 4.8,
     "location": "Lagos",
     "phone": "08021212121",
-    "image": "/pro/gen1.jpg"
+    "image": "/pro/gen1.jpeg"
   },
   {
     "id": 20,
@@ -177,7 +177,7 @@
     "rating": 4.7,
     "location": "Lagos",
     "phone": "08077778888",
-    "image": "/pro/gen2.jpg"
+    "image": "/pro/gen2.jpeg"
   },
   {
     "id": 21,
@@ -186,7 +186,7 @@
     "rating": 4.5,
     "location": "Abuja",
     "phone": "08033221144",
-    "image": "/pro/dryclean1.jpg"
+    "image": "/pro/dryclean1.jpeg"
   },
   {
     "id": 22,
@@ -195,7 +195,7 @@
     "rating": 4.6,
     "location": "Abuja",
     "phone": "08111224455",
-    "image": "/pro/dryclean2.jpg"
+    "image": "/pro/dryclean2.jpeg"
   },
   {
     "id": 23,
@@ -204,7 +204,7 @@
     "rating": 4.9,
     "location": "Port Harcourt",
     "phone": "08044556677",
-    "image": "/pro/makeup1.jpg"
+    "image": "/pro/makeup1.jpeg"
   },
   {
     "id": 24,
@@ -213,7 +213,7 @@
     "rating": 4.8,
     "location": "Port Harcourt",
     "phone": "08112223344",
-    "image": "/pro/makeup2.jpg"
+    "image": "/pro/makeup2.jpeg"
   },
   {
     "id": 25,
@@ -222,7 +222,7 @@
     "rating": 4.7,
     "location": "Lagos",
     "phone": "08199887766",
-    "image": "/pro/caregiver1.jpg"
+    "image": "/pro/caregiver1.jpeg"
   },
   {
     "id": 26,
@@ -231,6 +231,6 @@
     "rating": 4.8,
     "location": "Lagos",
     "phone": "08044332211",
-    "image": "/pro/caregiver2.jpg"
+    "image": "/pro/caregiver2.jpeg"
   }
 ]

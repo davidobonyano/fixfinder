@@ -37,6 +37,22 @@ const ProfessionalCard = ({ pro, onReviewClick }) => {
           Leave Review
         </button>
       </div>
+
+      {pro.reviews?.length > 0 && (
+        <div className="mt-4 border-t pt-3">
+          <h4 className="text-sm font-semibold mb-2 text-gray-800">Recent Reviews:</h4>
+          <ul className="space-y-2 max-h-32 overflow-auto text-sm text-gray-700">
+            {pro.reviews.slice().reverse().map((r, idx) => (
+              <li key={idx} className="bg-gray-100 p-2 rounded">
+                <span className="block mb-1 text-yellow-500">
+                  {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                </span>
+                <p className="text-gray-600">{r.text}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

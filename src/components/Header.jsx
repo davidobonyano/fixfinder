@@ -1,28 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/useAuth";
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-    setMobileDropdownOpen(false);
-  };
-
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
-  const toggleMobileDropdown = () => setMobileDropdownOpen(!mobileDropdownOpen);
-  const closeDropdown = () => {
-    setDropdownOpen(false);
-    setMobileDropdownOpen(false);
-  };
+  const closeDropdown = () => setDropdownOpen(false);
 
   const handleLogout = () => {
     logout();
@@ -30,53 +18,84 @@ export default function Header() {
     closeDropdown();
   };
 
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "auto";
-    return () => (document.body.style.overflow = "auto");
-  }, [isOpen]);
-
   const linkClasses = ({ isActive }) =>
     isActive
-      ? "text-indigo-600 dark:text-indigo-400 font-semibold"
-      : "hover:text-indigo-500";
+      ? "text-indigo-600 dark:text-indigo-400 font-semibold whitespace-nowrap"
+      : "hover:text-indigo-500 whitespace-nowrap";
 
   return (
-    <header className="relative z-50 bg-white dark:bg-gray-800 shadow-md">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <NavLink to={"/"}>
-          <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-            FixFinder
-          </h1>
+    <header className="bg-gray-50 dark:bg-gray-800 shadow-md">
+      {/* Top Bar (Logo + Auth) */}
+      <div className=" lg:hidden container mx-auto px-4 py-3 flex justify-between items-center">
+        <NavLink to="/">
+          <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">FixFinder</h1>
         </NavLink>
 
-        {/* Mobile Toggle */}
-        <button
-          className="lg:hidden text-gray-700 dark:text-white focus:outline-none"
-          onClick={toggleMenu}
-          aria-label="Toggle Menu"
-        >
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        {isAuthenticated && (
+          <div className="relative">
+            <button
+              onClick={toggleDropdown}
+              className="text-gray-700 dark:text-white text-xl focus:outline-none"
+            >
+              <FontAwesomeIcon icon={faUserCircle} size="lg" />
+            </button>
 
-        {/* Desktop Nav */}
-        <nav className="hidden lg:flex space-x-6 items-center text-sm font-medium">
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                >
+                  Logout
+                </button>
+                <NavLink
+                  to="/help"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                  onClick={closeDropdown}
+                >
+                  Help
+                </NavLink>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Nav (Horizontal scrollable row) */}
+      <nav className="lg:hidden bg-gray-100 dark:bg-gray-900 px-2 py-2 overflow-x-auto">
+        <div className="flex space-x-6 pl-2 text-base font-medium text-gray-700 dark:text-white w-max">
           <NavLink to="/" className={linkClasses}>Home</NavLink>
           <NavLink to="/services" className={linkClasses}>Services</NavLink>
           <NavLink to="/add-service" className={linkClasses}>Post a Job</NavLink>
           <NavLink to="/join" className={linkClasses}>Join as Pro</NavLink>
-          <NavLink to="/admin" className={linkClasses}>Admin</NavLink>
+         
+        </div>
+      </nav>
+
+      {/* Desktop Nav (Original Style) */}
+      <div className="hidden lg:flex justify-between items-center px-4 py-3">
+        <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+          <NavLink to="/">FixFinder</NavLink>
+        </div>
+
+        <nav className="flex items-center space-x-6 text-sm font-medium text-gray-700 dark:text-white">
+          <NavLink to="/" className={linkClasses}>Home</NavLink>
+          <NavLink to="/services" className={linkClasses}>Services</NavLink>
+          <NavLink to="/add-service" className={linkClasses}>Post a Job</NavLink>
+          <NavLink to="/join" className={linkClasses}>Join as Pro</NavLink>
+         
 
           {isAuthenticated && (
             <div className="relative">
               <button
                 onClick={toggleDropdown}
-                className="text-gray-700 dark:text-white text-xl focus:outline-none"
+                className="text-xl focus:outline-none"
               >
                 <FontAwesomeIcon icon={faUserCircle} size="lg" />
               </button>
 
               {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
+                <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 border rounded shadow-lg z-50">
                   <button
                     onClick={handleLogout}
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
@@ -95,53 +114,6 @@ export default function Header() {
             </div>
           )}
         </nav>
-      </div>
-
-      {/* Mobile Nav Menu */}
-      <div
-        className={`absolute top-full left-0 w-full z-40 bg-white dark:bg-gray-900 shadow-md transition-transform duration-300 ease-in-out lg:hidden transform ${
-          isOpen ? "translate-y-0" : "-translate-y-[200%]"
-        }`}
-      >
-        <div className="px-8 py-4 flex flex-col gap-3 text-sm font-medium text-gray-700 dark:text-white">
-          <NavLink to="/" onClick={() => setIsOpen(false)} className={linkClasses}>Home</NavLink>
-          <NavLink to="/services" onClick={() => setIsOpen(false)} className={linkClasses}>Services</NavLink>
-          <NavLink to="/add-service" onClick={() => setIsOpen(false)} className={linkClasses}>Post a Job</NavLink>
-          <NavLink to="/join" onClick={() => setIsOpen(false)} className={linkClasses}>Join as Pro</NavLink>
-          <NavLink to="/admin" onClick={() => setIsOpen(false)} className={linkClasses}>Admin</NavLink>
-
-          {isAuthenticated && (
-            <div className="relative">
-              <button
-                onClick={toggleMobileDropdown}
-                className="flex items-center gap-2 text-lg text-gray-700 dark:text-white focus:outline-none"
-              >
-                <FontAwesomeIcon icon={faUserCircle} size="lg" />
-              </button>
-
-              {mobileDropdownOpen && (
-                <div className="mt-2 bg-white w-40 dark:bg-gray-800 rounded shadow-md border dark:border-gray-700">
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
-                  >
-                    Logout
-                  </button>
-                  <NavLink
-                    to="help"
-                    onClick={() => {
-                      setIsOpen(false);
-                      setMobileDropdownOpen(false);
-                    }}
-                    className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    Help
-                  </NavLink>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
     </header>
   );
