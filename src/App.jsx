@@ -10,6 +10,7 @@ import PrivateRoute from "./components/PrivateRoute";
 
 // Layouts & Pages
 import RootLayout from "./layout/Rootlayout";
+import HelpLayout from "./layout/HelpLayout";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
 import AddService from "./pages/AddService";
@@ -34,8 +35,12 @@ const router = createBrowserRouter(
           <Route path="add-service" element={<AddService />} />
           <Route path="join" element={<Join />} />
           <Route path="admin" element={<AdminDashboard />} />
-          <Route path="help/faq" element={<Faq />} />
-          <Route path="help/contact" element={<Contact />} />
+
+          <Route path="help" element={<HelpLayout />}>
+            <Route path="faq" element={<Faq />} />
+            <Route path="contact" element={<Contact />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

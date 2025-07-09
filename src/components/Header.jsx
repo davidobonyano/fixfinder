@@ -14,13 +14,11 @@ export default function Header() {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-    setMobileDropdownOpen(false); // close dropdown if menu closes
+    setMobileDropdownOpen(false);
   };
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
-  const toggleMobileDropdown = () =>
-    setMobileDropdownOpen(!mobileDropdownOpen);
-
+  const toggleMobileDropdown = () => setMobileDropdownOpen(!mobileDropdownOpen);
   const closeDropdown = () => {
     setDropdownOpen(false);
     setMobileDropdownOpen(false);
@@ -45,9 +43,11 @@ export default function Header() {
   return (
     <header className="relative z-50 bg-white dark:bg-gray-800 shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-      <NavLink to={"/"}><h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-          FixFinder
-        </h1></NavLink>  
+        <NavLink to={"/"}>
+          <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            FixFinder
+          </h1>
+        </NavLink>
 
         {/* Mobile Toggle */}
         <button
@@ -60,24 +60,11 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex space-x-6 items-center text-sm font-medium">
-          <NavLink to="/" className={linkClasses}>
-            Home
-          </NavLink>
-          <NavLink to="/services" className={linkClasses}>
-            Services
-          </NavLink>
-          <NavLink to="/add-service" className={linkClasses}>
-            Post a Job
-          </NavLink>
-          <NavLink to="/help/faq" className={linkClasses}>
-            FAQ
-          </NavLink>
-          <NavLink to="/help/contact" className={linkClasses}>
-            Contact
-          </NavLink>
-          <NavLink to="/admin" className={linkClasses}>
-            Admin
-          </NavLink>
+          <NavLink to="/" className={linkClasses}>Home</NavLink>
+          <NavLink to="/services" className={linkClasses}>Services</NavLink>
+          <NavLink to="/add-service" className={linkClasses}>Post a Job</NavLink>
+          <NavLink to="/join" className={linkClasses}>Join as Pro</NavLink>
+          <NavLink to="/admin" className={linkClasses}>Admin</NavLink>
 
           {isAuthenticated && (
             <div className="relative">
@@ -97,11 +84,11 @@ export default function Header() {
                     Logout
                   </button>
                   <NavLink
-                    to="/join"
+                    to="/help"
                     className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                     onClick={closeDropdown}
                   >
-                    Join as Pro
+                    Help
                   </NavLink>
                 </div>
               )}
@@ -117,28 +104,14 @@ export default function Header() {
         }`}
       >
         <div className="px-8 py-4 flex flex-col gap-3 text-sm font-medium text-gray-700 dark:text-white">
-          <NavLink to="/" onClick={() => setIsOpen(false)} className={linkClasses}>
-            Home
-          </NavLink>
-          <NavLink to="/services" onClick={() => setIsOpen(false)} className={linkClasses}>
-            Services
-          </NavLink>
-          <NavLink to="/add-service" onClick={() => setIsOpen(false)} className={linkClasses}>
-            Post a Job
-          </NavLink>
-          <NavLink to="/help/faq" onClick={() => setIsOpen(false)} className={linkClasses}>
-            FAQ
-          </NavLink>
-          <NavLink to="/help/contact" onClick={() => setIsOpen(false)} className={linkClasses}>
-            Contact
-          </NavLink>
-          <NavLink to="/admin" onClick={() => setIsOpen(false)} className={linkClasses}>
-            Admin
-          </NavLink>
+          <NavLink to="/" onClick={() => setIsOpen(false)} className={linkClasses}>Home</NavLink>
+          <NavLink to="/services" onClick={() => setIsOpen(false)} className={linkClasses}>Services</NavLink>
+          <NavLink to="/add-service" onClick={() => setIsOpen(false)} className={linkClasses}>Post a Job</NavLink>
+          <NavLink to="/join" onClick={() => setIsOpen(false)} className={linkClasses}>Join as Pro</NavLink>
+          <NavLink to="/admin" onClick={() => setIsOpen(false)} className={linkClasses}>Admin</NavLink>
 
-          {/* Mobile Profile Dropdown */}
           {isAuthenticated && (
-            <div className="relative ">
+            <div className="relative">
               <button
                 onClick={toggleMobileDropdown}
                 className="flex items-center gap-2 text-lg text-gray-700 dark:text-white focus:outline-none"
@@ -155,14 +128,14 @@ export default function Header() {
                     Logout
                   </button>
                   <NavLink
-                    to="/join"
+                    to="help"
                     onClick={() => {
                       setIsOpen(false);
                       setMobileDropdownOpen(false);
                     }}
                     className="block px-4 py-2 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    Join as Pro
+                    Help
                   </NavLink>
                 </div>
               )}
