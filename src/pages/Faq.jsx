@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 const faqs = [
   {
@@ -41,7 +42,7 @@ const FAQ = () => {
       <h1 className="text-3xl font-bold mb-6 text-indigo-700">Frequently Asked Questions</h1>
       <p className="text-gray-700 mb-8">
         Here are answers to some of the most common questions about FixFinder. If you need more help, feel free to{" "}
-        <a href="/help/contact" className="text-indigo-600 underline">contact us</a>.
+        <Link to="/help/contact" className="text-indigo-600 underline">contact us</Link>.
       </p>
 
       <div className="space-y-4">

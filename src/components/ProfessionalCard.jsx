@@ -5,7 +5,7 @@ const ProfessionalCard = ({ pro, onReviewClick }) => {
   return (
     <div className="bg-white rounded-xl shadow-md p-5 transition hover:shadow-xl flex flex-col justify-between">
       <img
-        src={pro.image}
+        src={pro.image || '/pro/default.jpg'}
         alt={pro.name}
         className="w-full h-40 object-cover rounded-lg mb-4"
       />

@@ -14,23 +14,22 @@ const CategoryPage = () => {
     (pro) => pro.category.toLowerCase() === category.toLowerCase()
   );
 
-const handleReviewSubmit = ({ serviceName, rating }) => {
-  setPros((prev) =>
-    prev.map((pro) =>
-      pro.name === serviceName
-        ? {
-            ...pro,
-            rating: (
-              (pro.rating * (pro.reviewCount || 0) + rating) /
-              ((pro.reviewCount || 0) + 1)
-            ).toFixed(1),
-            reviewCount: (pro.reviewCount || 0) + 1,
-          }
-        : pro
-    )
-  );
-};
-
+  const handleReviewSubmit = ({ serviceName, rating }) => {
+    setPros((prev) =>
+      prev.map((pro) =>
+        pro.name === serviceName
+          ? {
+              ...pro,
+              rating: (
+                (pro.rating * (pro.reviewCount || 0) + rating) /
+                ((pro.reviewCount || 0) + 1)
+              ).toFixed(1),
+              reviewCount: (pro.reviewCount || 0) + 1,
+            }
+          : pro
+      )
+    );
+  };
 
   return (
     <div className="p-6">

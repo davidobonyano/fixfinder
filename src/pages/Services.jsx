@@ -1,20 +1,26 @@
-import { useState, useMemo } from 'react';
-import ServiceCard from '../components/ServiceCard';
-import FilterSidebar from '../components/FilterSidebar';
-import servicesData from '../data/services.json';
+import { useState, useMemo, useEffect } from "react";
+import ServiceCard from "../components/ServiceCard";
+import FilterSidebar from "../components/FilterSidebar";
+import { getAllServices } from "../utils/getAllServices";
 
 const Services = () => {
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [city, setCity] = useState('');
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [city, setCity] = useState("");
+  const [allServices, setAllServices] = useState([]);
 
-  const allCities = ['Lagos', 'Abuja', 'Port Harcourt', 'Benin'];
-  const allCategories = [...new Set(servicesData.map((s) => s.name))];
+  useEffect(() => {
+    const all = getAllServices();
+    setAllServices(all);
+  }, []);
+
+  const allCities = [...new Set(allServices.map((s) => s.location))];
+  const allCategories = [...new Set(allServices.map((s) => s.name))];
 
   const filteredServices = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return servicesData.filter((service) => {
+    return allServices.filter((service) => {
       const matchesSearch =
         service.name.toLowerCase().includes(keyword) ||
         service.description.toLowerCase().includes(keyword);
@@ -24,7 +30,7 @@ const Services = () => {
 
       return matchesSearch && matchesCategory && matchesCity;
     });
-  }, [search, category, city]);
+  }, [search, category, city, allServices]);
 
   return (
     <section className="px-4 md:px-12 py-12 bg-gray-50 min-h-screen">
@@ -50,7 +56,7 @@ const Services = () => {
           {filteredServices.length ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {filteredServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard key={service.id || service.name} service={service} />
               ))}
             </div>
           ) : (

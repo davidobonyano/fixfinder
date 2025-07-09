@@ -1,4 +1,4 @@
-// ✅ Validate a generic non-empty string
+// ✅ Validate a generic non-empty string 
 function isValidString(str) {
   return typeof str === 'string' && str.trim().length > 0;
 }
@@ -20,22 +20,52 @@ function isValidRating(rating) {
   return typeof rating === 'number' && rating >= 1 && rating <= 5;
 }
 
-// ✅ Validate a known location string (you can expand this list)
+// ✅ Validate a known location string (optional: expand this list)
 function isValidLocation(location) {
   const allowedLocations = ['Lagos', 'Abuja', 'Benin', 'Port Harcourt'];
-  return allowedLocations.includes(location);
+  return isValidString(location) && allowedLocations.includes(location);
 }
 
-// ✅ Default validator used in Home.jsx for name & description
+// ✅ Main form validator for AddService.jsx
+function validateServiceForm(form) {
+  if (!isValidString(form.name)) {
+    return "Please enter your full name.";
+  }
+
+  if (!isValidString(form.category)) {
+    return "Please select a service category.";
+  }
+
+  if (!isValidString(form.location)) {
+    return "Please enter a valid location.";
+  }
+
+  if (!isValidPhone(form.phone)) {
+    return "Please enter a valid Nigerian phone number.";
+  }
+
+  if (!isValidEmail(form.email)) {
+    return "Please enter a valid email address.";
+  }
+
+  if (!isValidString(form.description)) {
+    return "Please provide a brief service description.";
+  }
+
+  return ""; // No errors
+}
+
+// ✅ Default string validator used in Home.jsx for quick field checks
 export default function validateInput(str) {
   return isValidString(str);
 }
 
-// Optional named exports for future use
+// Named exports
 export {
   isValidString,
   isValidPhone,
   isValidEmail,
   isValidRating,
-  isValidLocation
+  isValidLocation,
+  validateServiceForm // <- this is the one you’ll now import in AddService.jsx
 };

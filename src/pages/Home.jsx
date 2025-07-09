@@ -101,12 +101,13 @@ const Home = () => {
       <div>
 
         {/* 🚀 Hero Section with Background */}
-        <div className="relative overflow-hidden shadow-xl h-[500px] md:h-[600px] flex items-center justify-center text-center bg-black/50">
-          <img
-            src={heroImage}
-            alt="Find trusted service professionals"
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-80"
-          />
+      <div className="relative h-[500px] md:h-[600px] flex items-center justify-center text-center">
+  <img
+    src={heroImage}
+    alt="Find trusted service professionals"
+    className="absolute inset-0 w-full h-full object-cover object-center"
+  />
+       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/10" />
           <div className="relative z-10 text-white px-6 md:px-12 space-y-6 max-w-3xl">
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
               Find Trusted Local Service Experts
