@@ -45,9 +45,9 @@ export default function Header() {
   return (
     <header className="relative z-50 bg-white dark:bg-gray-800 shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+      <NavLink to={"/"}><h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
           FixFinder
-        </h1>
+        </h1></NavLink>  
 
         {/* Mobile Toggle */}
         <button

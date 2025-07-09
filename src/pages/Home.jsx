@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import servicesData from '../data/services.json';
-import ServiceCard from '../components/ServiceCard';
 import heroImage from '../assets/images/hero-city.jpeg';
 import {
   isValidString,
@@ -112,20 +111,22 @@ const Home = () => {
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">
               Find Trusted Local Service Experts
             </h1>
-          <p className="text-lg md:text-xl text-gray-100 font-normal">
+            <p className="text-lg md:text-xl text-gray-100 font-normal">
               Whether you need a reliable tailor, plumber, or electrician,
               <span className="font-semibold text-white"> FixFinder</span> connects you to verified professionals in{' '}
               <span className="text-blue-600 font-medium">{selectedCity || userCity || 'your area'}</span>.
             </p>
             <div className="flex justify-center">
-              <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-full text-white font-medium shadow-lg">
-                Browse Services
-              </button>
+              <Link to={'/services'}>
+                <button className="bg-blue-600 hover:bg-blue-700 transition px-6 py-3 rounded-full text-white font-medium shadow-lg">
+                  Browse Services
+                </button>
+              </Link>
             </div>
           </div>
         </div>
 
-        {/* 🔍 Floating Search Bar */}
+        {/* 🔍 Search Bar */}
         <div className="-mt-20 z-20 relative px-4 md:px-0">
           <div className="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <input
@@ -158,8 +159,49 @@ const Home = () => {
           </div>
         </div>
 
-        {/* 🔄 How It Works */}
-        
+        {/* 🧰 Service Cards */}
+        <div className="px-4 md:px-12 py-16 bg-white">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
+            Discover Your Next Local Service
+          </h2>
+          <p className="text-center text-gray-500 mb-10 text-sm md:text-base">
+            Explore top-ranking categories to connect with trusted professionals near you.
+          </p>
+
+          {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+
+          {loading ? (
+            <p className="text-center">Loading nearby services...</p>
+          ) : services.length ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map((service) => (
+                <div key={service.id} className="border rounded-xl shadow-md overflow-hidden group hover:shadow-lg transition-all">
+                  <img
+                    src={`/images/${service.name.toLowerCase().replace(/\s+/g, '')}.jpeg`}
+                    alt={service.name}
+                    className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-2">
+                      {service.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 line-clamp-2">{service.description}</p>
+                    <Link
+                      to={`/services/${service.name.toLowerCase()}`}
+                      className="text-blue-600 text-sm mt-3 inline-block hover:underline"
+                    >
+                      View More →
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No matching services found.</p>
+          )}
+        </div>
+
+        {/* 📊 Stats */}
         <div className="px-4 md:px-12 py-16 bg-white text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-10 text-gray-800">
             Explore millions of services tailored to your local needs
@@ -184,8 +226,7 @@ const Home = () => {
           </div>
         </div>
 
-
-        {/* 🧭 Popular Categories Carousel */}
+        {/* 🔥 Popular Categories */}
         <div className="py-10 p-10 space-y-6">
           <h2 className="text-2xl font-semibold text-center">Popular Categories</h2>
           <div className="overflow-x-auto">
@@ -210,51 +251,8 @@ const Home = () => {
           </div>
         </div>
 
-        {/* 🔍 Service Cards */}
-        <div className="px-4 md:px-12 py-16 bg-white">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
-                Discover Your Next Local Service
-              </h2>
-              <p className="text-center text-gray-500 mb-10 text-sm md:text-base">
-                Explore top-ranking categories to connect with trusted professionals near you.
-              </p>
-
-              {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-
-              {loading ? (
-                <p className="text-center">Loading nearby services...</p>
-              ) : services.length ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {services.map((service) => (
-                    <div key={service.id} className="border rounded-xl shadow-md overflow-hidden group hover:shadow-lg transition-all">
-                      <img
-                        src={`/assets/images/services/${service.name.toLowerCase().replace(/\s+/g, '-')}.jpg`}
-                        alt={service.name}
-                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
-                      />
-                      <div className="p-4">
-                        <h3 className="font-semibold text-lg text-gray-800 mb-2">
-                          {service.name}
-                        </h3>
-                        <p className="text-sm text-gray-500 line-clamp-2">{service.description}</p>
-                        <Link
-                          to={`/services/${service.name.toLowerCase()}`}
-                          className="text-blue-600 text-sm mt-3 inline-block hover:underline"
-                        >
-                          View More →
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-gray-500">No matching services found.</p>
-              )}
-</div>
-
-
         {/* 🌟 Testimonials */}
-        <div className="bg-gray-50  py-10 px-6 rounded-xl">
+        <div className="bg-gray-50 py-10 px-6 rounded-xl">
           <h2 className="text-2xl font-semibold text-center mb-6">What Our Users Say</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -270,9 +268,7 @@ const Home = () => {
           </div>
         </div>
 
-       
-
-        {/* 📢 CTA Section */}
+        {/* 📢 CTA */}
         <div className="bg-blue-600 text-white text-center py-10 px-4 rounded-2xl shadow-lg">
           <h2 className="text-3xl font-bold mb-4">Ready to find or offer a service?</h2>
           <p className="mb-6 text-blue-100">
@@ -293,7 +289,6 @@ const Home = () => {
             </Link>
           </div>
         </div>
-
       </div>
     </section>
   );
