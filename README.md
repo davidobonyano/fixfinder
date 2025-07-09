@@ -85,13 +85,13 @@ src/
 ## 📸 Screenshots
 
 ### 🏠 Homepage
-![Homepage Screenshot](./src/assets/screenshots/homepage.jpeg)
+![Homepage Screenshot](/src/assets/screenshots/homepage.jpeg)
 
 ### 📂 Services Page
-![Services Screenshot](./src/assets/screenshots/servicespage.jpeg)
+![Services Screenshot](/src/assets/screenshots/servicespage.jpeg)
 
 ### 👤 Professional Modal
-![Professional Modal Screenshot](./src/assets/screenshots/modal.jpeg)
+![Professional Modal Screenshot](/src/assets/screenshots/modal.jpeg)
 
 ## 🤝 Contributing
 
