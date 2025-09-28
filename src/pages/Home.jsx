@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import servicesData from '../data/services.json';
-import heroImage from '../assets/images/hero-city.jpeg';
+import heroImage from '../assets/images/hero-city.webp';
 import {
   isValidString,
   isValidLocation
