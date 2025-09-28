@@ -84,14 +84,17 @@ src/
 
 ## 📸 Screenshots
 
+## 📸 Screenshots
+
 ### 🏠 Homepage
-![Homepage Screenshot](/src/assets/screenshots/homepage.jpeg)
+📁 View screenshot at: `src/assets/screenshots/homepage.jpeg`
 
 ### 📂 Services Page
-![Services Screenshot](/src/assets/screenshots/servicespage.jpeg)
+📁 View screenshot at: `src/assets/screenshots/servicespage.jpeg`
 
 ### 👤 Professional Modal
-![Professional Modal Screenshot](/src/assets/screenshots/modal.jpeg)
+📁 View screenshot at: `src/assets/screenshots/modal.jpeg`
+
 
 ## 🤝 Contributing
 
