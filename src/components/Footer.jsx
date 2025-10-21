@@ -18,7 +18,6 @@ export default function Footer() {
         <div className="flex flex-col sm:items-end">
           <nav className="flex flex-col gap-2 text-gray-600 dark:text-gray-300">
             <NavLink to="/" className="hover:text-indigo-500">Home</NavLink>
-            <NavLink to="/add-service" className="hover:text-indigo-500">Add Service</NavLink>
             <NavLink to="/help/faq" className="hover:text-indigo-500">FAQ</NavLink>
             <NavLink to="/help/contact" className="hover:text-indigo-500">Contact</NavLink>
           </nav>

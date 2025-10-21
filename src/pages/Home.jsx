@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import servicesData from '../data/services.json';
 import heroImage from '../assets/images/hero-city.webp';
@@ -13,15 +13,71 @@ import {
   FaStar,
   FaCheckCircle,
   FaClock,
-  FaThumbsUp
+  FaThumbsUp,
+  FaArrowRight,
+  FaUser,
+  FaBriefcase
 } from 'react-icons/fa';
 
 const getCityFromCoords = (lat, lng) => {
-  if (lat >= 6 && lat <= 7 && lng >= 3 && lng <= 4) return 'Lagos';
-  if (lat >= 4 && lat <= 5 && lng >= 7 && lng <= 8) return 'Port Harcourt';
-  if (lat >= 8 && lat <= 9 && lng >= 6 && lng <= 8) return 'Abuja';
-  if (lat >= 6 && lat <= 7 && lng >= 5 && lng <= 6) return 'Benin';
-  return 'Unknown';
+  // Nigeria coordinates ranges (more generous)
+  if (lat >= 6.0 && lat <= 6.8 && lng >= 3.0 && lng <= 4.0) return 'Lagos';
+  if (lat >= 4.5 && lat <= 5.2 && lng >= 6.8 && lng <= 7.5) return 'Port Harcourt';
+  if (lat >= 8.5 && lat <= 9.5 && lng >= 7.0 && lng <= 7.8) return 'Abuja';
+  if (lat >= 6.2 && lat <= 6.5 && lng >= 5.5 && lng <= 6.2) return 'Benin';
+  // If coordinates are in Nigeria but not in our predefined cities, default to Lagos
+  if (lat >= 4 && lat <= 14 && lng >= 3 && lng <= 15) return 'Lagos';
+  return null; // Return null instead of 'Unknown' for better handling
+};
+
+// Counter animation hook
+const useCounter = (end, duration = 2000) => {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !isVisible) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    let startTime;
+    const startValue = 0;
+    const endValue = end;
+
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      
+      const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+      const currentCount = Math.floor(startValue + (endValue - startValue) * easeOutQuart);
+      
+      setCount(currentCount);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isVisible, end, duration]);
+
+  return [count, ref];
 };
 
 const Home = () => {
@@ -34,45 +90,82 @@ const Home = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // Counter hooks
+  const [professionalsCount, professionalsRef] = useCounter(1000);
+  const [categoriesCount, categoriesRef] = useCounter(500);
+  const [usersCount, usersRef] = useCounter(100);
+  const [citiesCount, citiesRef] = useCounter(250);
+
   const allCities = ['Lagos', 'Abuja', 'Port Harcourt', 'Benin'];
   const allCategories = [...new Set(servicesData.map((s) => s.name))];
 
   useEffect(() => {
+    // Seed with all services immediately, but show only first 4 on home page
+    setAllServices(servicesData);
+    setServices(servicesData.slice(0, 4)); // Show only 4 services on home page
+
+    // Try auto geolocation (may show browser prompt/warning, acceptable per requirements)
+    if (navigator.permissions?.query) {
+      navigator.permissions
+        .query({ name: 'geolocation' })
+        .then((result) => {
+          if (result.state === 'granted' || result.state === 'prompt') {
+            handleGetLocation();
+          } else {
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          // Fallback: attempt geolocation directly
+          handleGetLocation();
+        });
+    } else {
+      handleGetLocation();
+    }
+  }, []);
+
+  const handleGetLocation = () => {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported.');
-      setAllServices(servicesData);
-      setServices(servicesData);
       setLoading(false);
       return;
     }
-
+    setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         const city = getCityFromCoords(latitude, longitude);
         setUserCity(city);
 
-        const filtered = servicesData.filter(
-          (service) =>
-            isValidString(service.name) &&
-            isValidString(service.description) &&
-            isValidLocation(service.location) &&
-            service.location === city
-        );
-
-        setAllServices(filtered.length ? filtered : servicesData);
-        setServices(filtered.length ? filtered : servicesData);
+        // Only filter by city if we have a valid known city
+        if (city && city !== 'Unknown') {
+          const filtered = servicesData.filter(
+            (service) =>
+              isValidString(service.name) &&
+              isValidString(service.description) &&
+              isValidLocation(service.location) &&
+              service.location === city
+          );
+          setAllServices(filtered.length ? filtered : servicesData);
+          setServices(filtered.length ? filtered.slice(0, 4) : servicesData.slice(0, 4));
+        } else {
+          // If city is null or unknown, show all services
+          setAllServices(servicesData);
+          setServices(servicesData.slice(0, 4));
+        }
         setLoading(false);
       },
       (err) => {
         console.warn(err.message);
         setError('Location access denied. Showing all services.');
+        setUserCity(null); // Set to null instead of empty string
         setAllServices(servicesData);
-        setServices(servicesData);
+        setServices(servicesData.slice(0, 4));
         setLoading(false);
-      }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
-  }, []);
+  };
 
   useEffect(() => {
     const keyword = searchTerm.toLowerCase();
@@ -88,16 +181,32 @@ const Home = () => {
 
       const matchesCity = selectedCity
         ? service.location === selectedCity
-        : service.location === userCity;
+        : userCity && userCity !== 'Unknown' ? service.location === userCity : true;
 
       return matchesKeyword && matchesCategory && matchesCity;
     });
 
-    setServices(filterServices);
+    setServices(filterServices.slice(0, 4));
   }, [searchTerm, selectedCategory, selectedCity, userCity, allServices]);
 
   return (
     <section>
+      <style jsx>{`
+        @keyframes scroll {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-scroll {
+          animation: scroll 20s linear infinite;
+        }
+        .animate-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
       <div>
 
         {/* 🚀 Hero Section with Background */}
@@ -178,9 +287,10 @@ const Home = () => {
               {services.map((service) => (
                 <div key={service.id} className="border rounded-xl shadow-md overflow-hidden group hover:shadow-lg transition-all">
                   <img
-                    src={`/images/${service.name.toLowerCase().replace(/\s+/g, '')}.jpeg`}
+                    src={service.image || `/images/${service.name.toLowerCase().replace(/\s+/g, '')}.jpeg`}
                     alt={service.name}
                     className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
+                    onError={(e) => (e.currentTarget.src = '/images/placeholder.jpeg')}
                   />
                   <div className="p-4">
                     <h3 className="font-semibold text-lg text-gray-800 mb-2">
@@ -208,31 +318,130 @@ const Home = () => {
             Explore millions of services tailored to your local needs
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <p className="text-4xl font-extrabold text-blue-600">1,000+</p>
+            <div ref={professionalsRef}>
+              <p className="text-4xl font-extrabold text-blue-600">{professionalsCount}+</p>
               <p className="text-sm text-gray-600 mt-2">Verified Professionals</p>
             </div>
-            <div>
-              <p className="text-4xl font-extrabold text-blue-600">500+</p>
+            <div ref={categoriesRef}>
+              <p className="text-4xl font-extrabold text-blue-600">{categoriesCount}+</p>
               <p className="text-sm text-gray-600 mt-2">Local Categories</p>
             </div>
-            <div>
-              <p className="text-4xl font-extrabold text-blue-600">100K+</p>
+            <div ref={usersRef}>
+              <p className="text-4xl font-extrabold text-blue-600">{usersCount}K+</p>
               <p className="text-sm text-gray-600 mt-2">Happy Users</p>
             </div>
-            <div>
-              <p className="text-4xl font-extrabold text-blue-600">250+</p>
+            <div ref={citiesRef}>
+              <p className="text-4xl font-extrabold text-blue-600">{citiesCount}+</p>
               <p className="text-sm text-gray-600 mt-2">Cities Covered</p>
             </div>
           </div>
         </div>
 
-        {/* 🔥 Popular Categories */}
-        <div className="py-10 p-10 space-y-6">
-          <h2 className="text-2xl font-semibold text-center">Popular Categories</h2>
-          <div className="overflow-x-auto">
-            <div className="flex gap-6 px-4 md:px-0 max-w-6xl mx-auto">
+        {/* 📢 CTA Section */}
+        <div className="px-4 md:px-12 py-16 bg-gray-50">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-gray-800">Ready to find or offer a service?</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Join thousands using FixFinder to find help or grow their business.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Find a Service Card */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="h-48 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=300&fit=crop"
+                  alt="Find a Service"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <h3 className="text-2xl font-bold">Find a Service</h3>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h4 className="text-xl font-semibold mb-4 text-gray-800">How to use FixFinder as a User</h4>
+                <div className="space-y-3 text-gray-600">
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</span>
+                    <p>Search for the service you need using our search bar or browse categories</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</span>
+                    <p>View verified professionals in your area with ratings and reviews</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</span>
+                    <p>Contact and book your preferred professional directly</p>
+                  </div>
+                </div>
+                <Link
+                  to="/services"
+                  className="mt-6 w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  Start Finding Services
+                  <FaArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Become a Provider Card */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="h-48 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop"
+                  alt="Become a Provider"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                  <div className="text-center text-white">
+                    <h3 className="text-2xl font-bold">Become a Provider</h3>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h4 className="text-xl font-semibold mb-4 text-gray-800">How to use FixFinder as a Professional</h4>
+                <div className="space-y-3 text-gray-600">
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">1</span>
+                    <p>Create your professional profile with your skills and experience</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">2</span>
+                    <p>Get verified to build trust with potential customers</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <span className="bg-gray-100 text-gray-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">3</span>
+                    <p>Receive job requests and grow your business</p>
+                  </div>
+                </div>
+                <Link
+                  to="/join"
+                  className="mt-6 w-full bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  Join as Professional
+                  <FaArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 🔥 Popular Categories - Sliding Carousel */}
+        <div className="py-10 bg-white">
+          <h2 className="text-2xl font-semibold text-center mb-8">Popular Categories</h2>
+          <div className="relative overflow-hidden">
+            <div className="flex animate-scroll gap-6 px-4 md:px-0">
+              {/* Duplicate the array to create seamless loop */}
               {[
+                { icon: <FaTools />, label: 'Electrician' },
+                { icon: <FaMapMarkerAlt />, label: 'Plumber' },
+                { icon: <FaStar />, label: 'Tailor' },
+                { icon: <FaThumbsUp />, label: 'Hair Stylist' },
+                { icon: <FaClock />, label: 'Generator Repair' },
+                { icon: <FaCheckCircle />, label: 'AC Technician' },
                 { icon: <FaTools />, label: 'Electrician' },
                 { icon: <FaMapMarkerAlt />, label: 'Plumber' },
                 { icon: <FaStar />, label: 'Tailor' },
@@ -242,7 +451,7 @@ const Home = () => {
               ].map((cat, idx) => (
                 <div
                   key={idx}
-                  className="min-w-[150px] bg-white border rounded-xl shadow p-4 text-center hover:scale-105 transition transform cursor-pointer"
+                  className="min-w-[150px] bg-white border rounded-xl shadow p-4 text-center hover:scale-105 transition transform cursor-pointer flex-shrink-0"
                 >
                   <div className="text-blue-600 text-3xl mb-2">{cat.icon}</div>
                   <p className="text-sm font-medium text-gray-700">{cat.label}</p>
@@ -269,27 +478,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* 📢 CTA */}
-        <div className="bg-blue-600 text-white text-center py-10 px-4 rounded-2xl shadow-lg">
-          <h2 className="text-3xl font-bold mb-4">Ready to find or offer a service?</h2>
-          <p className="mb-6 text-blue-100">
-            Join thousands using FixFinder to find help or grow their business.
-          </p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Link
-              to="/services"
-              className="bg-white text-blue-600 font-semibold px-6 py-3 rounded-xl shadow hover:bg-gray-100 transition-all"
-            >
-              Find a Service
-            </Link>
-            <Link
-              to="/add-service"
-              className="bg-blue-800 text-white px-6 py-3 rounded-xl hover:bg-blue-900 transition-all"
-            >
-              Become a Provider
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );

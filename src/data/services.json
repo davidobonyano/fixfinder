@@ -3,78 +3,385 @@
     "id": 1,
     "name": "Electrician",
     "description": "Handles electrical wiring, installations, repairs, and maintenance for homes and offices.",
-    "location": "Lagos"
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
   },
   {
     "id": 2,
     "name": "Plumber",
     "description": "Fixes leaking pipes, installs water systems, and provides general plumbing repairs.",
-    "location": "Abuja"
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop"
   },
   {
     "id": 3,
     "name": "Tailor",
     "description": "Sews, adjusts, and repairs clothes to fit perfectly and look stylish.",
-    "location": "Port Harcourt"
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
   },
   {
     "id": 4,
     "name": "Hair Stylist",
     "description": "Offers braiding, haircuts, coloring, and professional hair styling for all hair types.",
-    "location": "Lagos"
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop"
   },
   {
     "id": 5,
     "name": "Barber",
     "description": "Provides haircuts, beard trims, and grooming services for men and boys.",
-    "location": "Benin"
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400&h=300&fit=crop"
   },
   {
     "id": 6,
     "name": "AC Technician",
     "description": "Specializes in installation, maintenance, and repair of air conditioning units.",
-    "location": "Abuja"
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
   },
   {
     "id": 7,
     "name": "Carpenter",
     "description": "Builds and repairs furniture, doors, wardrobes, and other wooden structures.",
-    "location": "Port Harcourt"
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&h=300&fit=crop"
   },
   {
     "id": 8,
     "name": "Painter",
     "description": "Paints homes, offices, gates, and interiors with a smooth, professional finish.",
-    "location": "Lagos"
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&h=300&fit=crop"
   },
   {
     "id": 9,
     "name": "Mechanic",
     "description": "Repairs and services cars, bikes, and generators, offering diagnostics and maintenance.",
-    "location": "Benin"
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1486754735734-325b5831c3ad?w=400&h=300&fit=crop"
   },
   {
     "id": 10,
     "name": "Generator Repairer",
     "description": "Fixes and maintains small and large generators for homes and businesses.",
-    "location": "Lagos"
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop"
   },
   {
     "id": 11,
     "name": "Dry Cleaner",
     "description": "Offers washing, dry cleaning, ironing, and folding services with doorstep delivery.",
-    "location": "Abuja"
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
   },
   {
     "id": 12,
     "name": "Makeup Artist",
     "description": "Provides professional makeup services for weddings, birthdays, and special events.",
-    "location": "Port Harcourt"
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop"
   },
   {
     "id": 13,
     "name": "Caregiver",
     "description": "Assists the elderly or sick with daily tasks, medical routines, and companionship.",
-    "location": "Lagos"
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 14,
+    "name": "Photographer",
+    "description": "Captures special moments with professional photography for events, portraits, and weddings.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 15,
+    "name": "Videographer",
+    "description": "Creates professional videos for weddings, corporate events, and promotional content.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 16,
+    "name": "Caterer",
+    "description": "Provides delicious meals and catering services for events, parties, and corporate functions.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 17,
+    "name": "Driver Hire",
+    "description": "Professional driving services for personal trips, corporate events, and special occasions.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 18,
+    "name": "Laptop Repair",
+    "description": "Fixes laptop hardware issues, software problems, and provides maintenance services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 19,
+    "name": "Smartphone Repair",
+    "description": "Repairs mobile phones, tablets, and other electronic devices with quick turnaround.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 20,
+    "name": "CCTV Installation",
+    "description": "Installs and maintains security camera systems for homes and businesses.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 21,
+    "name": "Solar Panel Installation",
+    "description": "Installs solar power systems for homes and businesses to reduce electricity costs.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 22,
+    "name": "Locksmith",
+    "description": "Provides lock installation, repair, and emergency lockout services.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1581578731548-c6a0c3f2f6c5?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 23,
+    "name": "Refrigerator Repair",
+    "description": "Fixes refrigerator cooling issues, compressor problems, and general maintenance.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 24,
+    "name": "Washing Machine Repair",
+    "description": "Repairs washing machines, dryers, and other laundry appliances.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 25,
+    "name": "Nail Technician",
+    "description": "Provides manicures, pedicures, nail art, and nail care services.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 26,
+    "name": "Website Design",
+    "description": "Creates professional websites for businesses, portfolios, and e-commerce platforms.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 27,
+    "name": "Graphic Design",
+    "description": "Designs logos, flyers, business cards, and marketing materials.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1558655146-d09347e92766?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 28,
+    "name": "Event Planning",
+    "description": "Organizes and coordinates weddings, parties, corporate events, and celebrations.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1519167758481-83f1426e1a2e?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 29,
+    "name": "DJ",
+    "description": "Provides music entertainment for parties, weddings, and corporate events.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 30,
+    "name": "MC Host",
+    "description": "Professional master of ceremonies for events, weddings, and corporate functions.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1519167758481-83f1426e1a2e?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 31,
+    "name": "Massage Therapy",
+    "description": "Provides therapeutic massage services for relaxation and pain relief.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 32,
+    "name": "House Cleaning",
+    "description": "Professional cleaning services for homes, offices, and commercial spaces.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 33,
+    "name": "Gardener",
+    "description": "Landscaping, lawn care, and garden maintenance services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 34,
+    "name": "Security Guard",
+    "description": "Provides security services for homes, offices, and events.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 35,
+    "name": "Tutor",
+    "description": "Private tutoring services for students in various subjects and levels.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 36,
+    "name": "Translator",
+    "description": "Professional translation services for documents, meetings, and communications.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 37,
+    "name": "Accountant",
+    "description": "Financial accounting, bookkeeping, and tax preparation services.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 38,
+    "name": "Lawyer",
+    "description": "Legal consultation and representation services for various legal matters.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 39,
+    "name": "Doctor",
+    "description": "Medical consultation, diagnosis, and treatment services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 40,
+    "name": "Nurse",
+    "description": "Nursing care, health monitoring, and medical assistance services.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1559757175-0eb30cd8c063?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 41,
+    "name": "Pharmacist",
+    "description": "Medication consultation, prescription filling, and health advice.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 42,
+    "name": "Dentist",
+    "description": "Dental care, teeth cleaning, and oral health services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1606811841689-23dfddce5e95?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 43,
+    "name": "Veterinarian",
+    "description": "Animal health care, treatment, and veterinary services.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 44,
+    "name": "Real Estate Agent",
+    "description": "Property buying, selling, and rental services.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 45,
+    "name": "Insurance Agent",
+    "description": "Insurance consultation and policy management services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 46,
+    "name": "Banking Consultant",
+    "description": "Financial planning, investment advice, and banking services.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 47,
+    "name": "Travel Agent",
+    "description": "Travel planning, booking, and vacation services.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 48,
+    "name": "Fitness Trainer",
+    "description": "Personal training, fitness coaching, and workout guidance.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 49,
+    "name": "Yoga Instructor",
+    "description": "Yoga classes, meditation, and wellness coaching.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 50,
+    "name": "Music Teacher",
+    "description": "Music lessons, instrument training, and vocal coaching.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 51,
+    "name": "Art Teacher",
+    "description": "Art lessons, painting classes, and creative skills training.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 52,
+    "name": "Language Teacher",
+    "description": "Language learning, conversation practice, and translation services.",
+    "location": "Port Harcourt",
+    "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 53,
+    "name": "Computer Repair",
+    "description": "Desktop and laptop repair, software installation, and IT support.",
+    "location": "Abuja",
+    "image": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 54,
+    "name": "Network Engineer",
+    "description": "Network setup, WiFi installation, and internet connectivity services.",
+    "location": "Lagos",
+    "image": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    "id": 55,
+    "name": "App Developer",
+    "description": "Mobile app development, software programming, and tech solutions.",
+    "location": "Benin",
+    "image": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop"
   }
 ]

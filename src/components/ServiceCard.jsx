@@ -26,7 +26,8 @@ const getIcon = (name) => {
 
 const ServiceCard = ({ service }) => {
   const imageName = service.name.toLowerCase().replace(/\s+/g, '');
-  const imageSrc = `/images/${imageName}.jpeg`;
+  const fallbackImageSrc = `/images/${imageName}.jpeg`;
+  const imageSrc = service.image || fallbackImageSrc;
 
   return (
     <div
