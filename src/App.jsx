@@ -7,6 +7,8 @@ import {
 
 import { AuthProvider } from "./context/AuthProvider";
 import { SocketProvider } from "./context/SocketContext";
+import { NotificationProvider } from "./context/NotificationContext";
+import { ToastProvider } from "./context/ToastContext";
 
 // Layouts & Pages
 import RootLayout from "./layout/Rootlayout";
@@ -24,6 +26,10 @@ import NotFound from "./pages/NotFound";
 // Dashboard Pages
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import ProfessionalDashboard from "./pages/dashboard/ProfessionalDashboard";
+import ProJobFeed from "./pages/dashboard/ProJobFeed";
+import ProOverview from "./pages/dashboard/ProOverview";
+import ProAnalytics from "./pages/dashboard/ProAnalytics";
+import ProReviews from "./pages/dashboard/ProReviews";
 import PostJob from "./pages/dashboard/PostJob";
 import MyJobs from "./pages/dashboard/MyJobs";
 import Messages from "./pages/dashboard/Messages";
@@ -38,12 +44,38 @@ import ProfessionalForm from "./pages/ProfessionalForm";
 import VerifyEmail from "./pages/VerifyEmail";
 import ProfessionalDiscovery from "./pages/ProfessionalDiscovery";
 import ProfessionalsPage from "./pages/dashboard/ProfessionalsPage";
+import ProfessionalProfile from "./pages/ProfessionalProfile";
+import ProProfile from "./pages/dashboard/ProProfile";
+import Notifications from "./pages/dashboard/Notifications";
+
+const ErrorElement = ({ error, resetErrorBoundary }) => {
+  console.error('Route error:', error);
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-white border rounded-lg p-6 text-center">
+        <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <p className="text-gray-600 mb-4">Please try again or go back.</p>
+        <div className="space-x-3">
+          <button 
+            onClick={resetErrorBoundary}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Try again
+          </button>
+          <a href="/" className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 inline-block">
+            Go home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
       {/* Main Site Routes (with header/footer) */}
-      <Route path="/" element={<RootLayout />}>
+      <Route path="/" element={<RootLayout />} errorElement={<ErrorElement />}>
           <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
@@ -58,6 +90,7 @@ const router = createBrowserRouter(
           {/* Professional Routes */}
           <Route path="professionals/:id" element={<ProfessionalDetail />} />
           <Route path="professionals/:id/edit" element={<ProfessionalForm />} />
+          <Route path="professional/:id" element={<ProfessionalProfile />} />
 
           <Route path="help" element={<HelpLayout />}>
             <Route path="faq" element={<Faq />} />
@@ -68,7 +101,7 @@ const router = createBrowserRouter(
         </Route>
 
       {/* Dashboard Routes (no header/footer) */}
-      <Route path="dashboard" element={<DashboardLayout userType="user" />}>
+      <Route path="dashboard" element={<DashboardLayout userType="user" />} errorElement={<ErrorElement />}>
         <Route index element={<ProfessionalDiscovery />} />
         <Route path="overview" element={<UserDashboard />} />
         <Route path="professionals" element={<ProfessionalsPage />} />
@@ -76,14 +109,25 @@ const router = createBrowserRouter(
         <Route path="my-jobs" element={<MyJobs />} />
         <Route path="messages" element={<Messages />} />
         <Route path="messages/:conversationId" element={<Messages />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="security" element={<ChangePassword />} />
+        <Route path="professional/:id" element={<ProfessionalProfile />} />
         {/* Add more user dashboard routes here */}
       </Route>
       
-      <Route path="dashboard/professional" element={<DashboardLayout userType="professional" />}>
-        <Route index element={<ProfessionalDashboard />} />
-        <Route path="profile" element={<Profile />} />
+      <Route path="dashboard/professional" element={<DashboardLayout userType="professional" />} errorElement={<ErrorElement />}>
+        <Route index element={<ProJobFeed />} />
+        <Route path="overview" element={<ProOverview />} />
+        <Route path="my-jobs" element={<MyJobs />} />
+        <Route path="messages" element={<Messages />} />
+        <Route path="messages/:conversationId" element={<Messages />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="analytics" element={<ProAnalytics />} />
+        <Route path="reviews" element={<ProReviews />} />
+        <Route path="profile" element={<ProProfile />} />
+        <Route path="create-profile" element={<ProfessionalForm />} />
+        <Route path="edit-profile" element={<ProfessionalForm />} />
         {/* Add more professional dashboard routes here */}
       </Route>
     </>
@@ -94,7 +138,11 @@ export default function App() {
   return (
     <AuthProvider>
       <SocketProvider>
-        <RouterProvider router={router} />
+        <NotificationProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </NotificationProvider>
       </SocketProvider>
     </AuthProvider>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import ServiceSelector from './ServiceSelector';
 
 const FilterSidebar = ({ search, setSearch, category, setCategory, state, setState, city, setCity, allCategories }) => {
   // Nigerian states and their cities
@@ -52,13 +53,13 @@ const FilterSidebar = ({ search, setSearch, category, setCategory, state, setSta
       <h2 className="text-lg font-semibold mb-4 text-gray-700">Filter Services</h2>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-600 mb-1">Search</label>
-        <input
-          type="text"
+        <label className="block text-sm font-medium text-gray-600 mb-1">Search Services</label>
+        <ServiceSelector
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search services..."
-          className="w-full p-2 border border-gray-300 rounded"
+          onChange={setSearch}
+          placeholder="Search for a service..."
+          showSuggestions={true}
+          allowCustom={true}
         />
       </div>
 

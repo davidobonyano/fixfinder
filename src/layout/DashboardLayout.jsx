@@ -45,15 +45,14 @@ const DashboardLayout = ({ userType = 'user' }) => {
 
   // Professional Dashboard Navigation
   const proNavItems = [
-    { path: '/dashboard', icon: FaHome, label: 'Overview' },
-    { path: '/dashboard/job-feed', icon: FaBriefcase, label: 'Job Feed' },
-    { path: '/dashboard/my-jobs', icon: FaBriefcase, label: 'My Jobs' },
-    { path: '/dashboard/messages', icon: FaComments, label: 'Messages' },
-    { path: '/dashboard/portfolio', icon: FaUser, label: 'Portfolio' },
-    { path: '/dashboard/reviews', icon: FaStar, label: 'Reviews' },
-    { path: '/dashboard/schedule', icon: FaCalendarAlt, label: 'Schedule' },
-    { path: '/dashboard/analytics', icon: FaChartLine, label: 'Analytics' },
-    { path: '/dashboard/settings', icon: FaCog, label: 'Settings' }
+    { path: '/dashboard/professional', icon: FaBriefcase, label: 'Job Feed' },
+    { path: '/dashboard/professional/overview', icon: FaHome, label: 'Overview' },
+    { path: '/dashboard/professional/my-jobs', icon: FaBriefcase, label: 'My Jobs' },
+    { path: '/dashboard/professional/messages', icon: FaComments, label: 'Messages' },
+    { path: '/dashboard/professional/notifications', icon: FaBell, label: 'Notifications' },
+    { path: '/dashboard/professional/profile', icon: FaUser, label: 'Profile' },
+    { path: '/dashboard/professional/reviews', icon: FaStar, label: 'Reviews' },
+    { path: '/dashboard/professional/analytics', icon: FaChartLine, label: 'Analytics' }
   ];
 
   const navItems = userType === 'professional' ? proNavItems : userNavItems;
@@ -85,7 +84,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
         {/* User info */}
         <div className="px-6 py-4 border-b">
           <NavLink 
-            to="/dashboard/profile" 
+            to={userType === 'professional' ? '/dashboard/professional/profile' : '/dashboard/profile'} 
             className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
             onClick={() => setSidebarOpen(false)}
           >
@@ -161,7 +160,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
               
               {/* User avatar */}
               <NavLink 
-                to="/dashboard/profile" 
+                to={userType === 'professional' ? '/dashboard/professional/profile' : '/dashboard/profile'} 
                 className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden hover:bg-gray-200 transition-colors"
               >
                 {user?.profilePicture || user?.avatarUrl ? (

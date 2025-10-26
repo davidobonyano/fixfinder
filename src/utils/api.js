@@ -32,8 +32,20 @@ async function request(path, { method = "GET", body, auth = false, headers: extr
     headers,
     body: payload,
   });
+  
+  console.log(`🌐 API Request: ${method} ${API_BASE}${path}`, {
+    status: res.status,
+    statusText: res.statusText,
+    headers: Object.fromEntries(res.headers.entries())
+  });
+  
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
+    console.error(`❌ API Error: ${method} ${API_BASE}${path}`, {
+      status: res.status,
+      statusText: res.statusText,
+      data
+    });
     const error = new Error(data?.message || "Request failed");
     error.status = res.status;
     error.data = data;
@@ -45,18 +57,23 @@ async function request(path, { method = "GET", body, auth = false, headers: extr
 export const registerUser = (payload) => request("/api/auth/register", { method: "POST", body: payload });
 export const loginUser = (payload) => request("/api/auth/login", { method: "POST", body: payload });
 export const getMe = () => request("/api/auth/me", { method: "GET", auth: true });
+export const getUser = (id) => request(`/api/users/${id}`, { auth: true });
 export const getServicesApi = async (params = {}) => {
   const q = new URLSearchParams(params).toString();
   return request(`/api/services${q ? `?${q}` : ""}`, { method: "GET" });
 };
 
 // Professional API functions
-export const getProfessionals = (query = {}) => {
-  const params = new URLSearchParams(query).toString();
-  return request(`/api/professionals?${params}`);
+export const getProfessionals = (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  return request(`/api/professionals${queryString ? `?${queryString}` : ''}`, { auth: true });
 };
 
-export const getProfessional = (id) => request(`/api/professionals/${id}`);
+// Prefer fetching professional by user id to avoid mismatch between user id and pro id
+export const getProfessional = (userIdOrProId, { byUser = true } = {}) => {
+  const path = byUser ? `/api/professionals/by-user/${userIdOrProId}` : `/api/professionals/${userIdOrProId}`;
+  return request(path, { auth: true });
+};
 
 export const createProfessional = (data) => request("/api/professionals", { 
   method: "POST", 
@@ -75,24 +92,7 @@ export const deleteProfessional = (id) => request(`/api/professionals/${id}`, {
   auth: true 
 });
 
-export const uploadProfessionalMedia = async (id, formData) => {
-  const token = getAuthToken();
-  const res = await fetch(`${API_BASE}/api/professionals/${id}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-    body: formData,
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data?.message || "Upload failed");
-  return data;
-};
 
-export const deleteProfessionalMedia = (id, mediaType, publicId) => request(`/api/professionals/${id}/media/${mediaType}/${publicId}`, { 
-  method: "DELETE", 
-  auth: true 
-});
 
 // Job API functions
 export const createJob = (data) => request("/api/jobs", {
@@ -181,6 +181,24 @@ export const markConversationAsRead = (conversationId) => request(`/api/messages
   auth: true
 });
 
+// Delete all my messages in a conversation
+export const deleteMyMessagesInConversation = (conversationId) => request(`/api/messages/conversations/${conversationId}/my-messages`, {
+  method: "DELETE",
+  auth: true
+});
+
+// Location sharing functions
+export const shareLocation = (conversationId, locationData) => request(`/api/messages/conversations/${conversationId}/location-share`, {
+  method: "POST",
+  body: locationData,
+  auth: true
+});
+
+export const stopLocationShare = (conversationId) => request(`/api/messages/conversations/${conversationId}/stop-location-share`, {
+  method: "POST",
+  auth: true
+});
+
 // Notification API functions
 export const getNotifications = (params = {}) => {
   const query = new URLSearchParams(params).toString();
@@ -200,6 +218,47 @@ export const markAllNotificationsAsRead = () => request("/api/notifications/read
 });
 
 export const deleteNotification = (id) => request(`/api/notifications/${id}`, {
+  method: "DELETE",
+  auth: true
+});
+
+// Pro dashboard API
+export const getProOverview = () => request(`/api/pro-dashboard/overview`, { auth: true });
+export const getProAnalytics = () => request(`/api/pro-dashboard/analytics`, { auth: true });
+
+// Connection request API functions
+export const sendConnectionRequest = (professionalId) => request(`/api/connections/request`, {
+  method: "POST",
+  body: { professionalId },
+  auth: true
+});
+
+export const acceptConnectionRequest = (requestId) => request(`/api/connections/accept`, {
+  method: "POST",
+  body: { requestId },
+  auth: true
+});
+
+export const rejectConnectionRequest = (requestId) => request(`/api/connections/reject`, {
+  method: "POST",
+  body: { requestId },
+  auth: true
+});
+
+export const getConnectionRequests = () => {
+  console.log('🔍 API: Getting connection requests...');
+  return request(`/api/connections/my-requests`, { auth: true });
+};
+
+export const getConnections = () => request(`/api/connections`, { auth: true });
+
+export const removeConnection = (connectionId) => request(`/api/connections/${connectionId}`, {
+  method: "DELETE",
+  auth: true
+});
+
+// Cancel a pending connection request
+export const cancelConnectionRequest = (professionalId) => request(`/api/connections/cancel/${professionalId}`, {
   method: "DELETE",
   auth: true
 });
@@ -226,6 +285,45 @@ export const uploadProfilePicture = (file) => {
   }).then(res => res.json());
 };
 
+// Professional portfolio media upload
+export const uploadProfessionalMedia = (professionalId, file, mediaType = 'image') => {
+  console.log("🌐 Uploading media for professional ID:", professionalId);
+  console.log("📁 File details:", {
+    name: file.name,
+    type: file.type,
+    size: file.size
+  });
+  console.log("🎬 Media type:", mediaType);
+  
+  const formData = new FormData();
+  formData.append('media', file);
+  formData.append('mediaType', mediaType);
+  
+  return fetch(`${API_BASE}/api/professionals/${professionalId}/media`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${getAuthToken()}`
+    },
+    body: formData
+  }).then(res => {
+    console.log("🌐 API Response status:", res.status);
+    if (!res.ok) {
+      console.error("❌ API Error:", res.status, res.statusText);
+    }
+    return res.json();
+  });
+};
+
+// Delete professional media
+export const deleteProfessionalMedia = (professionalId, mediaId, mediaType) => request(`/api/professionals/${professionalId}/media`, {
+  method: "DELETE",
+  auth: true,
+  body: JSON.stringify({
+    publicId: mediaId,
+    type: mediaType
+  })
+});
+
 export const removeProfilePicture = () => request("/api/users/profile-picture", {
   method: "DELETE",
   auth: true
@@ -243,9 +341,8 @@ export const sendEmailVerification = () => request("/api/users/send-email-verifi
   auth: true
 });
 
-export const verifyEmail = (token) => request("/api/users/verify-email", {
+export const sendProfessionalEmailVerification = () => request("/api/professionals/send-email-verification", {
   method: "POST",
-  body: { token },
   auth: true
 });
 
@@ -253,3 +350,11 @@ export const deleteAccount = () => request("/api/users/delete-account", {
   method: "DELETE",
   auth: true
 });
+
+export const verifyEmail = (token) => request("/api/users/verify-email", {
+  method: "POST",
+  body: { token },
+  auth: true
+});
+
+export const getProfessionalProfile = (id) => request(`/api/professionals/${id}`, { auth: true });

@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import RouteGuard from "../components/RouteGuard";
+import NotificationContainer from "../components/NotificationContainer";
 
 export default function Rootlayout() {
   return (
@@ -14,6 +15,7 @@ export default function Rootlayout() {
         </main>
 
         <Footer />
+        <NotificationContainer />
       </div>
     </RouteGuard>
   );

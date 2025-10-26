@@ -5,6 +5,7 @@ import { setAuthToken, clearAuthToken, getAuthToken, getMe } from "../utils/api"
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -13,7 +14,10 @@ export const AuthProvider = ({ children }) => {
       // lazy load user
       getMe()
         .then((res) => setUser(res.user))
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
@@ -21,15 +25,17 @@ export const AuthProvider = ({ children }) => {
     setAuthToken(token);
     setUser(userData || null);
     setIsAuthenticated(true);
+    setIsLoading(false);
   };
   const logout = () => {
     clearAuthToken();
     setUser(null);
     setIsAuthenticated(false);
+    setIsLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

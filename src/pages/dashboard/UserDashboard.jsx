@@ -21,6 +21,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
 import { getMyJobs, getProfessionals, getNotifications } from '../../utils/api';
+import ServiceSelector from '../../components/ServiceSelector';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -196,10 +197,9 @@ const UserDashboard = () => {
     loadDashboardData();
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/dashboard/professionals?search=${encodeURIComponent(searchQuery)}`);
+  const handleSearch = (service) => {
+    if (service.trim()) {
+      navigate(`/dashboard/professionals?search=${encodeURIComponent(service)}`);
     }
   };
 
@@ -234,14 +234,17 @@ const UserDashboard = () => {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-gray-400 hover:text-gray-600 relative">
+            <Link
+              to="/dashboard/notifications"
+              className="p-2 text-gray-400 hover:text-gray-600 relative"
+            >
               <FaBell className="w-6 h-6" />
               {notifications.filter(n => n.unread).length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {notifications.filter(n => n.unread).length}
                 </span>
               )}
-            </button>
+            </Link>
             <Link
               to="/dashboard/profile"
               className="p-2 text-gray-400 hover:text-gray-600"
@@ -255,25 +258,24 @@ const UserDashboard = () => {
       {/* Quick Search */}
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Search</h2>
-        <form onSubmit={handleSearch} className="flex gap-3">
-          <div className="flex-1 relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="e.g. Plumber near me"
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <ServiceSelector
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+              onChange={setSearchQuery}
+              placeholder="Search for a service (e.g. Plumber, Electrician, Barber)..."
+              showSuggestions={true}
+              allowCustom={true}
             />
           </div>
           <button
-            type="submit"
+            onClick={() => handleSearch(searchQuery)}
             className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
           >
             <FaSearch className="w-4 h-4" />
             Search
           </button>
-        </form>
+        </div>
       </div>
 
       {/* Stats Cards */}

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getProfessional, createProfessional, updateProfessional, uploadProfessionalMedia } from '../utils/api';
 import { FaUpload, FaTrash, FaPlus, FaSpinner } from 'react-icons/fa';
+import ServiceSelector from '../components/ServiceSelector';
+import CertificateSelector from '../components/CertificateSelector';
 
 const ProfessionalForm = () => {
   const { id } = useParams();
@@ -20,7 +22,6 @@ const ProfessionalForm = () => {
   });
 
   const [languageInput, setLanguageInput] = useState('');
-  const [certificationInput, setCertificationInput] = useState('');
   const [photos, setPhotos] = useState([]);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -81,23 +82,6 @@ const ProfessionalForm = () => {
     setFormData(prev => ({
       ...prev,
       languages: prev.languages.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleAddCertification = () => {
-    if (certificationInput.trim() && !formData.certifications.includes(certificationInput.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        certifications: [...prev.certifications, certificationInput.trim()]
-      }));
-      setCertificationInput('');
-    }
-  };
-
-  const handleRemoveCertification = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      certifications: prev.certifications.filter((_, i) => i !== index)
     }));
   };
 
@@ -214,20 +198,12 @@ const ProfessionalForm = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category *
               </label>
-              <select
-                name="category"
+              <ServiceSelector
                 value={formData.category}
-                onChange={handleInputChange}
-                required
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select category</option>
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-              </select>
+                onChange={(selectedService) => setFormData(prev => ({ ...prev, category: selectedService }))}
+                placeholder="Select your service category"
+                className="w-full"
+              />
             </div>
 
             <div>
@@ -336,40 +312,18 @@ const ProfessionalForm = () => {
         {/* Certifications */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Certifications</h2>
-          <div className="flex gap-2 mb-4">
-            <input
-              type="text"
-              value={certificationInput}
-              onChange={(e) => setCertificationInput(e.target.value)}
-              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Add a certification"
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCertification())}
+          <div className="mb-4">
+            <CertificateSelector
+              value={formData.certifications}
+              onChange={(certificates) => setFormData(prev => ({ ...prev, certifications: certificates }))}
+              placeholder="Select your professional certifications"
+              maxSelections={10}
+              className="w-full"
             />
-            <button
-              type="button"
-              onClick={handleAddCertification}
-              className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <FaPlus />
-            </button>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {formData.certifications.map((cert, index) => (
-              <span
-                key={index}
-                className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-              >
-                {cert}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveCertification(index)}
-                  className="text-green-600 hover:text-green-800"
-                >
-                  <FaTrash className="text-xs" />
-                </button>
-              </span>
-            ))}
-          </div>
+          <p className="text-sm text-gray-600">
+            Select your professional certifications to build trust with clients
+          </p>
         </div>
 
         {/* Media Upload */}
@@ -495,6 +449,8 @@ const ProfessionalForm = () => {
 };
 
 export default ProfessionalForm;
+
+
 
 
 

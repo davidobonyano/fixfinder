@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes } from 'react-icons/fa';
-import { getProfessionals, createOrGetConversation } from '../../utils/api';
+import { Link } from 'react-router-dom';
+import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes, FaUser } from 'react-icons/fa';
+import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../context/ToastContext';
+import ServiceSelector from '../../components/ServiceSelector';
 
 const ProfessionalsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { success, error } = useToast();
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
@@ -20,11 +24,114 @@ const ProfessionalsPage = () => {
     availability: 'all'
   });
   const [savedProfessionals, setSavedProfessionals] = useState(new Set());
+  const [connectionRequests, setConnectionRequests] = useState(new Set());
+  const [connections, setConnections] = useState(new Map()); // Map of professionalId -> connectionId
 
   useEffect(() => {
     loadProfessionals();
     getUserLocation();
+    checkExistingConnectionRequests();
+    checkExistingConnections();
   }, []);
+
+  // Refresh connection status when user changes
+  useEffect(() => {
+    if (user) {
+      checkExistingConnectionRequests();
+      checkExistingConnections();
+    }
+  }, [user]);
+
+  // Refresh connections when page regains focus or becomes visible
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        console.log('🔄 ProfessionalsPage focused - refreshing connections');
+        checkExistingConnectionRequests();
+        checkExistingConnections();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('🔄 ProfessionalsPage became visible - refreshing connections');
+        checkExistingConnectionRequests();
+        checkExistingConnections();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
+  // Check existing connection requests
+  const checkExistingConnectionRequests = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('🔍 Checking existing connection requests for user:', user.id);
+      const response = await getConnectionRequests();
+      console.log('📡 Connection requests response:', response);
+      
+      if (response.success) {
+        const pendingRequests = response.data
+          .filter(req => req.status === 'pending')
+          .map(req => req.professional._id);
+        console.log('📋 Pending requests:', pendingRequests);
+        setConnectionRequests(new Set(pendingRequests));
+      }
+    } catch (err) {
+      console.log('❌ Could not check existing connection requests:', err);
+    }
+  };
+
+  // Check existing connections (accepted requests)
+  const checkExistingConnections = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('🔍 All Professionals - Loading connections for user:', user.id);
+      const response = await getConnections();
+      console.log('🔍 All Professionals - Connections response:', response);
+      
+      if (response.success) {
+        const connectionsMap = new Map();
+        response.data.forEach(connection => {
+          console.log('🔍 All Professionals - Processing connection:', {
+            connectionId: connection._id,
+            requesterId: connection.requester._id,
+            professionalId: connection.professional._id,
+            userId: user.id
+          });
+          
+          // Determine which professional this connection is with
+          let professionalId;
+          if (connection.requester._id === user.id) {
+            // User sent the request, so the professional is the other party
+            professionalId = connection.professional._id;
+          } else {
+            // User is the professional, so the requester is the other party
+            // For the All Professionals page, we need to find the professional profile of the requester
+            // Since the requester is a user, we need to find their professional profile
+            // For now, we'll use the requester's user ID as the key
+            professionalId = connection.requester._id;
+          }
+          
+          console.log('🔍 All Professionals - Setting connection:', professionalId, connection._id);
+          connectionsMap.set(professionalId, connection._id);
+        });
+        console.log('🔍 All Professionals - Final connections map:', Array.from(connectionsMap.entries()));
+        setConnections(connectionsMap);
+      }
+    } catch (err) {
+      console.log('Could not check existing connections:', err);
+    }
+  };
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -54,7 +161,21 @@ const ProfessionalsPage = () => {
       try {
         const response = await getProfessionals({ limit: 50 });
         if (response.success && response.professionals && response.professionals.length > 0) {
-          const pros = response.professionals;
+          const pros = response.professionals.map(pro => {
+            // Handle images - use professional photos first, then user profile picture, then placeholder
+            let image = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop';
+            if (pro.photos && pro.photos.length > 0 && pro.photos[0] !== '/images/placeholder.jpeg') {
+              image = pro.photos[0];
+            } else if (pro.user?.profilePicture) {
+              image = pro.user.profilePicture;
+            }
+            
+            return {
+              ...pro,
+              image // Add the processed image
+            };
+          });
+          
           if (userLocation) {
             const prosWithDistance = pros.map(pro => ({
               ...pro,
@@ -213,18 +334,109 @@ const ProfessionalsPage = () => {
     return `${distance.toFixed(1)}km away`;
   };
 
-  const handleConnect = async (professional) => {
+  const handleCancelRequest = async (professional) => {
+    if (!user) return;
+    
     try {
-      const response = await createOrGetConversation({
-        otherUserId: professional.user._id,
-        jobId: null
-      });
+      const response = await cancelConnectionRequest(professional._id);
+      if (response.success) {
+        // Remove from connection requests set
+        setConnectionRequests(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(professional._id);
+          return newSet;
+        });
+        success(`Connection request to ${professional.name} has been cancelled.`);
+      } else {
+        error('Failed to cancel connection request. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error cancelling connection request:', err);
+      error('Failed to cancel connection request. Please try again.');
+    }
+  };
+
+  const handleUnfriend = async (professional) => {
+    if (!user) return;
+    
+    const connectionId = connections.get(professional._id);
+    if (!connectionId) return;
+
+    try {
+      const response = await removeConnection(connectionId);
+      if (response.success) {
+        // Remove from connections map
+        setConnections(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(professional._id);
+          return newMap;
+        });
+        success(`Removed ${professional.name} from your connections.`);
+      } else {
+        error('Failed to remove connection. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error removing connection:', err);
+      error('Failed to remove connection. Please try again.');
+    }
+  };
+
+  const handleConnect = async (professional) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    console.log('🔗 HandleConnect called for professional:', professional._id);
+    console.log('📊 Current connectionRequests:', Array.from(connectionRequests));
+    console.log('📊 Current connections:', Array.from(connections.keys()));
+
+    // Check if already sent a request or connected
+    if (connectionRequests.has(professional._id) || connections.has(professional._id)) {
+      console.log('⚠️ Already sent request or connected, returning');
+      return;
+    }
+
+    try {
+      console.log('📤 Sending connection request...');
+      // Send connection request instead of immediately creating conversation
+      const response = await sendConnectionRequest(professional._id);
+      console.log('📥 Connection request response:', response);
       
       if (response.success) {
-        navigate(`/dashboard/messages/${response.data._id}`);
+        // Add to connection requests set immediately
+        setConnectionRequests(prev => {
+          const newSet = new Set([...prev, professional._id]);
+          console.log('✅ Updated connectionRequests:', Array.from(newSet));
+          return newSet;
+        });
+        success(`Connection request sent to ${professional.name}! They'll be notified and can accept your request.`);
+      } else {
+        // Handle specific error cases
+        if (response.message === 'Connection request already sent') {
+          setConnectionRequests(prev => {
+            const newSet = new Set([...prev, professional._id]);
+            console.log('✅ Updated connectionRequests (already sent):', Array.from(newSet));
+            return newSet;
+          });
+          success('Connection request already sent!');
+        } else {
+          error('Failed to send connection request. Please try again.');
+        }
       }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
+    } catch (err) {
+      console.error('Error sending connection request:', err);
+      // Check if it's a duplicate request error
+      if (err.message && err.message.includes('already sent')) {
+        setConnectionRequests(prev => {
+          const newSet = new Set([...prev, professional._id]);
+          console.log('✅ Updated connectionRequests (error):', Array.from(newSet));
+          return newSet;
+        });
+        success('Connection request already sent!');
+      } else {
+        error('Failed to send connection request. Please try again.');
+      }
     }
   };
 
@@ -241,13 +453,47 @@ const ProfessionalsPage = () => {
   };
 
   const filteredProfessionals = professionals.filter(pro => {
+    // Only show connected professionals
+    const isConnected = connections.has(pro._id);
+    console.log('🔍 All Professionals - Checking professional:', {
+      name: pro.name,
+      id: pro._id,
+      isConnected,
+      connections: Array.from(connections.keys()),
+      connectionsMap: connections
+    });
+    
+    if (!isConnected) return false;
+    
     const matchesService = !filters.service || 
       pro.category?.toLowerCase().includes(filters.service.toLowerCase());
     const matchesLocation = !filters.location || 
       pro.location?.address?.toLowerCase().includes(filters.location.toLowerCase());
-    const matchesRating = pro.rating >= filters.rating;
-    const matchesPrice = pro.hourlyRate >= filters.priceRange.min && 
-      pro.hourlyRate <= filters.priceRange.max;
+    
+    // Handle undefined/null rating - if no rating, treat as 0 (passes any rating filter)
+    const proRating = pro.ratingAvg || pro.rating || 0;
+    const matchesRating = proRating >= filters.rating;
+    
+    // Handle undefined/null price - if no price, treat as 0 (passes any price filter)
+    const proPrice = pro.pricePerHour || pro.hourlyRate || 0;
+    const matchesPrice = proPrice >= filters.priceRange.min && 
+      proPrice <= filters.priceRange.max;
+    
+    console.log('🔍 All Professionals - Filter results for', pro.name, ':', {
+      matchesService,
+      matchesLocation,
+      matchesRating,
+      matchesPrice,
+      filters,
+      proData: {
+        category: pro.category,
+        location: pro.location?.address,
+        originalRating: pro.rating,
+        originalPrice: pro.hourlyRate,
+        usedRating: proRating,
+        usedPrice: proPrice
+      }
+    });
     
     return matchesService && matchesLocation && matchesRating && matchesPrice;
   });
@@ -270,8 +516,8 @@ const ProfessionalsPage = () => {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Professionals</h1>
-              <p className="text-gray-600">{filteredProfessionals.length} professionals found</p>
+              <h1 className="text-2xl font-bold text-gray-900">Connected Professionals</h1>
+              <p className="text-gray-600">{filteredProfessionals.length} connected professionals</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -305,15 +551,28 @@ const ProfessionalsPage = () => {
       {/* Search Bar */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search professionals by service or location..."
-              value={filters.service}
-              onChange={(e) => setFilters(prev => ({ ...prev, service: e.target.value }))}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <ServiceSelector
+                value={filters.service}
+                onChange={(service) => setFilters(prev => ({ ...prev, service }))}
+                placeholder="Search for a service (e.g. Plumber, Electrician, Barber)..."
+                showSuggestions={true}
+                allowCustom={true}
+              />
+            </div>
+            <div className="flex-1">
+              <div className="relative">
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by location..."
+                  value={filters.location}
+                  onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -323,7 +582,11 @@ const ProfessionalsPage = () => {
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProfessionals.map((professional) => (
-              <div key={professional._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <Link
+                key={professional._id}
+                to={`/dashboard/professional/${professional._id}`}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow block"
+              >
                 <div className="relative">
                   <img
                     src={professional.image || '/images/placeholder.jpeg'}
@@ -332,7 +595,11 @@ const ProfessionalsPage = () => {
                   />
                   <div className="absolute top-3 right-3 flex gap-2">
                     <button
-                      onClick={() => handleSave(professional._id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSave(professional._id);
+                      }}
                       className={`p-2 rounded-full ${
                         savedProfessionals.has(professional._id)
                           ? 'bg-red-500 text-white'
@@ -376,25 +643,80 @@ const ProfessionalsPage = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => handleConnect(professional)}
-                      className="flex-1 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
-                    >
-                      <FaComments className="w-4 h-4" />
-                      Connect
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
-                      <FaPhone className="w-4 h-4" />
-                    </button>
+                    {(() => {
+                      const isConnected = connections.has(professional._id);
+                      const hasRequestSent = connectionRequests.has(professional._id);
+                      console.log(`🔍 Button state for ${professional.name} (${professional._id}):`, {
+                        isConnected,
+                        hasRequestSent,
+                        connectionRequests: Array.from(connectionRequests),
+                        connections: Array.from(connections.keys())
+                      });
+                      
+                      if (isConnected) {
+                        // Connected - show Message and Unfriend buttons
+                        return (
+                          <>
+                            <Link
+                              to={`/dashboard/messages?professional=${professional._id}`}
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            >
+                              <FaComments className="w-4 h-4" />
+                              Message
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUnfriend(professional);
+                              }}
+                              className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                            >
+                              Unfriend
+                            </button>
+                          </>
+                        );
+                      } else if (hasRequestSent) {
+                        // Request sent - show disabled button
+                        return (
+                          <button
+                            disabled
+                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-gray-400 text-white cursor-not-allowed"
+                          >
+                            <FaComments className="w-4 h-4" />
+                            Request Sent
+                          </button>
+                        );
+                      } else {
+                        // Not connected - show Connect button
+                        return (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleConnect(professional);
+                            }}
+                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          >
+                            <FaComments className="w-4 h-4" />
+                            Connect
+                          </button>
+                        );
+                      }
+                    })()}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (
           <div className="space-y-4">
             {filteredProfessionals.map((professional) => (
-              <div key={professional._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <Link
+                key={professional._id}
+                to={`/dashboard/professional/${professional._id}`}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow block"
+              >
                 <div className="flex items-start gap-4">
                   <img
                     src={professional.image || '/images/placeholder.jpeg'}
@@ -416,7 +738,11 @@ const ProfessionalsPage = () => {
                           </span>
                         </div>
                         <button
-                          onClick={() => handleSave(professional._id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSave(professional._id);
+                          }}
                           className={`p-2 rounded-full ${
                             savedProfessionals.has(professional._id)
                               ? 'bg-red-500 text-white'
@@ -445,21 +771,69 @@ const ProfessionalsPage = () => {
                     </div>
 
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => handleConnect(professional)}
-                        className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
-                      >
-                        <FaComments className="w-4 h-4" />
-                        Connect
-                      </button>
-                      <button className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                        <FaPhone className="w-4 h-4" />
-                        Call
-                      </button>
+                      {(() => {
+                        const isConnected = connections.has(professional._id);
+                        const hasRequestSent = connectionRequests.has(professional._id);
+                        
+                        if (isConnected) {
+                          // Connected - show Message and Unfriend buttons
+                          return (
+                            <>
+                              <Link
+                                to={`/dashboard/messages?professional=${professional._id}`}
+                                className="px-6 py-2 rounded-lg flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                              >
+                                <FaComments className="w-4 h-4" />
+                                Message
+                              </Link>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleUnfriend(professional);
+                                }}
+                                className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                              >
+                                Unfriend
+                              </button>
+                            </>
+                          );
+                        } else if (hasRequestSent) {
+                          // Request sent - show Cancel Request button
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCancelRequest(professional);
+                              }}
+                              className="px-6 py-2 rounded-lg flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+                            >
+                              <FaTimes className="w-4 h-4" />
+                              Cancel Request
+                            </button>
+                          );
+                        } else {
+                          // Not connected - show Connect button
+                          return (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleConnect(professional);
+                              }}
+                              className="px-6 py-2 rounded-lg flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            >
+                              <FaComments className="w-4 h-4" />
+                              Connect
+                            </button>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -484,16 +858,13 @@ const ProfessionalsPage = () => {
                 {/* Service Search */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
-                  <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="e.g., Electrician, Plumber, Barber"
-                      value={filters.service}
-                      onChange={(e) => setFilters(prev => ({ ...prev, service: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-                    />
-                  </div>
+                  <ServiceSelector
+                    value={filters.service}
+                    onChange={(service) => setFilters(prev => ({ ...prev, service }))}
+                    placeholder="e.g., Electrician, Plumber, Barber"
+                    showSuggestions={true}
+                    allowCustom={true}
+                  />
                 </div>
 
                 {/* Location */}

@@ -3,11 +3,29 @@ import { faMapMarkerAlt, faStar, faPhone } from '@fortawesome/free-solid-svg-ico
 import { Link } from 'react-router-dom';
 
 const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
-  // Handle both old mock data and new backend data structure
-  const rating = pro.ratingAvg || pro.rating || 0;
-  const reviewCount = pro.ratingCount || pro.reviewCount || 0;
-  const location = pro.city || pro.location || 'Location not specified';
-  const image = pro.photos?.[0] || pro.image || '/images/placeholder.jpeg';
+  // Handle real professional data structure from backend
+  const rating = pro.ratingAvg || 0;
+  const reviewCount = pro.ratingCount || 0;
+  const location = pro.location?.address || pro.city || 'Location not specified';
+  
+  // Debug logging
+  console.log('ProfessionalCard - pro data:', {
+    name: pro.name,
+    photos: pro.photos,
+    image: pro.image,
+    user: pro.user,
+    _id: pro._id
+  });
+  
+  // Use professional photos first, then user profile picture, then placeholder
+  let image = '/images/placeholder.jpeg';
+  if (pro.photos && pro.photos.length > 0 && pro.photos[0] !== '/images/placeholder.jpeg') {
+    image = pro.photos[0];
+  } else if (pro.user?.profilePicture) {
+    image = pro.user.profilePicture;
+  } else if (pro.image && pro.image !== '/images/placeholder.jpeg') {
+    image = pro.image;
+  }
 
   // Calculate distance if user location is available
   const calculateDistance = (userLat, userLon, proLat, proLon) => {
@@ -35,7 +53,11 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
         src={image}
         alt={pro.name}
         className="w-full h-40 object-cover rounded-lg mb-4"
-        onError={(e) => (e.currentTarget.src = '/images/placeholder.jpeg')}
+        onError={(e) => {
+          console.log('Image failed to load:', image);
+          e.currentTarget.src = '/images/placeholder.jpeg';
+        }}
+        onLoad={() => console.log('Image loaded successfully:', image)}
       />
 
       <div>
@@ -58,6 +80,16 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
           <p className="text-sm text-gray-600 mb-2 line-clamp-2">
             {pro.bio}
           </p>
+        )}
+        {pro.videos && pro.videos.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-blue-600 mb-2">
+            <span>📹 {pro.videos.length} video{pro.videos.length > 1 ? 's' : ''}</span>
+          </div>
+        )}
+        {pro.certifications && pro.certifications.length > 0 && (
+          <div className="flex items-center gap-1 text-xs text-green-600 mb-2">
+            <span>🏆 {pro.certifications.length} certification{pro.certifications.length > 1 ? 's' : ''}</span>
+          </div>
         )}
       </div>
 

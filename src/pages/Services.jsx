@@ -5,6 +5,7 @@ import ServicesMap from "../components/ServicesMap";
 import { getProfessionals } from "../utils/api";
 import servicesData from "../data/services.json";
 import { FaList, FaMap } from "react-icons/fa";
+import ServiceSelector from "../components/ServiceSelector";
 
 const Services = () => {
   const [search, setSearch] = useState("");
@@ -16,32 +17,31 @@ const Services = () => {
 
   useEffect(() => {
     const load = async () => {
-      try {
-        // Try to get services from professionals API instead
-        const response = await getProfessionals();
-        const professionals = response.professionals || [];
-        
-        // Extract unique services from professionals
-        const uniqueServices = [...new Set(professionals.map(pro => pro.category || pro.services?.[0]))]
-          .filter(Boolean)
-          .map(serviceName => ({
-            id: serviceName.toLowerCase().replace(/\s+/g, '-'),
-            name: serviceName,
-            description: `Professional ${serviceName} services available in your area`,
-            location: 'Multiple Locations'
-          }));
-        
-        if (uniqueServices.length > 0) {
-          setAllServices(uniqueServices);
-        } else {
-          // Fallback to local demo data
-          setAllServices(servicesData);
-        }
-      } catch (e) {
-        console.log('API Error, using fallback services:', e);
-        // Fallback to local demo data on error
-        setAllServices(servicesData);
-      }
+      // For now, always use the full mock services until we have enough real professionals
+      setAllServices(servicesData);
+      
+      // TODO: Later, when we have enough professionals, we can switch to this logic:
+      // try {
+      //   const response = await getProfessionals();
+      //   const professionals = response.professionals || [];
+      //   
+      //   if (professionals.length >= 20) { // Only use real data when we have enough professionals
+      //     const uniqueServices = [...new Set(professionals.map(pro => pro.category || pro.services?.[0]))]
+      //       .filter(Boolean)
+      //       .map(serviceName => ({
+      //         id: serviceName.toLowerCase().replace(/\s+/g, '-'),
+      //         name: serviceName,
+      //         description: `Professional ${serviceName} services available in your area`,
+      //         location: 'Multiple Locations'
+      //       }));
+      //     
+      //     if (uniqueServices.length > 0) {
+      //       setAllServices(uniqueServices);
+      //     }
+      //   }
+      // } catch (e) {
+      //   console.log('API Error, using fallback services:', e);
+      // }
     };
     load();
   }, []);

@@ -1,13 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import { createProfessional, uploadProfessionalMedia, registerUser, loginUser, getServicesApi } from '../utils/api';
+import { createProfessional, uploadProfessionalMedia, registerUser, loginUser, getServicesApi, uploadProfilePicture } from '../utils/api';
+import ServiceSelector from '../components/ServiceSelector';
 import {
   FaUser,
   FaTools,
   FaCamera,
   FaBriefcase,
-  FaSpinner
+  FaSpinner,
+  FaMapMarkerAlt,
+  FaImage
 } from 'react-icons/fa';
 
 const JoinAsPro = () => {
@@ -41,6 +44,53 @@ const JoinAsPro = () => {
   const [serviceQuery, setServiceQuery] = useState('');
   const [showCategorySug, setShowCategorySug] = useState(false);
   const [showServiceSug, setShowServiceSug] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [compressing, setCompressing] = useState(false);
+
+  // Image compression utility
+  const compressImage = (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Get coordinates for city
+  const getCityCoordinates = (state, city) => {
+    const coordinates = {
+      'Lagos': { lat: 6.5244, lng: 3.3792 },
+      'Victoria Island': { lat: 6.4281, lng: 3.4219 },
+      'Ikoyi': { lat: 6.4474, lng: 3.4203 },
+      'Surulere': { lat: 6.4995, lng: 3.3550 },
+      'Ikorodu': { lat: 6.6167, lng: 3.5167 },
+      'Lekki': { lat: 6.4654, lng: 3.5653 },
+      'Abuja': { lat: 9.0765, lng: 7.3986 },
+      'Garki': { lat: 9.0765, lng: 7.3986 },
+      'Port Harcourt': { lat: 4.8156, lng: 7.0498 },
+      'Benin': { lat: 6.3333, lng: 5.6167 }
+    };
+    
+    return coordinates[city] || coordinates[state] || { lat: 6.5244, lng: 3.3792 };
+  };
 
   // Nigerian states and their cities
   const stateCities = {
@@ -114,11 +164,32 @@ const JoinAsPro = () => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const { name, value, type, files } = e.target;
     if (name === 'state') {
       // Reset city when state changes
       setFormData(prev => ({ ...prev, state: value, city: '' }));
+    } else if (name === 'profilePhoto' && files[0]) {
+      // Handle image compression
+      setCompressing(true);
+      try {
+        const compressedFile = await compressImage(files[0]);
+        const compressedFileWithName = new File([compressedFile], files[0].name, {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+        
+        // Create preview
+        const previewUrl = URL.createObjectURL(compressedFile);
+        setImagePreview(previewUrl);
+        
+        setFormData(prev => ({ ...prev, [name]: compressedFileWithName }));
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        setFormData(prev => ({ ...prev, [name]: files[0] }));
+      } finally {
+        setCompressing(false);
+      }
     } else {
       setFormData(prev => ({ ...prev, [name]: type === 'file' ? files[0] : value }));
     }
@@ -166,29 +237,60 @@ const JoinAsPro = () => {
         }
       }
 
-      // Create professional profile
+      // Get location coordinates
+      const coordinates = getCityCoordinates(formData.state, formData.city);
+      
+      // Create professional profile with location
       const professionalData = {
         email: (isAuthenticated ? user?.email : formData.email),
         name: formData.name,
         category: formData.category.toLowerCase(),
         services: Array.from(new Set([formData.category, ...(formData.services || [])])).map(s => s.toLowerCase()),
         city: formData.city,
+        location: {
+          address: `${formData.city}, ${formData.state}`,
+          coordinates: coordinates
+        },
         bio: formData.bio,
         yearsOfExperience: formData.yearsOfExperience,
-        price: formData.price,
+        pricePerHour: formData.price, // Use pricePerHour to match backend
+        isActive: true, // Ensure professional is active
+        isVerified: false, // Will be verified later
       };
 
+      console.log('🚀 Creating professional with data:', professionalData);
       const response = await createProfessional(professionalData);
+      console.log('📡 Professional creation response:', response);
+      
       const created = response?.professional || response || {};
       const proId = created._id || created.id;
 
       if (!proId) {
+        console.error('❌ No professional ID returned:', response);
         throw new Error('Failed to create professional profile');
       }
+      
+      console.log('✅ Professional created successfully with ID:', proId);
 
       // Upload profile photo if provided
       if (formData.profilePhoto) {
         try {
+          // Upload as user profile picture
+          const profileResponse = await uploadProfilePicture(formData.profilePhoto);
+          if (profileResponse.success) {
+            console.log('✅ Profile picture uploaded successfully');
+            
+            // Update auth context with new profile picture
+            if (login) {
+              login(user.token, {
+                ...user,
+                profilePicture: profileResponse.data.profilePicture,
+                avatarUrl: profileResponse.data.avatarUrl
+              });
+            }
+          }
+          
+          // Also upload as professional media for portfolio
           const fd = new FormData();
           fd.append('files', formData.profilePhoto);
           await uploadProfessionalMedia(proId, fd);
@@ -313,47 +415,19 @@ const JoinAsPro = () => {
 
             <div className="space-y-4">
               {/* Category */}
-              <div className="flex flex-col relative">
+              <div className="flex flex-col">
                 <label className="font-medium mb-1">Category / Specialty</label>
-                {/* Typeahead input */}
-                <input
-                  type="text"
-                  value={categoryQuery || formData.category}
-                  onChange={(e) => { setCategoryQuery(e.target.value); setShowCategorySug(true); if (!e.target.value) setFormData({ ...formData, category: '' }); }}
-                  onFocus={() => setShowCategorySug(true)}
-                  onBlur={() => setTimeout(() => setShowCategorySug(false), 200)}
-                  placeholder="Start typing e.g. plumber, electrician"
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] mb-2"
-                  required
+                <ServiceSelector
+                  value={formData.category}
+                  onChange={(value) => setFormData({ ...formData, category: value })}
+                  placeholder="Search for your specialty (e.g. plumber, electrician, hairstylist)"
+                  allowCustom={true}
+                  className="w-full"
                 />
-                {showCategorySug && (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
-                    {filteredCategorySuggestions.length ? (
-                      filteredCategorySuggestions.map((opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => { setFormData({ ...formData, category: opt }); setCategoryQuery(opt); setShowCategorySug(false); }}
-                          className={`w-full text-left px-3 py-2 hover:bg-gray-100 ${opt===formData.category ? 'bg-gray-50' : ''}`}
-                        >{opt}</button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
-                    )}
-                    {categoryQuery && !catalog.includes(categoryQuery.toLowerCase()) && (
-                      <button
-                        type="button"
-                        onClick={() => { setFormData({ ...formData, category: categoryQuery.toLowerCase() }); setShowCategorySug(false); }}
-                        className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700"
-                      >Use "{categoryQuery}"</button>
-                    )}
-                  </div>
-                )}
-                {/* Category dropdown removed to avoid duplication; use typeahead above */}
               </div>
 
-              {/* Additional Services - typeahead with chips + legacy dropdown */}
-              <div className="flex flex-col relative">
+              {/* Additional Services */}
+              <div className="flex flex-col">
                 <label className="font-medium mb-1">Additional Services (optional)</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formData.services.map((svc) => (
@@ -363,30 +437,18 @@ const JoinAsPro = () => {
                     </span>
                   ))}
                 </div>
-                <input
-                  type="text"
+                <ServiceSelector
                   value={serviceQuery}
-                  onChange={(e) => { setServiceQuery(e.target.value); setShowServiceSug(true); }}
-                  onFocus={() => setShowServiceSug(true)}
-                  onBlur={() => setTimeout(() => setShowServiceSug(false), 200)}
-                  placeholder="Type to add services"
-                  className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366]"
+                  onChange={(value) => {
+                    if (value && !formData.services.includes(value)) {
+                      addService(value);
+                    }
+                    setServiceQuery('');
+                  }}
+                  placeholder="Add more services you offer"
+                  allowCustom={true}
+                  className="w-full"
                 />
-                {showServiceSug && (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-1 bg-white border rounded-md shadow-md max-h-60 overflow-auto">
-                    {filteredServiceSuggestions.length ? (
-                      filteredServiceSuggestions.map((opt) => (
-                        <button key={opt} type="button" onClick={() => addService(opt)} className="w-full text-left px-3 py-2 hover:bg-gray-100">{opt}</button>
-                      ))
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
-                    )}
-                    {serviceQuery && (
-                      <button type="button" onClick={() => addService(serviceQuery)} className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700">Add "{serviceQuery}"</button>
-                    )}
-                  </div>
-                )}
-                {/* Legacy multi-select removed; use typeahead and chips above */}
               </div>
 
               {/* City */}
@@ -463,6 +525,22 @@ const JoinAsPro = () => {
                             </select>
               </div>
 
+              {/* Location Preview */}
+              {formData.state && formData.city && (
+                <div className="flex flex-col bg-blue-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <FaMapMarkerAlt className="text-blue-600" />
+                    <span className="font-medium">Location Set</span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    {formData.city}, {formData.state}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Coordinates: {getCityCoordinates(formData.state, formData.city).lat.toFixed(4)}, {getCityCoordinates(formData.state, formData.city).lng.toFixed(4)}
+                  </p>
+                </div>
+              )}
+
               {/* Years of Experience */}
               <div className="flex flex-col">
                 <label className="font-medium mb-1">Years of Experience</label>
@@ -503,6 +581,19 @@ const JoinAsPro = () => {
             <div className="space-y-4">
               <div className="flex flex-col">
                 <label className="font-medium mb-1">Upload Profile Picture</label>
+                
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="mb-4">
+                    <img 
+                      src={imagePreview} 
+                      alt="Profile preview" 
+                      className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200"
+                    />
+                    <p className="text-xs text-green-600 mt-1">✓ Image compressed and ready</p>
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-3">
                   <FaCamera className="text-[#003366]" />
                   <input
@@ -511,9 +602,21 @@ const JoinAsPro = () => {
                     accept="image/*"
                     onChange={handleChange}
                     className="w-full"
+                    disabled={compressing}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">You can add certificates and ID later in your dashboard during verification.</p>
+                
+                {compressing && (
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <FaSpinner className="animate-spin" />
+                    <span className="text-sm">Compressing image...</span>
+                  </div>
+                )}
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Images are automatically compressed for faster uploads. 
+                  You can add certificates and ID later in your dashboard during verification.
+                </p>
               </div>
             </div>
           </div>

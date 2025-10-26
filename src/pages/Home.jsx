@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import servicesData from '../data/services.json';
 import heroImage from '../assets/images/hero-city.webp';
+import ServiceSelector from '../components/ServiceSelector';
 import {
   isValidString,
   isValidLocation
@@ -191,7 +192,7 @@ const Home = () => {
 
   return (
     <section>
-      <style jsx>{`
+      <style>{`
         @keyframes scroll {
           0% {
             transform: translateX(0);
@@ -239,12 +240,12 @@ const Home = () => {
         {/* 🔍 Search Bar */}
         <div className="-mt-20 z-20 relative px-4 md:px-0">
           <div className="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-            <input
-              type="text"
+            <ServiceSelector
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search e.g. electrician"
-              className="p-3 border border-gray-300 rounded-lg w-full"
+              onChange={setSearchTerm}
+              placeholder="Search for a service (e.g. Electrician, Plumber, Barber)..."
+              showSuggestions={true}
+              allowCustom={true}
             />
             <select
               value={selectedCategory}

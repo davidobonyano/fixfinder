@@ -43,59 +43,58 @@ const CategoryPage = () => {
         const response = await getProfessionals({ category: category.toLowerCase() });
         let professionals = response.professionals || [];
 
-        // Fallback demo professionals if none from backend
+        console.log('API Response:', response);
+        console.log('Professionals from API:', professionals);
+
+        // If no professionals from backend, show empty state
         if (!Array.isArray(professionals) || professionals.length === 0) {
-          const baseLocation = userLocation || [6.5244, 3.3792]; // Lagos default
-          const demoNames = [
-            'John', 'Mary', 'Emeka', 'Aisha', 'Chinedu', 'Fatima', 'Bola', 'Ibrahim', 'Ngozi', 'Tunde'
-          ];
-          const cities = ['Lagos', 'Abuja', 'Port Harcourt', 'Benin'];
-          const priceByCategory = {
-            electrician: [8000, 15000],
-            plumber: [7000, 12000],
-            tailor: [3000, 8000],
-            barber: [2000, 5000],
-            mechanic: [6000, 14000],
-            painter: [5000, 12000],
-            carpenter: [5000, 13000],
-            default: [4000, 10000],
-          };
-
-          const [minP, maxP] = priceByCategory[category.toLowerCase()] || priceByCategory.default;
-
-          professionals = Array.from({ length: 8 }).map((_, i) => {
-            const offsetLat = (Math.random() - 0.5) * 0.08;
-            const offsetLon = (Math.random() - 0.5) * 0.08;
-            const name = `${demoNames[i % demoNames.length]} ${category.charAt(0).toUpperCase() + category.slice(1)}`;
-            const rating = Math.round((Math.random() * 2 + 3) * 10) / 10; // 3.0 - 5.0
-            const reviewCount = Math.floor(Math.random() * 50) + 5;
-
-            return {
-              id: `demo_${category}_${i}`,
-              name,
-              category: category.toLowerCase(),
-              city: cities[i % cities.length],
-              bio: `Experienced ${category} available for quick and reliable service.`,
-              pricePerHour: Math.floor(Math.random() * (maxP - minP)) + minP,
-              ratingAvg: rating,
-              ratingCount: reviewCount,
-              photos: ['/images/placeholder.jpeg'],
-              coordinates: [baseLocation[0] + offsetLat, baseLocation[1] + offsetLon],
-            };
-          });
+          setPros([]);
+          return;
         }
+
+        // Remove duplicates based on _id or name
+        const uniqueProfessionals = professionals.filter((pro, index, self) => 
+          index === self.findIndex(p => p._id === pro._id || (p.name === pro.name && p.category === pro.category))
+        );
+
+        console.log('Unique professionals after deduplication:', uniqueProfessionals.length);
         
         // Attach saved reviews from localStorage
         const stored = localStorage.getItem(LOCAL_KEY);
         const storedReviews = stored ? JSON.parse(stored) : {};
 
-        const enriched = professionals.map((pro) => {
+        const enriched = uniqueProfessionals.map((pro) => {
           const saved = storedReviews[pro.name] || {};
-          // Generate coordinates if not available (for demo purposes)
-          const coordinates = pro.coordinates || (userLocation ? [
-            userLocation[0] + (Math.random() - 0.5) * 0.05,
-            userLocation[1] + (Math.random() - 0.5) * 0.05
-          ] : null);
+          
+          // Convert location coordinates to array format for distance calculation
+          let coordinates = null;
+          if (pro.location?.coordinates) {
+            coordinates = [pro.location.coordinates.lat, pro.location.coordinates.lng];
+          }
+          
+          // Debug logging
+          console.log('Professional data:', {
+            name: pro.name,
+            photos: pro.photos,
+            videos: pro.videos,
+            bio: pro.bio,
+            pricePerHour: pro.pricePerHour,
+            _id: pro._id
+          });
+          
+          // Filter out invalid photo URLs
+          const validPhotos = (pro.photos || []).filter(photo => 
+            photo && typeof photo === 'string' && photo.trim() !== '' && photo !== '/images/placeholder.jpeg'
+          );
+          
+          // Use professional photos first, then user profile picture, then placeholder
+          let finalPhotos = validPhotos;
+          if (finalPhotos.length === 0 && pro.user?.profilePicture) {
+            finalPhotos = [pro.user.profilePicture];
+          }
+          if (finalPhotos.length === 0) {
+            finalPhotos = ['/images/placeholder.jpeg'];
+          }
           
           return {
             ...pro,
@@ -103,6 +102,14 @@ const CategoryPage = () => {
             ratingCount: saved.reviewCount || pro.ratingCount || 0,
             reviews: saved.reviews || [],
             coordinates,
+            // Use real photos if available, otherwise show placeholder
+            photos: finalPhotos,
+            // Add videos if available
+            videos: pro.videos || [],
+            // Ensure bio exists
+            bio: pro.bio || `Experienced ${category} professional available for service.`,
+            // Ensure price exists
+            pricePerHour: pro.pricePerHour || 0,
           };
         });
 
@@ -130,6 +137,7 @@ const CategoryPage = () => {
 
         setPros(sorted);
       } catch (err) {
+        console.error('Error fetching professionals:', err);
         setError(err.message || 'Failed to fetch professionals');
         setPros([]);
       } finally {
