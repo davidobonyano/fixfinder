@@ -56,9 +56,15 @@ const MessageBubble = ({
   };
 
   const renderLocationMessage = () => {
+    // Only render location message if location data actually exists
     if (!message.content?.location) return null;
-
+    
+    // Check if location has actual coordinates
     const { lat, lng, accuracy } = message.content.location || {};
+    if (lat === undefined && lng === undefined) return null;
+
+    // Only render if both lat and lng are valid numbers
+    if (typeof lat !== 'number' || typeof lng !== 'number') return null;
     
     return (
       <div className="text-sm">

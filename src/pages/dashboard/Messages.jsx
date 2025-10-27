@@ -148,7 +148,12 @@ const Messages = () => {
     // Listen for new messages
     const handleNewMessage = (message) => {
       if (message.conversation === selectedConversation?._id) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => {
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some(msg => msg._id === message._id);
+          if (exists) return prev;
+          return [...prev, message];
+        });
         
         // Update conversation last message
         setConversations(prev => 
@@ -697,6 +702,47 @@ const Messages = () => {
           <ChatWindow
             conversation={selectedConversation}
             messages={messages}
+            onMessageSent={(message, tempId, remove) => {
+              if (remove) {
+                // Remove the optimistic message
+                setMessages(prev => prev.filter(msg => msg._id !== tempId));
+              } else if (tempId && message) {
+                // Replace optimistic message with real one
+                setMessages(prev => prev.map(msg => 
+                  msg._id === tempId ? message : msg
+                ));
+                // Update conversation last message with real data
+                setConversations(prev => 
+                  prev.map(conv => 
+                    conv._id === selectedConversation._id 
+                      ? { 
+                          ...conv, 
+                          lastMessage: message,
+                          updatedAt: message.createdAt
+                        }
+                      : conv
+                  )
+                );
+              } else if (message) {
+                // Add new optimistic message
+                setMessages(prev => [...prev, message]);
+                // Update conversation last message
+                setConversations(prev => 
+                  prev.map(conv => 
+                    conv._id === selectedConversation._id 
+                      ? { 
+                          ...conv, 
+                          lastMessage: message,
+                          updatedAt: message.createdAt
+                        }
+                      : conv
+                  )
+                );
+              }
+            }}
+            onUpdateMessages={(updater) => {
+              setMessages(updater);
+            }}
             onBack={() => setSelectedConversation(null)}
             onViewProfile={handleViewProfile}
             onDeleteConversation={handleDeleteConfirm}

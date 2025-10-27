@@ -26,6 +26,8 @@ import ChatProfileModal from './ChatProfileModal';
 const ChatWindow = ({ 
   conversation, 
   messages = [], 
+  onMessageSent,
+  onUpdateMessages,
   onBack,
   onViewProfile,
   onDeleteConversation,
@@ -59,14 +61,39 @@ const ChatWindow = ({
   // Handle message deletion events
   const handleMessageDeleted = (data) => {
     console.log('Message deleted received:', data);
-    // The message will be updated via the API response
-    // This is just for real-time updates to other users
+    // Update the message in real-time
+    if (data.messageId && onUpdateMessages) {
+      onUpdateMessages(prev => prev.map(msg => 
+        msg._id === data.messageId 
+          ? { ...msg, isDeleted: true, deletedAt: data.deletedAt }
+          : msg
+      ));
+    }
   };
 
   const handleMessagesDeleted = (data) => {
     console.log('Messages deleted received:', data);
-    // The messages will be updated via the API response
-    // This is just for real-time updates to other users
+    // Update messages in real-time
+    if (data.messageIds && data.messageIds.length > 0 && onUpdateMessages) {
+      onUpdateMessages(prev => prev.map(msg => 
+        data.messageIds.includes(msg._id)
+          ? { ...msg, isDeleted: true }
+          : msg
+      ));
+    }
+  };
+
+  // Handle message edit events
+  const handleMessageEdited = (data) => {
+    console.log('Message edited received:', data);
+    // Update the message in real-time
+    if (data.messageId && data.content && onUpdateMessages) {
+      onUpdateMessages(prev => prev.map(msg => 
+        msg._id === data.messageId 
+          ? { ...msg, content: { ...msg.content, text: data.content }, isEdited: true, editedAt: data.editedAt }
+          : msg
+      ));
+    }
   };
 
   // Socket event listeners
@@ -156,6 +183,7 @@ const ChatWindow = ({
     on('stop_location_update', handleStopLocationUpdate);
     on('message_deleted', handleMessageDeleted);
     on('messages_deleted', handleMessagesDeleted);
+    on('message_edited', handleMessageEdited);
 
     return () => {
       emit('leave', conversation._id);
@@ -168,8 +196,9 @@ const ChatWindow = ({
       off('stop_location_update', handleStopLocationUpdate);
       off('message_deleted', handleMessageDeleted);
       off('messages_deleted', handleMessagesDeleted);
+      off('message_edited', handleMessageEdited);
     };
-  }, [socket, isConnected, conversation, user, emit, on, off]);
+  }, [socket, isConnected, conversation, user, emit, on, off, onUpdateMessages]);
 
   // Cleanup location tracking on unmount
   useEffect(() => {
@@ -195,6 +224,33 @@ const ChatWindow = ({
     const messageText = newMessage.trim();
     setNewMessage('');
 
+    // Create a temporary ID for the optimistic message
+    const tempId = `temp-${Date.now()}`;
+    
+    // Create the optimistic message object immediately
+    const optimisticMessage = {
+      _id: tempId,
+      sender: {
+        _id: user?.id,
+        name: user?.name,
+        profilePicture: user?.profilePicture || user?.avatarUrl
+      },
+      content: { text: messageText },
+      messageType: 'text',
+      isRead: false,
+      isEdited: false,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+      conversation: conversation._id,
+      replyTo: replyingTo,
+      isOptimistic: true // Flag to identify optimistic messages
+    };
+
+    // Add message to local state IMMEDIATELY for instant UI update
+    if (onMessageSent) {
+      onMessageSent(optimisticMessage);
+    }
+
     try {
       const response = await sendMessage(conversation._id, {
         content: { text: messageText },
@@ -203,6 +259,30 @@ const ChatWindow = ({
       });
 
       if (response.success) {
+        // Replace optimistic message with real data
+        const realMessage = {
+          _id: response.data._id || response.data.messageId,
+          sender: {
+            _id: user?.id,
+            name: user?.name,
+            profilePicture: user?.profilePicture || user?.avatarUrl
+          },
+          content: response.data.content || { text: messageText },
+          messageType: response.data.messageType || 'text',
+          isRead: response.data.isRead || false,
+          isEdited: response.data.isEdited || false,
+          isDeleted: false,
+          createdAt: response.data.createdAt || new Date().toISOString(),
+          conversation: response.data.conversation || conversation._id,
+          replyTo: replyingTo,
+          isOptimistic: false
+        };
+
+        // Replace the optimistic message with the real one
+        if (onMessageSent) {
+          onMessageSent(realMessage, tempId);
+        }
+        
         // Emit message via Socket.IO for real-time delivery
         if (socket && isConnected) {
           emit('send_message', {
@@ -215,6 +295,10 @@ const ChatWindow = ({
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      // Remove the optimistic message on error
+      if (onMessageSent && tempId) {
+        onMessageSent(null, tempId, true); // true = remove
+      }
       // Revert message input
       setNewMessage(messageText);
     } finally {
@@ -226,6 +310,15 @@ const ChatWindow = ({
     try {
       const response = await editMessage(messageId, content);
       if (response.success) {
+        // Update message in local state immediately
+        if (onUpdateMessages) {
+          onUpdateMessages(prev => prev.map(msg => 
+            msg._id === messageId 
+              ? { ...msg, content: { ...msg.content, text: content }, isEdited: true, editedAt: new Date().toISOString() }
+              : msg
+          ));
+        }
+        
         // Emit edit via Socket.IO
         if (socket && isConnected) {
           emit('message_edited', {
@@ -244,6 +337,15 @@ const ChatWindow = ({
     try {
       const response = await deleteMessage(messageId);
       if (response.success) {
+        // Update message in local state immediately
+        if (onUpdateMessages) {
+          onUpdateMessages(prev => prev.map(msg => 
+            msg._id === messageId 
+              ? { ...msg, isDeleted: true, deletedAt: new Date().toISOString() }
+              : msg
+          ));
+        }
+        
         // Emit delete via Socket.IO
         if (socket && isConnected) {
           emit('message_deleted', {
@@ -280,6 +382,15 @@ const ChatWindow = ({
       setSending(true);
       const deletePromises = selectedMessages.map(messageId => deleteMessage(messageId));
       await Promise.all(deletePromises);
+      
+      // Update messages in local state immediately
+      if (onUpdateMessages) {
+        onUpdateMessages(prev => prev.map(msg => 
+          selectedMessages.includes(msg._id)
+            ? { ...msg, isDeleted: true }
+            : msg
+        ));
+      }
       
       // Emit bulk delete via Socket.IO
       if (socket && isConnected) {
@@ -320,6 +431,8 @@ const ChatWindow = ({
   };
 
   const handleShareLocation = async (location) => {
+    const tempId = `temp-loc-${Date.now()}`;
+    
     try {
       setSending(true);
       const response = await shareLocation(conversation._id, {
@@ -334,6 +447,64 @@ const ChatWindow = ({
           ...location,
           avatarUrl: user?.profilePicture || user?.avatarUrl
         });
+
+        // Add location message to local state immediately for instant update
+        const optimisticLocationMessage = {
+          _id: tempId,
+          sender: {
+            _id: user?.id,
+            name: user?.name,
+            profilePicture: user?.profilePicture || user?.avatarUrl
+          },
+          content: {
+            location: {
+              lat: location.lat,
+              lng: location.lng,
+              accuracy: location.accuracy
+            }
+          },
+          messageType: 'location_share',
+          isRead: false,
+          isEdited: false,
+          isDeleted: false,
+          createdAt: new Date().toISOString(),
+          conversation: conversation._id,
+          isOptimistic: true
+        };
+
+        if (onMessageSent) {
+          onMessageSent(optimisticLocationMessage);
+        }
+
+        // Replace with real data when available
+        if (response.data) {
+          const locationMessage = {
+            _id: response.data._id || response.data.messageId,
+            sender: {
+              _id: user?.id,
+              name: user?.name,
+              profilePicture: user?.profilePicture || user?.avatarUrl
+            },
+            content: response.data.content || {
+              location: {
+                lat: location.lat,
+                lng: location.lng,
+                accuracy: location.accuracy
+              }
+            },
+            messageType: response.data.messageType || 'location_share',
+            isRead: response.data.isRead || false,
+            isEdited: response.data.isEdited || false,
+            isDeleted: false,
+            createdAt: response.data.createdAt || new Date().toISOString(),
+            conversation: response.data.conversation || conversation._id,
+            isOptimistic: false
+          };
+
+          if (onMessageSent) {
+            onMessageSent(locationMessage, tempId);
+          }
+        }
         
         // Emit location share via Socket.IO
         if (socket && isConnected) {
@@ -350,6 +521,10 @@ const ChatWindow = ({
       }
     } catch (error) {
       console.error('Error sharing location:', error);
+      // Remove optimistic message on error
+      if (onMessageSent) {
+        onMessageSent(null, tempId, true);
+      }
     } finally {
       setSending(false);
     }
@@ -626,22 +801,73 @@ const ChatWindow = ({
               title="Share contact"
               onClick={async () => {
                 if (!conversation) return;
+                const tempId = `temp-${Date.now()}`;
+                const contactData = { 
+                  name: user?.name, 
+                  phone: user?.phone || 'N/A', 
+                  email: user?.email 
+                };
+                
+                // Optimistic message
+                const optimisticContact = {
+                  _id: tempId,
+                  sender: {
+                    _id: user?.id,
+                    name: user?.name,
+                    profilePicture: user?.profilePicture || user?.avatarUrl
+                  },
+                  content: { contact: contactData },
+                  messageType: 'contact',
+                  isRead: false,
+                  isEdited: false,
+                  isDeleted: false,
+                  createdAt: new Date().toISOString(),
+                  conversation: conversation._id,
+                  isOptimistic: true
+                };
+
+                if (onMessageSent) {
+                  onMessageSent(optimisticContact);
+                }
+
                 try {
                   const resp = await sendMessage(conversation._id, {
                     messageType: 'contact',
-                    content: { 
-                      contact: { 
-                        name: user?.name, 
-                        phone: user?.phone || 'N/A', 
-                        email: user?.email 
-                      } 
-                    }
+                    content: { contact: contactData }
                   });
-                  if (resp.success && socket && isConnected) {
-                    emit('send_message', { ...resp.data, conversationId: conversation._id });
+                  
+                  if (resp.success) {
+                    // Replace with real message
+                    const contactMessage = {
+                      _id: resp.data._id || resp.data.messageId,
+                      sender: {
+                        _id: user?.id,
+                        name: user?.name,
+                        profilePicture: user?.profilePicture || user?.avatarUrl
+                      },
+                      content: resp.data.content || { contact: contactData },
+                      messageType: resp.data.messageType || 'contact',
+                      isRead: resp.data.isRead || false,
+                      isEdited: resp.data.isEdited || false,
+                      isDeleted: false,
+                      createdAt: resp.data.createdAt || new Date().toISOString(),
+                      conversation: resp.data.conversation || conversation._id,
+                      isOptimistic: false
+                    };
+
+                    if (onMessageSent) {
+                      onMessageSent(contactMessage, tempId);
+                    }
+
+                    if (socket && isConnected) {
+                      emit('send_message', { ...resp.data, conversationId: conversation._id });
+                    }
                   }
                 } catch (e) {
                   console.error(e);
+                  if (onMessageSent) {
+                    onMessageSent(null, tempId, true);
+                  }
                 }
               }}
             >
