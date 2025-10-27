@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   FaSearch, 
   FaPaperPlane, 
@@ -21,7 +21,6 @@ import {
   FaMap,
   FaLocationArrow,
   FaShare,
-  FaBan,
   FaInfoCircle,
   FaExternalLinkAlt,
   FaTimes,
@@ -39,7 +38,11 @@ import {
   shareLocation,
   stopLocationShare,
   editMessage,
-  deleteMessage
+  deleteMessage,
+  deleteMyMessagesInConversation,
+  deleteConversation as deleteConversationApi,
+  getConnections,
+  removeConnection
 } from '../../utils/api';
 import { compressImage, validateImageFile } from '../../utils/imageCompression';
 import FriendsMap from '../../components/FriendsMap';
@@ -425,11 +428,66 @@ const Messages = () => {
     }
   };
 
+  const getOtherParticipantUser = (otherParticipant) => {
+    // If participant has user data, return it
+    if (otherParticipant?.user) {
+      return otherParticipant.user;
+    }
+    
+    // If participant has no user data but has userType, we need to fetch it
+    // For now, return a placeholder object
+    if (otherParticipant?.userType) {
+      return {
+        _id: otherParticipant._id,
+        name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
+        email: 'Unknown',
+        role: otherParticipant.userType
+      };
+    }
+    
+    return null;
+  };
+
   const getOtherParticipant = (conversation) => {
     if (!conversation || !user) return null;
     
     if (conversation.participants) {
-      return conversation.participants.find(p => p.user._id !== user.id);
+      // Find the participant that is not the current user
+      const otherParticipant = conversation.participants.find(p => {
+        // If participant has a user object, check by user._id
+        if (p.user && p.user._id) {
+          return p.user._id !== user.id;
+        }
+        
+        // If participant has no user object but has userType, check by userType
+        if (!p.user && p.userType) {
+          // If current user is professional, look for user type participant
+          if (user.role === 'professional' && p.userType === 'user') {
+            return true;
+          }
+          // If current user is user, look for professional type participant
+          if (user.role === 'user' && p.userType === 'professional') {
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
+      // If we found a participant but it doesn't have user data, try to create a placeholder
+      if (otherParticipant && !otherParticipant.user && otherParticipant.userType) {
+        return {
+          ...otherParticipant,
+          user: {
+            _id: otherParticipant._id,
+            name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
+            email: 'Unknown',
+            role: otherParticipant.userType
+          }
+        };
+      }
+      
+      return otherParticipant;
     }
     
     return null;
@@ -461,8 +519,9 @@ const Messages = () => {
 
   const filteredConversations = conversations.filter(conv => {
     const otherParticipant = getOtherParticipant(conv);
-    return otherParticipant?.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           conv.job?.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchName = otherParticipant?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchJob = conv.job?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchName || matchJob;
   });
 
   const handleDeleteConfirm = () => {
@@ -470,16 +529,48 @@ const Messages = () => {
   };
 
   const deleteConversation = async () => {
-    // TODO: Implement delete conversation API
-    console.log('Delete conversation:', selectedConversation._id);
+    if (!selectedConversation) return;
+    
+    try {
+      const response = await deleteConversationApi(selectedConversation._id);
+      if (response.success) {
+        // Remove from conversations list
+        setConversations(prev => prev.filter(c => c._id !== selectedConversation._id));
+        setSelectedConversation(null);
+        console.log('✅ Conversation deleted');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting conversation:', error);
+    }
     setShowDeleteConfirmModal(false);
-    setSelectedConversation(null);
   };
 
-  const blockUser = () => {
-    // TODO: Implement block user functionality
-    console.log('Block user:', getOtherParticipant(selectedConversation)?.user._id);
+
+  const handleDeleteAllMyMessages = async () => {
+    if (!selectedConversation) return;
+    
+    try {
+      const response = await deleteMyMessagesInConversation(selectedConversation._id);
+      if (response.success) {
+        // Clear messages
+        setMessages([]);
+        console.log('✅ All messages deleted');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting messages:', error);
+    }
   };
+
+  const handleViewProfile = () => {
+    if (!selectedConversation) return;
+    const otherParticipant = getOtherParticipant(selectedConversation);
+    const otherUser = getOtherParticipantUser(otherParticipant);
+    if (otherUser?._id) {
+      // Navigate to the professional's profile
+      navigate(`/professional/${otherUser._id}`);
+    }
+  };
+
 
   const handleSavePrivacySettings = (settings) => {
     setPrivacySettings(settings);
@@ -607,9 +698,9 @@ const Messages = () => {
             conversation={selectedConversation}
             messages={messages}
             onBack={() => setSelectedConversation(null)}
-            onViewProfile={() => setShowUserInfo(true)}
-            onBlockUser={blockUser}
+            onViewProfile={handleViewProfile}
             onDeleteConversation={handleDeleteConfirm}
+            onDeleteAllMessages={handleDeleteAllMyMessages}
             formatTime={formatTime}
             formatLastSeen={formatLastSeen}
           />
@@ -724,21 +815,19 @@ const Messages = () => {
                     <button
                       onClick={() => {
                         setShowUserInfo(false);
-                        // TODO: Navigate to user profile
+                        handleViewProfile();
                       }}
                       className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       View Profile
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowUserInfo(false);
-                        blockUser();
-                      }}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    <Link
+                      to={user?.role === 'professional' ? '/dashboard/professional/connected-users' : '/dashboard/professionals'}
+                      onClick={() => setShowUserInfo(false)}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-center"
                     >
-                      Block User
-                    </button>
+                      Manage Connections
+                    </Link>
                   </div>
                 </div>
               );

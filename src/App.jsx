@@ -44,6 +44,7 @@ import ProfessionalForm from "./pages/ProfessionalForm";
 import VerifyEmail from "./pages/VerifyEmail";
 import ProfessionalDiscovery from "./pages/ProfessionalDiscovery";
 import ProfessionalsPage from "./pages/dashboard/ProfessionalsPage";
+import ConnectedUsers from "./pages/dashboard/ConnectedUsers";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import ProProfile from "./pages/dashboard/ProProfile";
 import Notifications from "./pages/dashboard/Notifications";
@@ -119,6 +120,7 @@ const router = createBrowserRouter(
       <Route path="dashboard/professional" element={<DashboardLayout userType="professional" />} errorElement={<ErrorElement />}>
         <Route index element={<ProJobFeed />} />
         <Route path="overview" element={<ProOverview />} />
+        <Route path="connected-users" element={<ConnectedUsers />} />
         <Route path="my-jobs" element={<MyJobs />} />
         <Route path="messages" element={<Messages />} />
         <Route path="messages/:conversationId" element={<Messages />} />

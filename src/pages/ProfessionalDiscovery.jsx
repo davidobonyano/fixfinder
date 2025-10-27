@@ -32,6 +32,8 @@ const ProfessionalDiscovery = () => {
     verified: false
   });
   const [lastRefreshedAt, setLastRefreshedAt] = useState(Date.now());
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false);
+  const [professionalToUnfriend, setProfessionalToUnfriend] = useState(null);
 
   // Service catalog and synonyms for better matching
   const serviceCatalog = [
@@ -584,11 +586,21 @@ const ProfessionalDiscovery = () => {
     }
   };
 
-  const handleUnfriend = async (professional) => {
-    if (!user) return;
+  const handleUnfriendClick = (professional) => {
+    setProfessionalToUnfriend(professional);
+    setShowUnfriendModal(true);
+  };
+
+  const handleUnfriendConfirm = async () => {
+    if (!user || !professionalToUnfriend) return;
     
-    const connectionId = connections.get(professional._id);
-    if (!connectionId) return;
+    const connectionId = connections.get(professionalToUnfriend._id);
+    if (!connectionId) {
+      error('Connection not found');
+      setShowUnfriendModal(false);
+      setProfessionalToUnfriend(null);
+      return;
+    }
 
     try {
       const response = await removeConnection(connectionId);
@@ -596,10 +608,10 @@ const ProfessionalDiscovery = () => {
         // Remove from connections map
         setConnections(prev => {
           const newMap = new Map(prev);
-          newMap.delete(professional._id);
+          newMap.delete(professionalToUnfriend._id);
           return newMap;
         });
-        success(`Removed ${professional.name} from your connections.`);
+        success(`Removed ${professionalToUnfriend.name} from your connections.`);
       } else {
         error('Failed to remove connection. Please try again.');
       }
@@ -607,6 +619,9 @@ const ProfessionalDiscovery = () => {
       console.error('Error removing connection:', err);
       error('Failed to remove connection. Please try again.');
     }
+    
+    setShowUnfriendModal(false);
+    setProfessionalToUnfriend(null);
   };
 
   const handleStartChat = async (professional) => {
@@ -866,7 +881,7 @@ const ProfessionalDiscovery = () => {
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleUnfriend(professional);
+                                    handleUnfriendClick(professional);
                                   }}
                                   className="px-3 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
                                 >
@@ -1013,7 +1028,7 @@ const ProfessionalDiscovery = () => {
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        handleUnfriend(professional);
+                                        handleUnfriendClick(professional);
                                       }}
                                       className="py-1 px-2 rounded text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
                                     >
@@ -1280,6 +1295,45 @@ const ProfessionalDiscovery = () => {
                     Search Professionals
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unfriend Confirmation Modal */}
+      {showUnfriendModal && professionalToUnfriend && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Unfriend {professionalToUnfriend.name}?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to unfriend {professionalToUnfriend.name}? This action is irreversible and will:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Remove them from your connections</li>
+                  <li>Remove you from their connections</li>
+                  <li className="text-red-600 font-semibold">Delete all chat history permanently</li>
+                  <li>Remove them from your messaging interface</li>
+                </ul>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowUnfriendModal(false);
+                    setProfessionalToUnfriend(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUnfriendConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Unfriend
+                </button>
               </div>
             </div>
           </div>

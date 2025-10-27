@@ -187,6 +187,25 @@ export const deleteMyMessagesInConversation = (conversationId) => request(`/api/
   auth: true
 });
 
+// Block/Unblock user
+export const blockUser = (userId) => request(`/api/users/block`, {
+  method: "POST",
+  body: { userId },
+  auth: true
+});
+
+export const unblockUser = (userId) => request(`/api/users/unblock`, {
+  method: "POST",
+  body: { userId },
+  auth: true
+});
+
+// Delete conversation
+export const deleteConversation = (conversationId) => request(`/api/messages/conversations/${conversationId}`, {
+  method: "DELETE",
+  auth: true
+});
+
 // Location sharing functions
 export const shareLocation = (conversationId, locationData) => request(`/api/messages/conversations/${conversationId}/location-share`, {
   method: "POST",

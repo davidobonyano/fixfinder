@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   FaBell, 
   FaCheckCircle, 
@@ -26,6 +26,7 @@ const Notifications = () => {
   const { user } = useAuth();
   const { success, error } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
   const isProDashboard = location.pathname.startsWith('/dashboard/professional');
   const basePath = isProDashboard ? '/dashboard/professional' : '/dashboard';
   const [notifications, setNotifications] = useState([]);
@@ -137,6 +138,11 @@ const Notifications = () => {
       );
       
       success('Connection accepted! You can now chat with this professional.');
+      
+      // Redirect to connected users page for professionals
+      if (isProDashboard) {
+        navigate('/dashboard/professional/connected-users');
+      }
     } catch (err) {
       error('Failed to accept connection request');
       console.error('Error accepting connection:', err);

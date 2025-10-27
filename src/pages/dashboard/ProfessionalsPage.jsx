@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes, FaUser } from 'react-icons/fa';
-import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest } from '../../utils/api';
+import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
@@ -26,6 +26,8 @@ const ProfessionalsPage = () => {
   const [savedProfessionals, setSavedProfessionals] = useState(new Set());
   const [connectionRequests, setConnectionRequests] = useState(new Set());
   const [connections, setConnections] = useState(new Map()); // Map of professionalId -> connectionId
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false);
+  const [professionalToUnfriend, setProfessionalToUnfriend] = useState(null);
 
   useEffect(() => {
     loadProfessionals();
@@ -356,11 +358,21 @@ const ProfessionalsPage = () => {
     }
   };
 
-  const handleUnfriend = async (professional) => {
-    if (!user) return;
+  const handleUnfriendClick = (professional) => {
+    setProfessionalToUnfriend(professional);
+    setShowUnfriendModal(true);
+  };
+
+  const handleUnfriendConfirm = async () => {
+    if (!user || !professionalToUnfriend) return;
     
-    const connectionId = connections.get(professional._id);
-    if (!connectionId) return;
+    const connectionId = connections.get(professionalToUnfriend._id);
+    if (!connectionId) {
+      error('Connection not found');
+      setShowUnfriendModal(false);
+      setProfessionalToUnfriend(null);
+      return;
+    }
 
     try {
       const response = await removeConnection(connectionId);
@@ -368,16 +380,43 @@ const ProfessionalsPage = () => {
         // Remove from connections map
         setConnections(prev => {
           const newMap = new Map(prev);
-          newMap.delete(professional._id);
+          newMap.delete(professionalToUnfriend._id);
           return newMap;
         });
-        success(`Removed ${professional.name} from your connections.`);
+        success(`Removed ${professionalToUnfriend.name} from your connections.`);
       } else {
         error('Failed to remove connection. Please try again.');
       }
     } catch (err) {
       console.error('Error removing connection:', err);
       error('Failed to remove connection. Please try again.');
+    }
+    
+    setShowUnfriendModal(false);
+    setProfessionalToUnfriend(null);
+  };
+
+  const handleStartChat = async (professional) => {
+    try {
+      console.log('💬 Starting chat with professional:', professional._id);
+      console.log('💬 Professional user ID:', professional.user);
+      
+      // Create or get conversation
+      const response = await createOrGetConversation({
+        otherUserId: professional.user // Send the User ID, not Professional ID
+      });
+      
+      if (response.success) {
+        console.log('✅ Conversation created/found:', response.data);
+        // Navigate to the conversation
+        navigate(`/dashboard/messages/${response.data._id}`);
+      } else {
+        error('Failed to create conversation');
+        console.error('Error creating conversation:', response);
+      }
+    } catch (err) {
+      error('Failed to start chat');
+      console.error('Error starting chat:', err);
     }
   };
 
@@ -657,18 +696,22 @@ const ProfessionalsPage = () => {
                         // Connected - show Message and Unfriend buttons
                         return (
                           <>
-                            <Link
-                              to={`/dashboard/messages?professional=${professional._id}`}
-                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
-                            >
-                              <FaComments className="w-4 h-4" />
-                              Message
-                            </Link>
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleUnfriend(professional);
+                                handleStartChat(professional);
+                              }}
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                            >
+                              <FaComments className="w-4 h-4" />
+                              Message
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUnfriendClick(professional);
                               }}
                               className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
                             >
@@ -790,7 +833,7 @@ const ProfessionalsPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  handleUnfriend(professional);
+                                  handleUnfriendClick(professional);
                                 }}
                                 className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
                               >
@@ -936,6 +979,45 @@ const ProfessionalsPage = () => {
                     Apply Filters
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unfriend Confirmation Modal */}
+      {showUnfriendModal && professionalToUnfriend && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Unfriend {professionalToUnfriend.name}?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to unfriend {professionalToUnfriend.name}? This action is irreversible and will:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Remove them from your connections</li>
+                  <li>Remove you from their connections</li>
+                  <li className="text-red-600 font-semibold">Delete all chat history permanently</li>
+                  <li>Remove them from your messaging interface</li>
+                </ul>
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowUnfriendModal(false);
+                    setProfessionalToUnfriend(null);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUnfriendConfirm}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Unfriend
+                </button>
               </div>
             </div>
           </div>

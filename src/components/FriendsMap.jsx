@@ -215,8 +215,11 @@ const FriendsMap = ({ isOpen, onClose, conversations = [] }) => {
     
     // Add friends from connections (these are your actual friends)
     connections.forEach(conn => {
+      // Add null checks
+      if (!conn || !conn.requester || !conn.professional) return;
+      
       const friend = conn.requester._id === user?.id ? conn.professional : conn.requester;
-      if (friend && !friendIds.has(friend._id)) {
+      if (friend && friend._id && !friendIds.has(friend._id)) {
         friends.push({
           id: friend._id,
           name: friend.name || friend.user?.name,
@@ -232,18 +235,30 @@ const FriendsMap = ({ isOpen, onClose, conversations = [] }) => {
     
     // Add chat partners from conversations (these are people you're chatting with)
     conversations.forEach(conv => {
-      const otherParticipant = conv.participants.find(p => p.user._id !== user?.id);
-      if (otherParticipant && !friendIds.has(otherParticipant.user._id)) {
-        friends.push({
-          id: otherParticipant.user._id,
-          name: otherParticipant.user.name,
-          email: otherParticipant.user.email,
-          userType: otherParticipant.userType,
-          conversationId: conv._id,
-          source: 'conversation',
-          isFriend: false
-        });
-        friendIds.add(otherParticipant.user._id);
+      // Skip if conversation is null or has no valid participants
+      if (!conv || !Array.isArray(conv.participants) || conv.participants.length === 0) return;
+      
+      const otherParticipant = conv.participants.find(p => 
+        p && 
+        p.user && 
+        p.user._id && 
+        p.user._id !== user?.id
+      );
+      
+      // Validate participant and user data
+      if (otherParticipant && otherParticipant.user && otherParticipant.user._id) {
+        if (!friendIds.has(otherParticipant.user._id)) {
+          friends.push({
+            id: otherParticipant.user._id,
+            name: otherParticipant.user.name || 'Unknown User',
+            email: otherParticipant.user.email || '',
+            userType: otherParticipant.userType || 'user',
+            conversationId: conv._id,
+            source: 'conversation',
+            isFriend: false
+          });
+          friendIds.add(otherParticipant.user._id);
+        }
       }
     });
     

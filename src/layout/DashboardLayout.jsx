@@ -47,6 +47,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
   const proNavItems = [
     { path: '/dashboard/professional', icon: FaBriefcase, label: 'Job Feed' },
     { path: '/dashboard/professional/overview', icon: FaHome, label: 'Overview' },
+    { path: '/dashboard/professional/connected-users', icon: FaUsers, label: 'Connected Users' },
     { path: '/dashboard/professional/my-jobs', icon: FaBriefcase, label: 'My Jobs' },
     { path: '/dashboard/professional/messages', icon: FaComments, label: 'Messages' },
     { path: '/dashboard/professional/notifications', icon: FaBell, label: 'Notifications' },

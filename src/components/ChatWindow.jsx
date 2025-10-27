@@ -28,8 +28,8 @@ const ChatWindow = ({
   messages = [], 
   onBack,
   onViewProfile,
-  onBlockUser,
   onDeleteConversation,
+  onDeleteAllMessages,
   formatTime,
   formatLastSeen 
 }) => {
@@ -54,7 +54,7 @@ const ChatWindow = ({
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
 
   // Get other participant
-  const otherParticipant = conversation?.participants?.find(p => p.user._id !== user?.id);
+  const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
 
   // Handle message deletion events
   const handleMessageDeleted = (data) => {
@@ -485,12 +485,12 @@ const ChatWindow = ({
         onBack={onBack}
         onViewProfile={() => setShowProfileModal(true)}
         onViewMap={() => setShowMapView(true)}
-        onBlockUser={onBlockUser}
         onDeleteConversation={onDeleteConversation}
         onToggleBulkActions={() => setShowBulkActions(!showBulkActions)}
-        onDeleteAllMessages={() => setShowDeleteAllModal(true)}
+        onDeleteAllMessages={onDeleteAllMessages || (() => setShowDeleteAllModal(true))}
         showBulkActions={showBulkActions}
         formatLastSeen={formatLastSeen}
+        userRole={user?.role}
       />
 
       {/* Messages */}
