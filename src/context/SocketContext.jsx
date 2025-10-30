@@ -15,17 +15,18 @@ export const useSocket = () => {
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Connect to Socket.IO server
+      // Connect to Socket.IO server (with reconnection enabled)
       const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000', {
         auth: {
           token: localStorage.getItem('token'),
           userId: user.id,
           userType: user.role
-        }
+        },
+        reconnection: true
       });
 
       newSocket.on('connect', () => {
@@ -33,8 +34,8 @@ export const SocketProvider = ({ children }) => {
         setIsConnected(true);
       });
 
-      newSocket.on('disconnect', () => {
-        console.log('Socket disconnected');
+      newSocket.on('disconnect', (reason) => {
+        console.log('Socket disconnected', reason ? `Reason: ${reason}` : '');
         setIsConnected(false);
       });
 
@@ -48,15 +49,15 @@ export const SocketProvider = ({ children }) => {
       return () => {
         newSocket.close();
       };
-    } else {
-      // Disconnect if user is not authenticated
+    } else if (!isAuthenticated && !isLoading) {
+      // Only disconnect if NOT authenticated and NOT loading (prevents disconnects on fast reloads)
       if (socket) {
         socket.close();
         setSocket(null);
         setIsConnected(false);
       }
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, isLoading, user]);
 
   const value = {
     socket,

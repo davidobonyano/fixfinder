@@ -244,6 +244,10 @@ export const deleteNotification = (id) => request(`/api/notifications/${id}`, {
 // Pro dashboard API
 export const getProOverview = () => request(`/api/pro-dashboard/overview`, { auth: true });
 export const getProAnalytics = () => request(`/api/pro-dashboard/analytics`, { auth: true });
+export const getProJobs = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/pro-dashboard/my-jobs?${query}`, { auth: true });
+};
 
 // Connection request API functions
 export const sendConnectionRequest = (professionalId) => request(`/api/connections/request`, {

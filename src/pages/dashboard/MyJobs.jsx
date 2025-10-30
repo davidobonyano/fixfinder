@@ -19,7 +19,7 @@ import {
   FaBriefcase
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { getMyJobs, completeJob, cancelJob } from '../../utils/api';
+import { getMyJobs, getProJobs, completeJob, cancelJob } from '../../utils/api';
 
 const MyJobs = () => {
   const { user } = useAuth();
@@ -38,10 +38,11 @@ const MyJobs = () => {
     const loadJobs = async () => {
       setLoading(true);
       try {
-        const response = await getMyJobs();
+        const response = String(user?.role).toLowerCase() === 'professional' ? await getProJobs() : await getMyJobs();
         if (response.success) {
-          setJobs(response.data.jobs);
-          setFilteredJobs(response.data.jobs);
+          const list = response.data.jobs || response.data || [];
+          setJobs(list);
+          setFilteredJobs(list);
         }
       } catch (error) {
         console.error('Error loading jobs:', error);
@@ -153,7 +154,7 @@ const MyJobs = () => {
     };
 
     loadJobs();
-  }, []);
+  }, [user?.role]);
 
   // Filter jobs based on search and status
   useEffect(() => {
@@ -188,6 +189,17 @@ const MyJobs = () => {
     return urgency === 'Urgent' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800';
   };
 
+  const reloadJobs = async () => {
+    try {
+      const response = String(user?.role).toLowerCase() === 'professional' ? await getProJobs() : await getMyJobs();
+      if (response.success) {
+        const list = response.data.jobs || response.data || [];
+        setJobs(list);
+        setFilteredJobs(list);
+      }
+    } catch (e) {}
+  };
+
   const handleJobAction = async (jobId, action, data = {}) => {
     setActionLoading(true);
     try {
@@ -199,11 +211,7 @@ const MyJobs = () => {
       }
 
       if (response?.success) {
-        // Reload jobs
-        const jobsResponse = await getMyJobs();
-        if (jobsResponse.success) {
-          setJobs(jobsResponse.data.jobs);
-        }
+        await reloadJobs();
         setShowModal(false);
       }
     } catch (error) {
@@ -241,16 +249,18 @@ const MyJobs = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">My Jobs</h1>
             <p className="text-gray-600">
-              Manage and track all your posted jobs
+              {String(user?.role).toLowerCase() === 'professional' ? 'Jobs you are working on and have completed' : 'Manage and track all your posted jobs'}
             </p>
           </div>
-          <Link
-            to="/dashboard/post-job"
-            className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-          >
-            <FaPlus className="w-4 h-4" />
-            Post New Job
-          </Link>
+          {String(user?.role).toLowerCase() !== 'professional' && (
+            <Link
+              to="/dashboard/post-job"
+              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <FaPlus className="w-4 h-4" />
+              Post New Job
+            </Link>
+          )}
         </div>
       </div>
 
@@ -294,10 +304,9 @@ const MyJobs = () => {
             <p className="text-gray-600 mb-4">
               {searchTerm || statusFilter 
                 ? 'Try adjusting your search or filter criteria'
-                : 'You haven\'t posted any jobs yet'
-              }
+                : (String(user?.role).toLowerCase() === 'professional' ? 'You have no jobs yet' : 'You haven\'t posted any jobs yet')}
             </p>
-            {!searchTerm && !statusFilter && (
+            {String(user?.role).toLowerCase() !== 'professional' && !searchTerm && !statusFilter && (
               <Link
                 to="/dashboard/post-job"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -340,14 +349,14 @@ const MyJobs = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(job.budget.min)} - {formatCurrency(job.budget.max)}
+                      {formatCurrency(job.budget?.min || 0)} - {formatCurrency(job.budget?.max || 0)}
                     </p>
                     <p className="text-sm text-gray-500">{job.category}</p>
                   </div>
                 </div>
 
-                {/* Professional Info */}
-                {job.professional && (
+                {/* Client Info for pro view */}
+                {String(user?.role).toLowerCase() === 'professional' && job.client && (
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -355,12 +364,9 @@ const MyJobs = () => {
                           <FaUser className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">{job.professional.name}</h4>
+                          <h4 className="font-medium text-gray-900">{job.client.name}</h4>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <FaStar className="w-3 h-3 text-yellow-400" />
-                            <span>{job.professional.rating}</span>
-                            <span>•</span>
-                            <span>{job.professional.phone}</span>
+                            <span>{job.client.phone || ''}</span>
                           </div>
                         </div>
                       </div>

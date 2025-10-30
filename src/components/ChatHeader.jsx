@@ -165,13 +165,26 @@ const ChatHeader = ({
       </div>
       
       {/* Job Context */}
-      {conversation?.job?.title && (
-        <div className="mt-2 p-2 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <span className="font-medium">Job:</span> {conversation.job.title}
-          </p>
-        </div>
-      )}
+      {(() => {
+        const job = conversation?.job;
+        if (!job) return null;
+        const ls = String(job.lifecycleState || '').toLowerCase();
+        const st = String(job.status || '').toLowerCase();
+        const isClosed = ls === 'closed' || ls === 'cancelled' || st === 'cancelled' || st === 'completed';
+        if (isClosed) return null; // hide job chip when cancelled/closed
+        return (
+          <div className="mt-2 p-2 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-800 flex items-center gap-2">
+              <span className="font-medium">Job:</span> {job.title}
+              {ls && (
+                <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                  {ls.replaceAll('_',' ')}
+                </span>
+              )}
+            </p>
+          </div>
+        );
+      })()}
     </div>
   );
 };

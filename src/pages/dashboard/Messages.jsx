@@ -59,7 +59,7 @@ import UserAvatar from '../../components/UserAvatar';
 const Messages = () => {
   const { conversationId } = useParams();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { socket, isConnected, emit, on, off } = useSocket();
   const navigate = useNavigate();
 
@@ -305,6 +305,21 @@ const Messages = () => {
       }).catch(() => {});
     };
 
+    // Listen for user-level job updates
+    const handleJobUpdate = (data) => {
+      try {
+        if (!data) return;
+        // Refresh sidebar always so job badge/status updates
+        getConversations().then(resp => {
+          if (resp.success) setConversations(resp.data);
+        }).catch(() => {});
+        // If this update belongs to the currently open conversation, update it
+        if (data.conversationId && selectedConversation?._id === data.conversationId && data.job) {
+          setSelectedConversation(prev => prev ? { ...prev, job: data.job } : prev);
+        }
+      } catch (_) {}
+    };
+
     // Listen for typing indicators
     const handleTyping = (data) => {
       if (data.conversationId === selectedConversation?._id && data.userId !== user?.id) {
@@ -394,6 +409,7 @@ const Messages = () => {
 
     on('receive_message', handleNewMessage);
     on('incoming_message', handleIncomingMessage);
+    on('job:update', handleJobUpdate);
     on('user_typing', handleTyping);
     on('message_read', handleMessageRead);
     on('presence:update', handlePresence);
@@ -406,6 +422,7 @@ const Messages = () => {
     return () => {
       off('receive_message', handleNewMessage);
       off('incoming_message', handleIncomingMessage);
+      off('job:update', handleJobUpdate);
       off('user_typing', handleTyping);
       off('message_read', handleMessageRead);
       off('presence:update', handlePresence);
@@ -722,10 +739,24 @@ const Messages = () => {
     setShowDeleteConfirmModal(false);
   };
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+      </div>
+    );
+  }
+
+  if (!user && !isLoading) {
+    // Instead of instant logout or redirect, show a friendly auth error
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-full mb-4">
+          <span className="text-3xl">🔒</span>
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Authentication Error</h2>
+        <p className="text-gray-500 mb-4">You are not logged in or your session has expired. Please log in again to access your messages.</p>
+        <a href="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Go to Login</a>
       </div>
     );
   }
@@ -819,9 +850,23 @@ const Messages = () => {
                       </p>
                       
                       {conversation.job && (
-                        <p className="text-xs text-blue-600 mt-1">
-                          Job: {conversation.job.title}
-                        </p>
+                        (() => {
+                          const job = conversation.job;
+                          const ls = String(job.lifecycleState || '').toLowerCase();
+                          const st = String(job.status || '').toLowerCase();
+                          const isClosed = ls === 'closed' || ls === 'cancelled' || st === 'cancelled' || st === 'completed';
+                          if (isClosed) return null;
+                          return (
+                            <p className="text-xs text-blue-600 mt-1 flex items-center gap-2">
+                              <span>Job: {job.title}</span>
+                              {ls && (
+                                <span className="px-2 py-0.5 text-[10px] rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                  {ls.replaceAll('_',' ')}
+                                </span>
+                              )}
+                            </p>
+                          );
+                        })()
                       )}
                     </div>
                   </div>

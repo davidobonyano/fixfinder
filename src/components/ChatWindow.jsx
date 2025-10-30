@@ -18,7 +18,8 @@ import {
   createJobRequestInChat,
   acceptJobRequest,
   proMarkCompleted,
-  confirmJobCompletion
+  confirmJobCompletion,
+  cancelJob
 } from '../utils/api';
 import MessageBubble from './MessageBubble';
 import ChatHeader from './ChatHeader';
@@ -28,6 +29,7 @@ import LocationButton from './LocationButton';
 import ChatProfileModal from './ChatProfileModal';
 import { useLocation as useLocationHook } from '../hooks/useLocation';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
+import ServiceSelector from './ServiceSelector';
 
 const ChatWindow = ({ 
   conversation, 
@@ -70,6 +72,8 @@ const ChatWindow = ({
     budgetMin: '',
     budgetMax: ''
   });
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
@@ -299,6 +303,16 @@ const ChatWindow = ({
       }
     };
 
+    // Listen for job lifecycle updates in this conversation
+    const handleJobUpdate = (data) => {
+      try {
+        if (!data || !data.conversationId || data.conversationId !== conversation._id) return;
+        if (data.job) {
+          setActiveJob(data.job);
+        }
+      } catch (_) {}
+    };
+
     on('receive_message', handleReceiveMessage);
     on('user_typing', handleTyping);
     on('message_read', handleMessageRead);
@@ -309,6 +323,7 @@ const ChatWindow = ({
     on('message_deleted', handleMessageDeleted);
     on('messages_deleted', handleMessagesDeleted);
     on('message_edited', handleMessageEdited);
+    on('job:update', handleJobUpdate);
 
     return () => {
       emit('leave', conversation._id);
@@ -322,6 +337,7 @@ const ChatWindow = ({
       off('message_deleted', handleMessageDeleted);
       off('messages_deleted', handleMessagesDeleted);
       off('message_edited', handleMessageEdited);
+      off('job:update', handleJobUpdate);
     };
   }, [socket, isConnected, conversation, user, emit, on, off, onUpdateMessages]);
 
@@ -819,8 +835,10 @@ const ChatWindow = ({
     }
   };
 
+  // Accept job should ONLY ever run by button click. Added debug log.
   const handleAcceptJob = async () => {
     if (!activeJob) return;
+    console.log('🔨 Accept Job button clicked by pro!', activeJob._id);
     try {
       setSending(true);
       const resp = await acceptJobRequest(activeJob._id);
@@ -864,6 +882,21 @@ const ChatWindow = ({
     }
   };
 
+  const deriveEffectiveState = (job) => {
+    if (!job) return undefined;
+    const ls = String(job.lifecycleState || '').toLowerCase();
+    if (['job_requested','in_progress','completed_by_pro','completed_by_user','closed','cancelled'].includes(ls)) return ls;
+    // Fallback mapping from legacy status
+    const st = String(job.status || '').toLowerCase();
+    if (st === 'pending') return 'job_requested';
+    if (st === 'in progress') return 'in_progress';
+    if (st === 'completed') return 'closed';
+    if (st === 'cancelled') return 'cancelled';
+    return undefined;
+  };
+
+  const effectiveState = deriveEffectiveState(activeJob);
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -900,7 +933,11 @@ const ChatWindow = ({
 
       {/* Job lifecycle banner */}
       <div className="px-4 pt-3">
-        {!activeJob && (
+        {(
+          !activeJob ||
+          effectiveState === 'cancelled' ||
+          effectiveState === 'closed'
+        ) && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 flex items-center justify-between">
             <span>
               {String(user?.role).toLowerCase() === 'professional' 
@@ -918,37 +955,51 @@ const ChatWindow = ({
           </div>
         )}
 
-        {activeJob && activeJob.lifecycleState === 'job_requested' && (
+        {activeJob && effectiveState === 'job_requested' && (
           <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 flex items-center justify-between">
             <span>
               {String(user?.role).toLowerCase() === 'professional' 
                 ? 'Job requested by user. Review and accept to start.'
                 : 'Job created! Waiting for pro to accept.'}
             </span>
-            {String(user?.role).toLowerCase() === 'professional' && (
+            <div className="flex gap-2">
+              {String(user?.role).toLowerCase() === 'professional' && (
+                <button onClick={handleAcceptJob} disabled={sending} className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50">
+                  {sending ? 'Accepting...' : 'Accept Job'}
+                </button>
+              )}
               <button
-                onClick={handleAcceptJob}
-                disabled={sending}
-                className="ml-3 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50"
+                onClick={() => setShowCancelModal(true)}
+                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
               >
-                {sending ? 'Accepting...' : 'Accept Job'}
+                Cancel Job
               </button>
-            )}
+            </div>
           </div>
         )}
 
-        {activeJob && activeJob.lifecycleState === 'in_progress' && (
-          <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 flex items-center justify-between">
-            <span>Job is in progress.</span>
-            {String(user?.role).toLowerCase() === 'professional' && (
+        {activeJob && effectiveState === 'in_progress' && (
+          <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3`}>
+            <div><span>Job is in progress.</span></div>
+            <div className="flex gap-2 mt-2 md:mt-0">
+              {String(user?.role).toLowerCase() === 'professional' && (
+                <button onClick={handleProMarkCompleted} disabled={sending} className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50">
+                  {sending ? 'Submitting...' : 'Mark Completed'}
+                </button>
+              )}
+              {/* Cancel Job for both user and pro in requested or in_progress */}
               <button
-                onClick={handleProMarkCompleted}
-                disabled={sending}
-                className="ml-3 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50"
+                onClick={() => setShowCancelModal(true)}
+                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
               >
-                {sending ? 'Submitting...' : 'Mark Completed'}
+                Cancel Job
               </button>
-            )}
+            </div>
+          </div>
+        )}
+        {activeJob && effectiveState === 'cancelled' && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-3">
+            Job Cancelled. Reason: {activeJob.cancellationReason || 'N/A'}
           </div>
         )}
 
@@ -1239,12 +1290,13 @@ const ChatWindow = ({
             onChange={(e) => setJobForm(prev => ({ ...prev, title: e.target.value }))}
             className="w-full px-3 py-2 border border-gray-300 rounded"
           />
-          <input
-            type="text"
-            placeholder="Category (e.g., Electrician)"
+          <ServiceSelector
             value={jobForm.category}
-            onChange={(e) => setJobForm(prev => ({ ...prev, category: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
+            onChange={(val) => setJobForm(prev => ({ ...prev, category: val }))}
+            placeholder="Category (e.g., Electrician)"
+            showSuggestions={true}
+            allowCustom={true}
+            className="w-full"
           />
           <textarea
             placeholder="Description"
@@ -1341,6 +1393,50 @@ const ChatWindow = ({
                 className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Job Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Cancel Job</h3>
+            <textarea
+              className="w-full border border-gray-300 rounded p-2 mb-4"
+              rows={3}
+              placeholder="Please enter a reason for cancellation..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+            />
+            <div className="flex gap-3">
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                disabled={!cancelReason.trim() || sending}
+                onClick={async () => {
+                  if (!activeJob) return;
+                  setSending(true);
+                  try {
+                    const resp = await cancelJob(activeJob._id, { reason: cancelReason.trim() });
+                    if (resp?.success) {
+                      setActiveJob(prev => ({ ...prev, status: 'Cancelled', lifecycleState: 'cancelled', cancellationReason: cancelReason.trim() }));
+                      setShowCancelModal(false);
+                      setCancelReason('');
+                    }
+                  } finally {
+                    setSending(false);
+                  }
+                }}
+              >
+                {sending ? 'Cancelling...' : 'Confirm Cancel'}
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded"
+                onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+              >
+                Back
               </button>
             </div>
           </div>
