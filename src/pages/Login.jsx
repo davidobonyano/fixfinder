@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { loginUser } from "../utils/api";
+import { loginUser, snapToLGAApi } from "../utils/api";
+import { useLocation } from "../hooks/useLocation";
 
 export default function Login() {
   const { login } = useAuth();
@@ -12,6 +13,47 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
+  const [tinyLoc, setTinyLoc] = useState("");
+  
+  // Auto location detection (no click needed)
+  const { location } = useLocation(true);
+
+  // Resolve human-readable tiny location from coords
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!location?.latitude || !location?.longitude) {
+        setTinyLoc("");
+        return;
+      }
+      try {
+        console.log('📡 Login: raw detected location', {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy
+        });
+      } catch (e) {}
+      try {
+        const res = await snapToLGAApi(location.latitude, location.longitude);
+        const lga = res?.data?.lga;
+        const state = res?.data?.state;
+        const label = lga || state || `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+        try {
+          console.log('📍 Login: snapped location', {
+            lga: res?.data?.lga,
+            state: res?.data?.state,
+            city: res?.data?.city,
+            address: res?.data?.address,
+            input: { lat: location.latitude, lng: location.longitude }
+          });
+        } catch (e) {}
+        if (!cancelled) setTinyLoc(label);
+      } catch {
+        if (!cancelled) setTinyLoc(`${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [location?.latitude, location?.longitude]);
 
   const isFormValid = email.trim() && password.trim();
 
@@ -20,7 +62,14 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const res = await loginUser({ email, password });
+      // Include location if available
+      const loginData = { email, password };
+      if (location) {
+        loginData.latitude = location.latitude;
+        loginData.longitude = location.longitude;
+      }
+      
+      const res = await loginUser(loginData);
       login(res.token, res.user);
       // Redirect to appropriate dashboard based on user role
       if (res.user?.role === 'professional') {
@@ -85,6 +134,13 @@ export default function Login() {
             </button>
           </div>
         </div>
+
+        {/* Tiny location indicator (bottom-right) */}
+        {tinyLoc && (
+          <div className="absolute bottom-2 right-3 text-[10px] text-green-700 bg-green-50/70 px-2 py-0.5 rounded">
+            {tinyLoc}
+          </div>
+        )}
 
         {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
 

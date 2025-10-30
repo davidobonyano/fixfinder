@@ -25,6 +25,10 @@ export default function Profile() {
     email: "",
     phone: ""
   });
+  // Location is read-only on Profile; we show what's stored on the account
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportMessage, setReportMessage] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -45,6 +49,7 @@ export default function Profile() {
           email: response.data.email || "",
           phone: response.data.phone || ""
         });
+        // location shown read-only from response.data.location
         
         // Update auth context if email verification status changed
         if (authUser && response.data.emailVerification?.isVerified !== authUser.emailVerification?.isVerified) {
@@ -98,6 +103,8 @@ export default function Profile() {
       setSaving(false);
     }
   };
+
+  // No manual or GPS update from Profile; location updates are automatic elsewhere
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -511,6 +518,107 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Location Section (read-only) */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Location</h2>
+        <p className="text-sm text-gray-600">
+          {user?.location?.city && user?.location?.state ? (
+            <>Detected: <span className="font-medium">{user.location.city}, {user.location.state}</span></>
+          ) : (
+            <>We’ll detect your location and snap to your LGA for accurate matching.</>
+          )}
+          {user?.location?.address && (
+            <><br/>Address: <span className="font-medium">{user.location.address}</span></>
+          )}
+        </p>
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setReportOpen(true)}
+            className="text-sm text-blue-700 hover:underline"
+          >
+            Report wrong location
+          </button>
+        </div>
+      </div>
+
+      {/* Report wrong location modal */}
+      {reportOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Report wrong location</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Current: {user?.location?.city || '—'}, {user?.location?.state || '—'}
+            </p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">What seems wrong?</label>
+            <textarea
+              value={reportMessage}
+              onChange={(e) => setReportMessage(e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., Snapped to Lagos Island but I’m in Ikorodu"
+            />
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setReportSubmitting(true);
+                    setError("");
+                    setSuccess("");
+                    // Try geolocation now and ask backend to re-snap via normal flow
+                    if (navigator.geolocation) {
+                      await new Promise((resolve) => navigator.geolocation.getCurrentPosition(resolve, resolve, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }));
+                    }
+                    setSuccess('Thanks! We will verify and update if needed.');
+                    setReportOpen(false);
+                    setReportMessage("");
+                  } catch (e) {
+                    setError('Could not retry detection. Please try again later.');
+                  } finally {
+                    setReportSubmitting(false);
+                  }
+                }}
+                disabled={reportSubmitting}
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+              >
+                {reportSubmitting ? 'Retrying…' : 'Retry detection now'}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setReportSubmitting(true);
+                    setError("");
+                    setSuccess("");
+                    const { reportLocationIssue } = await import('../utils/api');
+                    await reportLocationIssue({ message: reportMessage || 'Wrong location reported' });
+                    setSuccess('Report submitted. We will review and fix.');
+                    setReportOpen(false);
+                    setReportMessage("");
+                  } catch (e) {
+                    setError(e.message || 'Failed to submit report');
+                  } finally {
+                    setReportSubmitting(false);
+                  }
+                }}
+                disabled={reportSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                {reportSubmitting ? 'Submitting…' : 'Submit report'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Account Security Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

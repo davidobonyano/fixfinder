@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { snapToLGAApi } from '../utils/api';
 import servicesData from '../data/services.json';
 import heroImage from '../assets/images/hero-city.webp';
 import ServiceSelector from '../components/ServiceSelector';
@@ -101,28 +102,11 @@ const Home = () => {
   const allCategories = [...new Set(servicesData.map((s) => s.name))];
 
   useEffect(() => {
-    // Seed with all services immediately, but show only first 4 on home page
+    // Seed with all services immediately, show only first 4 on home page
     setAllServices(servicesData);
-    setServices(servicesData.slice(0, 4)); // Show only 4 services on home page
-
-    // Try auto geolocation (may show browser prompt/warning, acceptable per requirements)
-    if (navigator.permissions?.query) {
-      navigator.permissions
-        .query({ name: 'geolocation' })
-        .then((result) => {
-          if (result.state === 'granted' || result.state === 'prompt') {
-            handleGetLocation();
-          } else {
-            setLoading(false);
-          }
-        })
-        .catch(() => {
-          // Fallback: attempt geolocation directly
-          handleGetLocation();
-        });
-    } else {
-      handleGetLocation();
-    }
+    setServices(servicesData.slice(0, 4));
+    setLoading(false);
+    // Do not auto-request geolocation; require user gesture per browser guidance
   }, []);
 
   const handleGetLocation = () => {
@@ -133,27 +117,22 @@ const Home = () => {
     }
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const { latitude, longitude } = pos.coords;
-        const city = getCityFromCoords(latitude, longitude);
-        setUserCity(city);
-
-        // Only filter by city if we have a valid known city
-        if (city && city !== 'Unknown') {
-          const filtered = servicesData.filter(
-            (service) =>
-              isValidString(service.name) &&
-              isValidString(service.description) &&
-              isValidLocation(service.location) &&
-              service.location === city
-          );
-          setAllServices(filtered.length ? filtered : servicesData);
-          setServices(filtered.length ? filtered.slice(0, 4) : servicesData.slice(0, 4));
-        } else {
-          // If city is null or unknown, show all services
-          setAllServices(servicesData);
-          setServices(servicesData.slice(0, 4));
+        try {
+          // Use backend snap (no CORS) to get LGA/State
+          const snap = await snapToLGAApi(latitude, longitude);
+          const lga = snap?.data?.lga || '';
+          const state = snap?.data?.state || '';
+          const label = lga || state || '';
+          setUserCity(label);
+        } catch {
+          const city = getCityFromCoords(latitude, longitude);
+          setUserCity(city || '');
         }
+
+        setAllServices(servicesData);
+        setServices(servicesData.slice(0, 4));
         setLoading(false);
       },
       (err) => {
@@ -182,12 +161,15 @@ const Home = () => {
 
       const matchesCity = selectedCity
         ? service.location === selectedCity
-        : userCity && userCity !== 'Unknown' ? service.location === userCity : true;
+        : userCity && userCity !== 'Unknown'
+          ? (service.location === userCity || (userCity && service.location && userCity.toLowerCase().includes(service.location.toLowerCase())))
+          : true;
 
       return matchesKeyword && matchesCategory && matchesCity;
     });
 
-    setServices(filterServices.slice(0, 4));
+    const next = filterServices.length ? filterServices : allServices;
+    setServices(next.slice(0, 4));
   }, [searchTerm, selectedCategory, selectedCity, userCity, allServices]);
 
   return (
@@ -257,16 +239,17 @@ const Home = () => {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="p-3 border border-gray-300 rounded-lg w-full"
-            >
-              <option value="">Use My Location</option>
-              {allCities.map((city) => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleGetLocation}
+                className="p-3 border border-gray-300 rounded-lg w-full hover:bg-gray-50"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <FaMapMarkerAlt className="text-blue-600" /> {userCity ? `Using: ${userCity}` : 'Use My Location'}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -377,3 +377,51 @@ export const verifyEmail = (token) => request("/api/users/verify-email", {
 });
 
 export const getProfessionalProfile = (id) => request(`/api/professionals/${id}`, { auth: true });
+
+// Location API functions
+export const saveLocation = (latitude, longitude) => request("/api/location/save", {
+  method: "POST",
+  body: { latitude, longitude },
+  auth: true
+});
+
+export const getMyLocation = () => request("/api/location/my-location", { auth: true });
+
+export const findNearbyProfessionals = (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  return request(`/api/location/nearby-professionals${queryString ? `?${queryString}` : ''}`, { auth: true });
+};
+
+export const findNearbyJobs = (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  return request(`/api/location/nearby-jobs${queryString ? `?${queryString}` : ''}`, { auth: true });
+};
+
+export const calculateDistanceAPI = (lat1, lon1, lat2, lon2) => {
+  return request(`/api/location/calculate-distance?lat1=${lat1}&lon1=${lon1}&lat2=${lat2}&lon2=${lon2}`, { auth: true });
+};
+
+// Snap coordinates to LGA/state
+export const snapToLGAApi = (latitude, longitude) => {
+  const q = new URLSearchParams({ latitude, longitude }).toString();
+  return request(`/api/location/snap?${q}`, { auth: true });
+};
+
+// Report wrong location (optionally ask server to retry snapping)
+export const reportLocationIssue = (payload) => request(`/api/location/report-issue`, {
+  method: 'POST',
+  body: payload,
+  auth: true
+});
+
+export const deleteAllMessagesForMe = (conversationId) => {
+  return request(`/api/messages/conversations/${conversationId}/all-for-me`, {
+    method: 'DELETE',
+    auth: true,
+  });
+};
+
+export const deleteConversationForMe = (conversationId) => request(`/api/messages/conversations/${conversationId}/for-me`, {
+  method: 'DELETE',
+  auth: true,
+});

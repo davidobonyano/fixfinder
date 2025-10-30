@@ -8,6 +8,7 @@ import {
   FaSpinner,
   FaRuler
 } from 'react-icons/fa';
+import { Polyline } from 'react-leaflet';
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -79,10 +80,14 @@ const MapView = ({
   locations = [], 
   userLocation = null,
   onStopSharing = null,
-  isSharing = false 
+  isSharing = false,
+  onStartSharing = null 
 }) => {
   const mapRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
+  const [showTrails, setShowTrails] = useState(true);
+  const trailsRef = useRef({}); // key -> [{lat,lng}]
+  const lastPosRef = useRef({}); // key -> {lat,lng}
 
   // Calculate distance between two points
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -114,21 +119,50 @@ const MapView = ({
     window.open(mapsUrl, '_blank');
   };
 
-  // Combine user location and shared locations
-  const allLocations = [];
-  if (userLocation) {
-    allLocations.push({
-      ...userLocation,
-      user: { name: 'You' },
-      isOwn: true
-    });
+  // Combine user location and unique others
+  let ownId = null;
+  if (userLocation && (userLocation.user?._id || userLocation._id)) {
+    ownId = userLocation.user?._id || userLocation._id;
   }
-  allLocations.push(...locations);
+  const otherLocations = (locations || []).filter(loc => (loc.userId || loc.user?._id) !== ownId);
+  const allLocations = [
+    userLocation && ownId ? {
+      ...userLocation,
+      user: {
+        name: 'You',
+        profilePicture: userLocation.avatarUrl || userLocation.user?.profilePicture
+      },
+      isOwn: true,
+      userId: ownId
+    } : null,
+    ...otherLocations,
+  ].filter(Boolean);
+
+  // Update trails when positions change
+  useEffect(() => {
+    const MAX_POINTS = 60;
+    const nextTrails = { ...trailsRef.current };
+    const nextLast = { ...lastPosRef.current };
+    allLocations.forEach((loc) => {
+      const key = loc.user?._id || (loc.isOwn ? 'me' : `${loc.lat},${loc.lng}`);
+      const prev = nextLast[key];
+      const changed = !prev || prev.lat !== loc.lat || prev.lng !== loc.lng;
+      if (changed) {
+        const trail = nextTrails[key] ? [...nextTrails[key]] : [];
+        trail.push({ lat: loc.lat, lng: loc.lng });
+        if (trail.length > MAX_POINTS) trail.splice(0, trail.length - MAX_POINTS);
+        nextTrails[key] = trail;
+        nextLast[key] = { lat: loc.lat, lng: loc.lng };
+      }
+    });
+    trailsRef.current = nextTrails;
+    lastPosRef.current = nextLast;
+  }, [allLocations.map(l => `${l.user?._id||'me'}:${l.lat},${l.lng}`).join('|')]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-40 flex flex-col">
       {/* Header */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-b">
         <div className="flex items-center gap-3">
@@ -142,6 +176,21 @@ const MapView = ({
         </div>
         
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowTrails(v => !v)}
+            className="px-3 py-1 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+            title="Toggle movement trails"
+          >
+            {showTrails ? 'Hide Trails' : 'Show Trails'}
+          </button>
+          {!isSharing && onStartSharing && (
+            <button
+              onClick={onStartSharing}
+              className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            >
+              Share My Location
+            </button>
+          )}
           {isSharing && onStopSharing && (
             <button
               onClick={onStopSharing}
@@ -179,9 +228,20 @@ const MapView = ({
             
             {/* Center map on locations */}
             <CenterMapOnLocations locations={allLocations} mapRef={mapRef} />
+
+            {/* Movement Trails */}
+            {showTrails && Object.entries(trailsRef.current).map(([key, points]) => (
+              points && points.length > 1 ? (
+                <Polyline
+                  key={`trail-${key}`}
+                  positions={points.map(p => [p.lat, p.lng])}
+                  pathOptions={{ color: key === 'me' ? '#3B82F6' : '#10B981', weight: 3, opacity: 0.6 }}
+                />
+              ) : null
+            ))}
             
             {/* User's location marker */}
-            {userLocation && (
+            {userLocation && ownId && (
               <Marker
                 position={[userLocation.lat, userLocation.lng]}
                 icon={createCustomIcon('#3B82F6', true, userLocation.avatarUrl)}
@@ -208,30 +268,25 @@ const MapView = ({
                 </Popup>
               </Marker>
             )}
-            
+
             {/* Other users' location markers */}
-            {locations.map((location, index) => {
-              const distance = userLocation ? 
-                calculateDistance(
-                  userLocation.lat, 
-                  userLocation.lng, 
-                  location.lat, 
-                  location.lng
-                ) : null;
-              
+            {otherLocations.map((location, index) => {
+              const dist = userLocation
+                ? calculateDistance(userLocation.lat, userLocation.lng, location.lat, location.lng)
+                : null;
               return (
                 <Marker
-                  key={index}
+                  key={location.userId || index}
                   position={[location.lat, location.lng]}
                   icon={createCustomIcon('#10B981', false, location.user?.profilePicture || location.user?.avatarUrl)}
                 >
                   <Popup>
                     <div className="text-center">
                       <h4 className="font-semibold">{location.user?.name || 'Unknown User'}</h4>
-                      {distance && (
+                      {dist !== null && (
                         <p className="text-sm text-blue-600 font-medium flex items-center justify-center gap-1">
                           <FaRuler className="w-3 h-3" />
-                          {distance < 1 ? `${Math.round(distance * 1000)}m away` : `${distance.toFixed(1)}km away`}
+                          {dist < 1 ? `${Math.round(dist * 1000)}m away` : `${dist.toFixed(1)}km away`}
                         </p>
                       )}
                       <p className="text-xs text-gray-500">
@@ -267,15 +322,10 @@ const MapView = ({
             </h4>
             <div className="space-y-2">
               {allLocations.map((location, index) => {
-                const isOwn = location === userLocation;
-                const distance = userLocation && !isOwn ? 
-                  calculateDistance(
-                    userLocation.lat, 
-                    userLocation.lng, 
-                    location.lat, 
-                    location.lng
-                  ) : null;
-                
+                const isOwn = location.isOwn;
+                const dist = userLocation && !isOwn
+                  ? calculateDistance(userLocation.lat, userLocation.lng, location.lat, location.lng)
+                  : null;
                 return (
                   <div
                     key={index}
@@ -284,20 +334,19 @@ const MapView = ({
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       isOwn ? 'bg-blue-100' : 'bg-green-100'
                     }`}>
-                      <span className={`text-sm font-semibold ${
-                        isOwn ? 'text-blue-600' : 'text-green-600'
-                      }`}>
-                        {isOwn ? '👤' : '📍'}
-                      </span>
+                      {location.user?.profilePicture
+                        ? <img src={location.user.profilePicture} alt={location.user?.name||'Avatar'} className="w-8 h-8 object-cover rounded-full" />
+                        : <span className={`text-sm font-semibold ${isOwn ? 'text-blue-600' : 'text-green-600'}`}>{isOwn ? '👤' : '📍'}</span>
+                      }
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">
                           {isOwn ? 'You' : (location.user?.name || 'Unknown User')}
                         </p>
-                        {distance && (
+                        {dist !== null && !isOwn && (
                           <span className="text-xs text-blue-600 font-medium">
-                            {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`} away
+                            {dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`} away
                           </span>
                         )}
                       </div>

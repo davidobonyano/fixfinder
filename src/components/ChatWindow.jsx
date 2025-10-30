@@ -22,12 +22,15 @@ import LocationModal from './LocationModal';
 import MapView from './MapView';
 import LocationButton from './LocationButton';
 import ChatProfileModal from './ChatProfileModal';
+import { useLocation as useLocationHook } from '../hooks/useLocation';
+import { calculateDistance, formatDistance } from '../utils/locationUtils';
 
 const ChatWindow = ({ 
   conversation, 
   messages = [], 
   onMessageSent,
   onUpdateMessages,
+  onHideMessages,
   onBack,
   onViewProfile,
   onDeleteConversation,
@@ -57,6 +60,86 @@ const ChatWindow = ({
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
+
+  // Current user center for distance calc
+  const { location: detectedLocation } = useLocationHook(false);
+  const [center, setCenter] = useState(null); // { lat, lng }
+  const [headerDistance, setHeaderDistance] = useState(null); // formatted string
+  const [headerAddress, setHeaderAddress] = useState(''); // LGA/State label
+
+  // Resolve center from detected -> saved
+  useEffect(() => {
+    const fromDetected = (detectedLocation?.latitude && detectedLocation?.longitude)
+      ? { lat: Number(detectedLocation.latitude), lng: Number(detectedLocation.longitude) }
+      : null;
+    const saved = user?.location?.coordinates?.lat && user?.location?.coordinates?.lng
+      ? { lat: Number(user.location.coordinates.lat), lng: Number(user.location.coordinates.lng) }
+      : (user?.location?.latitude && user?.location?.longitude
+        ? { lat: Number(user.location.latitude), lng: Number(user.location.longitude) }
+        : null);
+    const chosen = fromDetected || saved || null;
+    if (chosen) {
+      setCenter(chosen);
+    }
+  }, [detectedLocation?.latitude, detectedLocation?.longitude, user?.location?.coordinates?.lat, user?.location?.coordinates?.lng, user?.location?.latitude, user?.location?.longitude]);
+
+  // Compute distance/address for header whenever participants or center change
+  useEffect(() => {
+    try {
+      const other = otherParticipant?.user;
+      const otherCoords = other?.location?.coordinates;
+      const otherLat = Number(otherCoords?.lat || other?.location?.latitude);
+      const otherLng = Number(otherCoords?.lng || other?.location?.longitude);
+      const label = [other?.location?.city, other?.location?.state].filter(Boolean).join(', ');
+      setHeaderAddress(label);
+
+      if (center && otherLat && otherLng) {
+        const d = calculateDistance(center.lat, center.lng, otherLat, otherLng);
+        setHeaderDistance(formatDistance(d));
+        console.log('💬 Chat header distance debug:', {
+          me: center,
+          other: { lat: otherLat, lng: otherLng, label },
+          distanceKm: d
+        });
+      } else {
+        setHeaderDistance(null);
+      }
+    } catch (e) {
+      setHeaderDistance(null);
+    }
+  }, [center, otherParticipant?.user?.location?.coordinates?.lat, otherParticipant?.user?.location?.coordinates?.lng, otherParticipant?.user?.location?.latitude, otherParticipant?.user?.location?.longitude, otherParticipant?.user?.location?.city, otherParticipant?.user?.location?.state]);
+
+  // Seed shared locations from existing messages
+  useEffect(() => {
+    try {
+      // Only keep last message per user
+      const byUser = new Map();
+      (messages || []).forEach(m => {
+        if (m.messageType === 'location_share' && m.content?.location && m.sender?._id) {
+          byUser.set(m.sender._id, m);
+        }
+      });
+      const seeded = Array.from(byUser.values()).map(m => {
+        const sender = m.sender || {};
+        const isMe = sender._id === user?.id;
+        const fallbackOther = otherParticipant?.user || {};
+        const photo = sender.profilePicture || sender.avatarUrl || (isMe ? (user?.profilePicture || user?.avatarUrl) : (fallbackOther.profilePicture || fallbackOther.avatarUrl));
+        return ({
+          lat: Number(m.content.location.lat),
+          lng: Number(m.content.location.lng),
+          accuracy: Number(m.content.location.accuracy || 0),
+          timestamp: m.createdAt || new Date().toISOString(),
+          user: {
+            _id: sender._id,
+            name: sender.name,
+            profilePicture: photo
+          },
+          userId: sender._id
+        });
+      });
+      if (seeded.length > 0) setSharedLocations(seeded);
+    } catch (_) {}
+  }, [messages, user?.id, user?.profilePicture, user?.avatarUrl, otherParticipant?.user?.profilePicture, otherParticipant?.user?.avatarUrl]);
 
   // Handle message deletion events
   const handleMessageDeleted = (data) => {
@@ -132,12 +215,37 @@ const ChatWindow = ({
     const handleReceiveLocation = (data) => {
       console.log('🎯 Location shared received in chat:', data);
       if (data.senderId !== user?.id) {
-        setSharedLocations(prev => [...prev, {
+        const fallbackUser = data.user || otherParticipant?.user || {};
+        const sharedLoc = {
           ...data.coordinates,
-          user: data.user,
+          user: {
+            _id: fallbackUser._id,
+            name: fallbackUser.name,
+            profilePicture: fallbackUser.profilePicture || fallbackUser.avatarUrl
+          },
           userId: data.senderId,
           timestamp: data.timestamp
-        }]);
+        };
+        setSharedLocations(prev => {
+          // Remove existing entry for this userId, then add latest
+          const rest = prev.filter(l => l.userId !== sharedLoc.userId);
+          return [...rest, sharedLoc];
+        });
+        // Append/replace location_share message in chat with latest? (optional)
+        if (onUpdateMessages) {
+          const locMessage = {
+            _id: `loc-${Date.now()}`,
+            sender: sharedLoc.user,
+            content: { location: { lat: sharedLoc.lat, lng: sharedLoc.lng, accuracy: sharedLoc.accuracy } },
+            messageType: 'location_share',
+            isRead: false,
+            isEdited: false,
+            isDeleted: false,
+            createdAt: sharedLoc.timestamp,
+            conversation: conversation._id
+          };
+          onUpdateMessages(prev => [...prev, locMessage]);
+        }
       }
     };
 
@@ -151,26 +259,29 @@ const ChatWindow = ({
     const handleLocationUpdate = (data) => {
       console.log('🎯 Location updated received:', data);
       if (data.userId !== user?.id) {
-        setSharedLocations(prev => 
-          prev.map(loc => 
-            loc.userId === data.userId 
-              ? { 
-                  ...loc, 
-                  lat: data.lat, 
-                  lng: data.lng, 
-                  timestamp: data.timestamp,
-                  user: data.user
-                }
-              : loc
-          )
-        );
+        const fallbackUser = data.user || otherParticipant?.user || {};
+        setSharedLocations(prev => {
+          const rest = prev.filter(l => l.userId !== data.userId);
+          return [...rest, {
+            lat: data.lat,
+            lng: data.lng,
+            accuracy: data.accuracy || 0,
+            timestamp: data.timestamp,
+            user: {
+              _id: fallbackUser._id,
+              name: fallbackUser.name,
+              profilePicture: fallbackUser.profilePicture || fallbackUser.avatarUrl
+            },
+            userId: data.userId
+          }];
+        });
       }
     };
 
     // Listen for stop location sharing
     const handleStopLocationUpdate = (data) => {
       if (data.userId !== user?.id) {
-        setSharedLocations(prev => prev.filter(loc => loc.user?.name !== data.user?.name));
+        setSharedLocations(prev => prev.filter(loc => loc.userId !== data.userId));
       }
     };
 
@@ -179,8 +290,8 @@ const ChatWindow = ({
     on('message_read', handleMessageRead);
     on('locationShared', handleReceiveLocation);
     on('locationSharingStarted', handleLocationSharingStarted);
-    on('location_update', handleLocationUpdate);
-    on('stop_location_update', handleStopLocationUpdate);
+    on('locationUpdated', handleLocationUpdate);
+    on('locationStopped', handleStopLocationUpdate);
     on('message_deleted', handleMessageDeleted);
     on('messages_deleted', handleMessagesDeleted);
     on('message_edited', handleMessageEdited);
@@ -192,8 +303,8 @@ const ChatWindow = ({
       off('message_read', handleMessageRead);
       off('locationShared', handleReceiveLocation);
       off('locationSharingStarted', handleLocationSharingStarted);
-      off('location_update', handleLocationUpdate);
-      off('stop_location_update', handleStopLocationUpdate);
+      off('locationUpdated', handleLocationUpdate);
+      off('locationStopped', handleStopLocationUpdate);
       off('message_deleted', handleMessageDeleted);
       off('messages_deleted', handleMessagesDeleted);
       off('message_edited', handleMessageEdited);
@@ -380,22 +491,33 @@ const ChatWindow = ({
 
     try {
       setSending(true);
-      const deletePromises = selectedMessages.map(messageId => deleteMessage(messageId));
+      // Only delete messages the current user owns
+      const myMessageIds = messages
+        .filter(msg => msg.sender._id === user?.id)
+        .map(msg => msg._id);
+      const deletable = selectedMessages.filter(id => myMessageIds.includes(id));
+      const hideOnly = selectedMessages.filter(id => !myMessageIds.includes(id));
+      const deletePromises = deletable.map(messageId => deleteMessage(messageId));
       await Promise.all(deletePromises);
       
       // Update messages in local state immediately
       if (onUpdateMessages) {
         onUpdateMessages(prev => prev.map(msg => 
-          selectedMessages.includes(msg._id)
+          deletable.includes(msg._id)
             ? { ...msg, isDeleted: true }
             : msg
         ));
+      }
+
+      // Hide the other user's selected messages locally (for me only)
+      if (hideOnly.length > 0 && onHideMessages) {
+        onHideMessages(hideOnly);
       }
       
       // Emit bulk delete via Socket.IO
       if (socket && isConnected) {
         emit('messages_deleted', {
-          messageIds: selectedMessages,
+          messageIds: deletable,
           conversationId: conversation._id
         });
       }
@@ -447,6 +569,8 @@ const ChatWindow = ({
           ...location,
           avatarUrl: user?.profilePicture || user?.avatarUrl
         });
+        // Close modal after confirming share
+        setShowLocationModal(false);
 
         // Add location message to local state immediately for instant update
         const optimisticLocationMessage = {
@@ -512,7 +636,12 @@ const ChatWindow = ({
             senderId: user?.id,
             receiverId: otherParticipant?.user._id,
             coordinates: location,
-            conversationId: conversation._id
+            conversationId: conversation._id,
+            user: {
+              _id: user?.id,
+              name: user?.name,
+              profilePicture: user?.profilePicture || user?.avatarUrl
+            }
           });
         }
 
@@ -555,7 +684,12 @@ const ChatWindow = ({
             lat: location.lat,
             lng: location.lng,
             receiverId: otherParticipant?.user._id,
-            conversationId: conversation._id
+            conversationId: conversation._id,
+            user: {
+              _id: user?.id,
+              name: user?.name,
+              profilePicture: user?.profilePicture || user?.avatarUrl
+            }
           });
         }
       },
@@ -666,6 +800,8 @@ const ChatWindow = ({
         showBulkActions={showBulkActions}
         formatLastSeen={formatLastSeen}
         userRole={user?.role}
+        distanceFormatted={headerDistance}
+        otherAddressLabel={headerAddress}
       />
 
       {/* Messages */}
@@ -692,6 +828,7 @@ const ChatWindow = ({
               isSelected={selectedMessages.includes(message._id)}
               onSelect={handleSelectMessage}
               showBulkActions={showBulkActions}
+              onActivateBulkActions={() => setShowBulkActions(true)}
             />
           );
         })}
@@ -908,6 +1045,7 @@ const ChatWindow = ({
         userLocation={userLocation}
         onStopSharing={handleStopLocationShare}
         isSharing={isSharingLocation}
+        onStartSharing={() => setShowLocationModal(true)}
       />
 
       {/* Profile Modal */}

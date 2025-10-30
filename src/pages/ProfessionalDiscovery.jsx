@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaTimes, FaFilter, FaSearch, FaMap, FaTh, FaList, FaSortAmountDown, FaSync, FaUser } from 'react-icons/fa';
 import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation } from '../utils/api';
+import { calculateDistance as haversineDistance, formatDistance } from '../utils/locationUtils';
+import { useLocation as useLocationHook } from '../hooks/useLocation';
 import { useAuth } from '../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../context/ToastContext';
@@ -16,6 +18,7 @@ const ProfessionalDiscovery = () => {
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  const { location: detectedLocation } = useLocationHook(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid', 'list', or 'map'
@@ -60,12 +63,54 @@ const ProfessionalDiscovery = () => {
     return [...startsWith, ...contains].slice(0, 8);
   })();
 
-  // Get user location on mount
+  // Initialize location from detectedLocation or saved user coords (no auto geolocation calls)
   useEffect(() => {
-    getUserLocation();
+    const fromDetected = detectedLocation?.latitude && detectedLocation?.longitude
+      ? { lat: detectedLocation.latitude, lng: detectedLocation.longitude }
+      : null;
+    // Try multiple shapes from saved user profile
+    const fromUser = user?.location?.coordinates?.lat && user?.location?.coordinates?.lng
+      ? { lat: Number(user.location.coordinates.lat), lng: Number(user.location.coordinates.lng) }
+      : (user?.location?.latitude && user?.location?.longitude
+          ? { lat: Number(user.location.latitude), lng: Number(user.location.longitude) }
+          : null);
+
+    const chosen = fromDetected || fromUser;
+    if (chosen) {
+      try { console.log('📌 Discovery center source:', fromDetected ? 'detected' : 'user.saved', chosen); } catch (e) {}
+      setUserLocation(chosen);
+    }
     checkExistingConnectionRequests();
     checkExistingConnections();
   }, []);
+
+  // Keep in sync if detected location changes later
+  useEffect(() => {
+    if (detectedLocation?.latitude && detectedLocation?.longitude) {
+      setUserLocation({ lat: detectedLocation.latitude, lng: detectedLocation.longitude });
+    }
+  }, [detectedLocation?.latitude, detectedLocation?.longitude]);
+
+  // Late fallback to a safe default if no source arrives (prevents indefinite loading)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!userLocation && !detectedLocation?.latitude) {
+        // Also check saved user now (in case it loaded later)
+        const fromUser = user?.location?.coordinates?.lat && user?.location?.coordinates?.lng
+          ? { lat: Number(user.location.coordinates.lat), lng: Number(user.location.coordinates.lng) }
+          : (user?.location?.latitude && user?.location?.longitude
+              ? { lat: Number(user.location.latitude), lng: Number(user.location.longitude) }
+              : null);
+        if (fromUser) {
+          try { console.log('📌 Discovery center late source: user.saved', fromUser); } catch (e) {}
+          setUserLocation(fromUser);
+        } else {
+          setUserLocation({ lat: 6.5244, lng: 3.3792 });
+        }
+      }
+    }, 2500);
+    return () => clearTimeout(t);
+  }, [userLocation, detectedLocation?.latitude, user?.location?.coordinates?.lat, user?.location?.coordinates?.lng, user?.location?.latitude, user?.location?.longitude]);
 
   // Refresh connection status when user changes
   useEffect(() => {
@@ -175,24 +220,8 @@ const ProfessionalDiscovery = () => {
     });
 
   const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.warn('Location access denied:', error);
-          // Default to Lagos coordinates
-          setUserLocation({ lat: 6.5244, lng: 3.3792 });
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    } else {
-      setUserLocation({ lat: 6.5244, lng: 3.3792 });
-    }
+    // Intentionally no-op to avoid auto geolocation without user gesture
+    // Left here for potential future button-triggered use
   };
 
   // Check existing connection requests
@@ -207,7 +236,7 @@ const ProfessionalDiscovery = () => {
       if (response.success) {
         const pendingRequestsMap = new Map();
         response.data
-          .filter(req => req.status === 'pending')
+          .filter(req => req && req.status === 'pending' && req.professional && req.professional._id)
           .forEach(req => {
             console.log('📋 Processing request:', {
               requestId: req._id,
@@ -215,7 +244,7 @@ const ProfessionalDiscovery = () => {
               professionalName: req.professional.name,
               status: req.status
             });
-            pendingRequestsMap.set(req.professional._id, req._id);
+            try { pendingRequestsMap.set(req.professional._id, req._id); } catch (e) {}
           });
         console.log('📋 ProfessionalDiscovery: Final pending requests map:', Array.from(pendingRequestsMap.entries()));
         setConnectionRequests(pendingRequestsMap);
@@ -264,6 +293,9 @@ const ProfessionalDiscovery = () => {
   const loadProfessionals = async () => {
     try {
       setLoading(true);
+      try {
+        console.log('📌 Discovery using userLocation:', userLocation);
+      } catch (e) {}
       
       // Try to get real professionals first
       try {
@@ -291,22 +323,12 @@ const ProfessionalDiscovery = () => {
           
           // Normalize backend fields to UI expectations and always calculate distance
           const prosWithDistance = pros.map(pro => {
-            // If no location coordinates, add default Lagos coordinates
-            let location = pro.location;
+            // Use backend-provided coordinates only; do not inject defaults
+            const location = pro.location;
             if (!location?.coordinates?.lat || !location?.coordinates?.lng) {
-              // Set default coordinates based on city
-              let defaultCoords = { lat: 6.5244, lng: 3.3792 }; // Lagos
-              let defaultAddress = 'Lagos, Nigeria';
-              
-              if (pro.city === 'Ikorodu') {
-                defaultCoords = { lat: 6.6167, lng: 3.5167 };
-                defaultAddress = 'Ikorodu, Lagos';
-              }
-              
-              location = {
-                address: defaultAddress,
-                coordinates: defaultCoords
-              };
+              try {
+                console.warn('⚠️ Missing pro coordinates; skipping distance calc for', pro.name, location);
+              } catch (e) {}
             }
             
             // Handle images - use professional photos first, then user profile picture, then placeholder
@@ -328,10 +350,22 @@ const ProfessionalDiscovery = () => {
               likes: pro.likes ?? 0,
               // Ensure nested user object shape for chat/connect action
               user: typeof pro.user === 'string' ? { _id: pro.user } : (pro.user || {}),
-              distance: userLocation ? calculateDistance(userLocation, location) : 999
+              distance: (userLocation && location?.coordinates?.lat && location?.coordinates?.lng)
+                ? haversineDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    Number(location.coordinates.lat),
+                    Number(location.coordinates.lng)
+                  )
+                : 999
             };
             
-            console.log(`📍 ${pro.name}: ${location.address} (${location.coordinates.lat}, ${location.coordinates.lng}) - Distance: ${normalizedPro.distance.toFixed(1)}km`);
+            try {
+              const addr = location?.address || `${location?.city || ''}, ${location?.state || ''}` || 'Unknown';
+              const plat = location?.coordinates?.lat;
+              const plng = location?.coordinates?.lng;
+              console.log(`📍 ${pro.name}: ${addr} (${plat ?? 'n/a'}, ${plng ?? 'n/a'}) - Distance: ${Number.isFinite(normalizedPro.distance) ? normalizedPro.distance.toFixed(1) : 'n/a'}km`);
+            } catch (e) {}
             console.log(`📊 Professional data:`, {
               name: normalizedPro.name,
               category: normalizedPro.category,
@@ -454,7 +488,14 @@ const ProfessionalDiscovery = () => {
       // Always calculate distance, even if userLocation is not available
       const prosWithDistance = fakeProfessionals.map(pro => ({
         ...pro,
-        distance: userLocation ? calculateDistance(userLocation, pro.location) : 999
+        distance: (userLocation && pro.location?.coordinates)
+          ? haversineDistance(
+              userLocation.lat,
+              userLocation.lng,
+              Number(pro.location.coordinates.lat),
+              Number(pro.location.coordinates.lng)
+            )
+          : 999
       }));
       
       // Sort by distance if userLocation is available
@@ -471,24 +512,7 @@ const ProfessionalDiscovery = () => {
     }
   };
 
-  const calculateDistance = (userLoc, proLoc) => {
-    if (!userLoc || !proLoc?.coordinates) return 999;
-    
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (proLoc.coordinates.lat - userLoc.lat) * Math.PI / 180;
-    const dLng = (proLoc.coordinates.lng - userLoc.lng) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(userLoc.lat * Math.PI / 180) * Math.cos(proLoc.coordinates.lat * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const formatDistance = (distance) => {
-    if (!distance || distance === undefined) return 'Distance unknown';
-    if (distance < 1) return `${Math.round(distance * 1000)}m away`;
-    return `${distance.toFixed(1)}km away`;
-  };
+  // Distance helpers now use shared utils
 
   const handleSave = (professional) => {
     setSavedProfessionals(prev => {

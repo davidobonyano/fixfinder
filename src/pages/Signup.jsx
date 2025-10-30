@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { registerUser } from "../utils/api";
 import { useAuth } from "../context/useAuth";
+import { useLocation } from "../hooks/useLocation";
+import { MapPin } from "lucide-react";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -13,6 +15,9 @@ export default function Signup() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuth();
+  
+  // Auto location detection (no click needed)
+  const { location } = useLocation(true);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +25,14 @@ export default function Signup() {
     setLoading(true);
     setError("");
     try {
-      const res = await registerUser({ name, email, password });
+      // Include location if available
+      const userData = { name, email, password, role: "customer" };
+      if (location) {
+        userData.latitude = location.latitude;
+        userData.longitude = location.longitude;
+      }
+      
+      const res = await registerUser(userData);
       login(res.token, res.user);
       // Redirect to user dashboard (signup is for customers)
       navigate("/dashboard");
@@ -69,6 +81,12 @@ export default function Signup() {
             {show ? "Hide" : "Show"}
           </button>
         </div>
+        
+        {location && (
+          <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+            Location detected ✓ {location.latitude?.toFixed(4)}, {location.longitude?.toFixed(4)}
+          </p>
+        )}
         
         {error && <p className="text-red-600 text-sm">{error}</p>}
         

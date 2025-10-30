@@ -24,12 +24,13 @@ import {
   FaPlus,
   FaLock
 } from 'react-icons/fa';
-import { getUserProfile, updateUserProfile, uploadProfilePicture, removeProfilePicture, sendEmailVerification, getProfessional, updateProfessional, uploadProfessionalMedia, deleteProfessionalMedia, changePassword, sendProfessionalEmailVerification, deleteAccount } from '../../utils/api';
+import { getUserProfile, updateUserProfile, uploadProfilePicture, removeProfilePicture, sendEmailVerification, getProfessional, updateProfessional, uploadProfessionalMedia, deleteProfessionalMedia, changePassword, sendProfessionalEmailVerification, deleteAccount, snapToLGAApi } from '../../utils/api';
 import { compressImage, validateImageFile } from '../../utils/imageCompression';
 import { compressVideo, validateVideoFile, getFileSizeString } from '../../utils/videoCompression';
 import { useAuth } from '../../context/useAuth';
 import ServiceSelector from '../../components/ServiceSelector';
 import { validateProfessionalForm, validatePortfolioUpload } from '../../utils/validation';
+import { useLocation as useLocationHook } from '../../hooks/useLocation';
 
 export default function ProProfile() {
   const { user: authUser, login, logout, isLoading: authLoading } = useAuth();
@@ -73,6 +74,51 @@ export default function ProProfile() {
     certifications: [],
     languages: []
   });
+  const { location: detectedLocation } = useLocationHook(false);
+  const [updatingLocation, setUpdatingLocation] = useState(false);
+
+  const handleUpdateLocation = async () => {
+    try {
+      setUpdatingLocation(true);
+      setError("");
+      setSuccess("");
+      const lat = detectedLocation?.latitude;
+      const lng = detectedLocation?.longitude;
+      if (!lat || !lng) {
+        throw new Error('Location not available yet. Please use the Use My Location button elsewhere or try again.');
+      }
+      // Snap to LGA/State on backend
+      const snap = await snapToLGAApi(lat, lng);
+      const lga = snap?.data?.lga;
+      const state = snap?.data?.state;
+      const address = snap?.data?.address || (lga && state ? `${lga}, ${state}` : undefined);
+      const city = lga || snap?.data?.city;
+
+      const proId = professionalData?._id || user?.professionalId || authUser?.professionalId;
+      if (!proId) throw new Error('Professional profile not found.');
+
+      const update = {
+        location: {
+          address,
+          city,
+          state,
+          coordinates: { lat, lng }
+        }
+      };
+      const resp = await updateProfessional(proId, update);
+      if (resp?.success) {
+        setProfessionalData(prev => ({ ...(prev || {}), ...resp.data }));
+        setUser(prev => ({ ...(prev || {}), location: resp.data?.location || update.location }));
+        setSuccess('Location updated successfully. Your cards will now show accurate distance.');
+      } else {
+        throw new Error(resp?.message || 'Failed to update location');
+      }
+    } catch (e) {
+      setError(e.message || 'Failed to update location');
+    } finally {
+      setUpdatingLocation(false);
+    }
+  };
 
   useEffect(() => {
     loadProfile();
@@ -812,6 +858,37 @@ export default function ProProfile() {
 
       {/* Professional Information Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {/* Location quick update */}
+        <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-gray-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <FaMapMarkerAlt className="w-4 h-4" /> Location
+              </h3>
+              <div className="text-sm text-gray-700 mt-1">
+                <div>
+                  Current: {user?.location?.address || `${user?.location?.city || ''}${user?.location?.city && user?.location?.state ? ', ' : ''}${user?.location?.state || ''}` || 'Not set'}
+                </div>
+                {user?.location?.coordinates && (
+                  <div className="text-gray-500">
+                    ({user.location.coordinates.lat}, {user.location.coordinates.lng})
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="shrink-0">
+              <button
+                onClick={handleUpdateLocation}
+                disabled={updatingLocation}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {updatingLocation ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaMapMarkerAlt className="w-4 h-4" />}
+                {updatingLocation ? 'Updating…' : 'Update Location (Use my GPS)'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900">Professional Information</h2>
           {!isEditing ? (

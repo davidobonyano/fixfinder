@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes, FaUser } from 'react-icons/fa';
-import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation } from '../../utils/api';
+import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation, getProfessional } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
+import { useLocation as useLocationHook } from '../../hooks/useLocation';
+import { calculateDistance as haversineDistance, formatDistance } from '../../utils/locationUtils';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import ServiceSelector from '../../components/ServiceSelector';
@@ -14,6 +16,7 @@ const ProfessionalsPage = () => {
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  const { location: detectedLocation } = useLocationHook(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [filters, setFilters] = useState({
@@ -26,15 +29,53 @@ const ProfessionalsPage = () => {
   const [savedProfessionals, setSavedProfessionals] = useState(new Set());
   const [connectionRequests, setConnectionRequests] = useState(new Set());
   const [connections, setConnections] = useState(new Map()); // Map of professionalId -> connectionId
+  const [connectedProDetails, setConnectedProDetails] = useState(new Map()); // Map of professionalId -> professional payload
   const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const [professionalToUnfriend, setProfessionalToUnfriend] = useState(null);
 
   useEffect(() => {
+    // prefer detected center, fallback to saved, then default; no auto prompt
+    const fromDetected = detectedLocation?.latitude && detectedLocation?.longitude
+      ? { lat: detectedLocation.latitude, lng: detectedLocation.longitude }
+      : null;
+    const fromUser = user?.location?.coordinates?.lat && user?.location?.coordinates?.lng
+      ? { lat: Number(user.location.coordinates.lat), lng: Number(user.location.coordinates.lng) }
+      : (user?.location?.latitude && user?.location?.longitude
+          ? { lat: Number(user.location.latitude), lng: Number(user.location.longitude) }
+          : null);
+    setUserLocation(fromDetected || fromUser || { lat: 6.5244, lng: 3.3792 });
+    try {
+      console.log('📌 Connected Pros center:', fromDetected ? 'detected' : fromUser ? 'user.saved' : 'default', fromDetected || fromUser || { lat: 6.5244, lng: 3.3792 });
+    } catch (e) {}
     loadProfessionals();
-    getUserLocation();
     checkExistingConnectionRequests();
     checkExistingConnections();
   }, []);
+
+  // Update center when detected location arrives later
+  useEffect(() => {
+    if (detectedLocation?.latitude && detectedLocation?.longitude) {
+      const center = { lat: detectedLocation.latitude, lng: detectedLocation.longitude };
+      setUserLocation(center);
+      try { console.log('📌 Connected Pros center (detected update):', center); } catch (e) {}
+    }
+  }, [detectedLocation?.latitude, detectedLocation?.longitude]);
+
+  // Update center if saved user location becomes available later
+  useEffect(() => {
+    if (!detectedLocation?.latitude && (user?.location?.coordinates?.lat && user?.location?.coordinates?.lng)) {
+      const center = { lat: Number(user.location.coordinates.lat), lng: Number(user.location.coordinates.lng) };
+      setUserLocation(center);
+      try { console.log('📌 Connected Pros center (user.saved update):', center); } catch (e) {}
+    }
+  }, [user?.location?.coordinates?.lat, user?.location?.coordinates?.lng]);
+
+  // Reload list whenever center changes
+  useEffect(() => {
+    if (userLocation) {
+      loadProfessionals();
+    }
+  }, [userLocation]);
 
   // Refresh connection status when user changes
   useEffect(() => {
@@ -81,8 +122,8 @@ const ProfessionalsPage = () => {
       console.log('📡 Connection requests response:', response);
       
       if (response.success) {
-        const pendingRequests = response.data
-          .filter(req => req.status === 'pending')
+        const pendingRequests = (response.data || [])
+          .filter(req => req && req.status === 'pending' && req.professional && req.professional._id)
           .map(req => req.professional._id);
         console.log('📋 Pending requests:', pendingRequests);
         setConnectionRequests(new Set(pendingRequests));
@@ -103,6 +144,7 @@ const ProfessionalsPage = () => {
       
       if (response.success) {
         const connectionsMap = new Map();
+        const detailsMap = new Map();
         response.data.forEach(connection => {
           console.log('🔍 All Professionals - Processing connection:', {
             connectionId: connection._id,
@@ -126,34 +168,20 @@ const ProfessionalsPage = () => {
           
           console.log('🔍 All Professionals - Setting connection:', professionalId, connection._id);
           connectionsMap.set(professionalId, connection._id);
+          if (connection.professional?._id) {
+            detailsMap.set(connection.professional._id, connection.professional);
+          }
         });
         console.log('🔍 All Professionals - Final connections map:', Array.from(connectionsMap.entries()));
         setConnections(connectionsMap);
+        setConnectedProDetails(detailsMap);
       }
     } catch (err) {
       console.log('Could not check existing connections:', err);
     }
   };
 
-  const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.warn('Location access denied:', error);
-          setUserLocation({ lat: 6.5244, lng: 3.3792 });
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    } else {
-      setUserLocation({ lat: 6.5244, lng: 3.3792 });
-    }
-  };
+  const getUserLocation = () => {};
 
   const loadProfessionals = async () => {
     try {
@@ -164,13 +192,13 @@ const ProfessionalsPage = () => {
         const response = await getProfessionals({ limit: 50 });
         if (response.success && response.professionals && response.professionals.length > 0) {
           const pros = response.professionals.map(pro => {
-            // Handle images - use professional photos first, then user profile picture, then placeholder
-            let image = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop';
-            if (pro.photos && pro.photos.length > 0 && pro.photos[0] !== '/images/placeholder.jpeg') {
-              image = pro.photos[0];
-            } else if (pro.user?.profilePicture) {
-              image = pro.user.profilePicture;
-            }
+            // Prefer avatar from profile, not portfolio; portfolio photos used as cover elsewhere
+            let image = pro.user?.profilePicture
+              || pro.user?.avatarUrl
+              || pro.profilePicture
+              || pro.avatarUrl
+              || pro.image
+              || '/images/placeholder.jpeg';
             
             return {
               ...pro,
@@ -179,11 +207,32 @@ const ProfessionalsPage = () => {
           });
           
           if (userLocation) {
-            const prosWithDistance = pros.map(pro => ({
-              ...pro,
-              distance: calculateDistance(userLocation, pro.location)
-            })).sort((a, b) => a.distance - b.distance);
-            setProfessionals(prosWithDistance);
+            const prosWithDistance = await Promise.all(pros.map(async (pro) => {
+              let loc = pro.location;
+              // Prefer connection details if present
+              const connDetail = connectedProDetails.get(pro._id);
+              if (!loc && connDetail?.location) loc = connDetail.location;
+              if (!loc?.coordinates?.lat || !loc?.coordinates?.lng) {
+                try {
+                  const detail = await getProfessional(pro._id, { byUser: false });
+                  const payload = detail?.data || detail;
+                  if (payload?.location) loc = payload.location;
+                } catch {}
+              }
+              const distance = (loc?.coordinates?.lat && loc?.coordinates?.lng)
+                ? haversineDistance(
+                    userLocation.lat,
+                    userLocation.lng,
+                    Number(loc.coordinates.lat),
+                    Number(loc.coordinates.lng)
+                  )
+                : undefined;
+              try {
+                console.log('📍 Connected Pro card:', pro.name, loc?.coordinates, '→', distance);
+              } catch (e) {}
+              return { ...pro, location: loc || pro.location, distance };
+            }));
+            setProfessionals(prosWithDistance.sort((a,b) => (a.distance ?? 999) - (b.distance ?? 999)));
           } else {
             setProfessionals(pros);
           }
@@ -317,24 +366,7 @@ const ProfessionalsPage = () => {
     }
   };
 
-  const calculateDistance = (userLoc, proLoc) => {
-    if (!userLoc || !proLoc?.coordinates) return 999;
-    
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = (proLoc.coordinates.lat - userLoc.lat) * Math.PI / 180;
-    const dLng = (proLoc.coordinates.lng - userLoc.lng) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(userLoc.lat * Math.PI / 180) * Math.cos(proLoc.coordinates.lat * Math.PI / 180) *
-              Math.sin(dLng/2) * Math.sin(dLng/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const formatDistance = (distance) => {
-    if (!distance || distance === undefined) return 'Distance unknown';
-    if (distance < 1) return `${Math.round(distance * 1000)}m away`;
-    return `${distance.toFixed(1)}km away`;
-  };
+  // Using shared utils for distance formatting
 
   const handleCancelRequest = async (professional) => {
     if (!user) return;

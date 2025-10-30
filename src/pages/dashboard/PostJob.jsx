@@ -10,7 +10,10 @@ import {
   FaTimes
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { createJob } from '../../utils/api';
+import { createJob, snapToLGAApi } from '../../utils/api';
+import LocationSelector from '../../components/LocationSelector';
+import { useLocation as useLocationHook } from '../../hooks/useLocation';
+import ServiceSelector from '../../components/ServiceSelector';
 
 const PostJob = () => {
   const { user } = useAuth();
@@ -20,11 +23,7 @@ const PostJob = () => {
     title: '',
     description: '',
     category: '',
-    location: {
-      address: '',
-      city: '',
-      state: ''
-    },
+    location: {},
     budget: {
       min: '',
       max: ''
@@ -34,37 +33,10 @@ const PostJob = () => {
     urgency: 'Regular',
     media: []
   });
+  const { location: detectedLocation } = useLocationHook(false);
+  const [locationForm, setLocationForm] = useState({ state: '', city: '', neighbourhood: '' });
   const [errors, setErrors] = useState({});
-  const [categories, setCategories] = useState([]);
-
-  // Load categories from services data
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        // This would be an API call in real implementation
-        const mockCategories = [
-          'Electrician', 'Plumber', 'Carpenter', 'Painter', 'Mechanic',
-          'AC Technician', 'Generator Repairer', 'Tailor', 'Hair Stylist',
-          'Barber', 'Makeup Artist', 'Caregiver', 'Photographer', 'Videographer',
-          'Caterer', 'Driver Hire', 'Laptop Repair', 'Smartphone Repair',
-          'CCTV Installation', 'Solar Panel Installation', 'Locksmith',
-          'Refrigerator Repair', 'Washing Machine Repair', 'Nail Technician',
-          'Website Design', 'Graphic Design', 'Event Planning', 'DJ', 'MC Host',
-          'Massage Therapy', 'House Cleaning', 'Gardener', 'Security Guard',
-          'Tutor', 'Translator', 'Accountant', 'Lawyer', 'Doctor', 'Nurse',
-          'Pharmacist', 'Dentist', 'Veterinarian', 'Real Estate Agent',
-          'Insurance Agent', 'Banking Consultant', 'Travel Agent',
-          'Fitness Trainer', 'Yoga Instructor', 'Music Teacher', 'Art Teacher',
-          'Language Teacher', 'Computer Repair', 'Network Engineer', 'App Developer'
-        ];
-        setCategories(mockCategories);
-      } catch (error) {
-        console.error('Error loading categories:', error);
-      }
-    };
-
-    loadCategories();
-  }, []);
+  // Using unified ServiceSelector; no local categories list needed
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -154,21 +126,12 @@ const PostJob = () => {
       newErrors.category = 'Service category is required';
     }
 
-    // Location validation
-    if (!formData.location.address.trim()) {
-      newErrors['location.address'] = 'Address is required';
-    } else if (formData.location.address.trim().length < 5) {
-      newErrors['location.address'] = 'Address must be at least 5 characters';
-    } else if (formData.location.address.trim().length > 200) {
-      newErrors['location.address'] = 'Address must not exceed 200 characters';
-    }
-
-    if (!formData.location.city.trim()) {
-      newErrors['location.city'] = 'City is required';
-    }
-
-    if (!formData.location.state.trim()) {
+    // Location validation: require State & LGA
+    if (!locationForm.state) {
       newErrors['location.state'] = 'State is required';
+    }
+    if (!locationForm.city) {
+      newErrors['location.city'] = 'LGA is required';
     }
 
     // Budget validation
@@ -231,14 +194,35 @@ const PostJob = () => {
     
     try {
       // Prepare job data for API
+      // Get precise coords and snap to LGA/State (gesture: form submit)
+      let lat = null, lon = null, lga = locationForm.city || '', state = locationForm.state || '';
+      try {
+        const position = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
+        });
+        lat = position.coords.latitude;
+        lon = position.coords.longitude;
+        // If selector empty or we want authoritative snap, try server snap
+        if (!lga || !state) {
+          try {
+            const snap = await snapToLGAApi(lat, lon);
+            lga = lga || snap?.data?.lga || '';
+            state = state || snap?.data?.state || '';
+          } catch {}
+        }
+      } catch {}
+
+      const composedAddress = [locationForm.neighbourhood, lga, state, 'Nigeria'].filter(Boolean).join(', ');
       const jobData = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         category: formData.category.trim(),
         location: {
-          address: formData.location.address.trim(),
-          city: formData.location.city.trim(),
-          state: formData.location.state.trim()
+          address: composedAddress || `${lga || ''}${lga && state ? ', ' : ''}${state || ''}`,
+          city: lga || '',
+          state: state || '',
+          coordinates: lat && lon ? { lat, lng: lon } : undefined
         },
         budget: {
           min: parseFloat(formData.budget.min),
@@ -371,19 +355,13 @@ const PostJob = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Service Category *
             </label>
-            <select
-              name="category"
+            <ServiceSelector
               value={formData.category}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                errors.category ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select a category</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+              onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+              placeholder="Search and select a service..."
+              showSuggestions={true}
+              allowCustom={false}
+            />
             {errors.category && (
               <p className="mt-1 text-sm text-red-600">{errors.category}</p>
             )}
@@ -397,99 +375,27 @@ const PostJob = () => {
             Location
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Address *
-              </label>
-              <input
-                type="text"
-                name="location.address"
-                value={formData.location.address}
-                onChange={handleChange}
-                placeholder="Enter full address"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                  errors['location.address'] ? 'border-red-500' : 'border-gray-300'
-                }`}
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">State & LGA *</label>
+              <LocationSelector
+                value={{ state: locationForm.state, city: locationForm.city, neighborhood: locationForm.neighbourhood }}
+                onChange={(val) => setLocationForm(prev => ({ ...prev, state: val.state || '', city: val.city || val.lga || '', neighbourhood: val.neighborhood || '' }))}
+                enforceNigeria
               />
-              {errors['location.address'] && (
-                <p className="mt-1 text-sm text-red-600">{errors['location.address']}</p>
+              {(errors['location.state'] || errors['location.city']) && (
+                <p className="mt-1 text-sm text-red-600">{errors['location.state'] || errors['location.city']}</p>
               )}
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                State *
-              </label>
-              <select
-                name="location.state"
-                value={formData.location.state}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                  errors['location.state'] ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Select State</option>
-                <option value="Lagos">Lagos</option>
-                <option value="Abuja">Abuja</option>
-                <option value="Rivers">Rivers</option>
-                <option value="Edo">Edo</option>
-                <option value="Kano">Kano</option>
-                <option value="Oyo">Oyo</option>
-                <option value="Kaduna">Kaduna</option>
-                <option value="Delta">Delta</option>
-                <option value="Enugu">Enugu</option>
-                <option value="Akwa Ibom">Akwa Ibom</option>
-                <option value="Cross River">Cross River</option>
-                <option value="Plateau">Plateau</option>
-                <option value="Bauchi">Bauchi</option>
-                <option value="Borno">Borno</option>
-                <option value="Adamawa">Adamawa</option>
-                <option value="Benue">Benue</option>
-                <option value="Kogi">Kogi</option>
-                <option value="Niger">Niger</option>
-                <option value="Katsina">Katsina</option>
-                <option value="Sokoto">Sokoto</option>
-                <option value="Kebbi">Kebbi</option>
-                <option value="Zamfara">Zamfara</option>
-                <option value="Jigawa">Jigawa</option>
-                <option value="Yobe">Yobe</option>
-                <option value="Ebonyi">Ebonyi</option>
-                <option value="Imo">Imo</option>
-                <option value="Abia">Abia</option>
-                <option value="Anambra">Anambra</option>
-                <option value="Ogun">Ogun</option>
-                <option value="Ondo">Ondo</option>
-                <option value="Osun">Osun</option>
-                <option value="Ekiti">Ekiti</option>
-                <option value="Bayelsa">Bayelsa</option>
-                <option value="Taraba">Taraba</option>
-                <option value="Gombe">Gombe</option>
-                <option value="Nasarawa">Nasarawa</option>
-                <option value="Kwara">Kwara</option>
-              </select>
-              {errors['location.state'] && (
-                <p className="mt-1 text-sm text-red-600">{errors['location.state']}</p>
-              )}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                City *
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Neighbourhood / Address (optional)</label>
               <input
                 type="text"
-                name="location.city"
-                value={formData.location.city}
-                onChange={handleChange}
-                placeholder="Enter city"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                  errors['location.city'] ? 'border-red-500' : 'border-gray-300'
-                }`}
+                value={locationForm.neighbourhood}
+                onChange={(e) => setLocationForm(prev => ({ ...prev, neighbourhood: e.target.value }))}
+                placeholder="e.g., Tajudeen Alli Street"
+                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 border-gray-300"
               />
-              {errors['location.city'] && (
-                <p className="mt-1 text-sm text-red-600">{errors['location.city']}</p>
-              )}
             </div>
           </div>
         </div>

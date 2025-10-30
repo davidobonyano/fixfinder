@@ -30,7 +30,7 @@ import {
   FaPlus,
   FaTrash
 } from 'react-icons/fa';
-import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest } from '../utils/api';
+import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, getUser } from '../utils/api';
 import { compressImage, validateImageFile } from '../utils/imageCompression';
 import { compressVideo, validateVideoFile } from '../utils/videoCompression';
 import { useAuth } from '../context/useAuth';
@@ -57,6 +57,23 @@ const ProfessionalProfile = () => {
   const [editingData, setEditingData] = useState({});
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [showMediaUpload, setShowMediaUpload] = useState(false);
+
+  // Normalize/resolve image URLs
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const resolveImageUrl = (url) => {
+    if (!url) return '/images/placeholder.jpeg';
+    const trimmed = typeof url === 'string' ? url.trim() : url;
+    if (
+      trimmed.startsWith('http') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('//')
+    ) {
+      return trimmed;
+    }
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${API_BASE}${normalized}`;
+  };
 
   useEffect(() => {
     loadProfessionalProfile();
@@ -140,9 +157,11 @@ const ProfessionalProfile = () => {
       console.log('📡 Connection requests response:', requestsResponse);
       
       if (requestsResponse.success) {
-        const existingRequest = requestsResponse.data.find(
-          req => req.professional._id === professional._id && req.status === 'pending'
-        );
+        const existingRequest = (requestsResponse.data || []).find((req) => {
+          const proId = typeof req.professional === 'string' ? req.professional : req.professional?._id;
+          const status = req.status || req.state;
+          return proId === professional._id && (status === 'pending' || status === 'sent');
+        });
         console.log('📋 Existing request:', existingRequest);
         if (existingRequest) {
           setConnectionRequestSent(true);
@@ -155,10 +174,10 @@ const ProfessionalProfile = () => {
       console.log('📡 Connections response:', connectionsResponse);
       
       if (connectionsResponse.success) {
-        const existingConnection = connectionsResponse.data.find(connection => {
-          const professionalId = connection.requester._id === user.id 
-            ? connection.professional._id 
-            : connection.requester._id;
+        const existingConnection = (connectionsResponse.data || []).find((connection) => {
+          const requesterId = connection?.requester?._id || connection?.requesterId || connection?.requester;
+          const proIdInConn = connection?.professional?._id || connection?.professionalId || connection?.professional;
+          const professionalId = requesterId === user.id ? proIdInConn : requesterId;
           return professionalId === professional._id;
         });
         console.log('🔗 Existing connection:', existingConnection);
@@ -209,20 +228,24 @@ const ProfessionalProfile = () => {
             ...(professionalData.photos || []).map((photo, index) => ({
               id: `photo_${index}`,
               type: 'image',
-              url: photo,
+              url: resolveImageUrl(photo),
               title: `Portfolio Image ${index + 1}`,
               description: 'Professional work sample'
             })),
             ...(professionalData.videos || []).map((video, index) => ({
               id: `video_${index}`,
               type: 'video',
-              url: video,
+              url: resolveImageUrl(video),
               title: `Portfolio Video ${index + 1}`,
               description: 'Professional work demonstration'
             }))
           ],
           // Ensure services array exists (you might want to add this to the backend model)
-          services: professionalData.services || [],
+          services: professionalData.services 
+            || professionalData.categories 
+            || (professionalData.category ? [professionalData.category] : [])
+            || professionalData.skills 
+            || [],
           // Ensure reviews array exists
           reviews: professionalData.reviews || [],
           // Ensure languages array exists
@@ -240,13 +263,47 @@ const ProfessionalProfile = () => {
           completedJobs: professionalData.completedJobs || 0,
           responseTime: professionalData.responseTime || 'Not specified',
           availability: professionalData.availability || 'Check availability',
-          // Set profile image
-          image: professionalData.photos?.[0] || '/images/placeholder.jpeg',
-          // Set cover image (you might want to add this to the backend model)
-          coverImage: professionalData.coverImage || professionalData.photos?.[0] || '/images/placeholder.jpeg',
+          // Avatar should be the user's profile picture (not portfolio)
+          image: resolveImageUrl(
+            professionalData.user?.profilePicture
+            || professionalData.user?.avatarUrl
+            || professionalData.profilePicture
+            || professionalData.avatarUrl
+            || professionalData.image
+          ),
+          // Cover should be the first portfolio photo if available
+          coverImage: resolveImageUrl(
+            (professionalData.photos && professionalData.photos[0])
+            || professionalData.coverImage
+          ),
+          // Attach user object if present (for contact info)
+          user: professionalData.user || professionalData.account || professionalData.owner || null,
+          // Phone normalization
+          phone: professionalData.phone || professionalData.contactPhone || professionalData.user?.phone || null,
         };
         
         setProfessional(transformedProfessional);
+
+        // Enrich avatar from user if missing
+        const userId = typeof professionalData.user === 'string' 
+          ? professionalData.user 
+          : professionalData.user?._id;
+        if ((!transformedProfessional.image || transformedProfessional.image === '/images/placeholder.jpeg') && userId) {
+          try {
+            const userResp = await getUser(userId);
+            const userPayload = userResp?.data || userResp;
+            const rawImage = userPayload?.profilePicture 
+              || userPayload?.avatarUrl 
+              || userPayload?.image 
+              || userPayload?.photo;
+            const resolved = resolveImageUrl(rawImage);
+            if (rawImage) {
+              setProfessional(prev => ({ ...prev, image: resolved }));
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
       } else {
         throw new Error('Professional not found');
       }
@@ -508,11 +565,20 @@ const ProfessionalProfile = () => {
             {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-start gap-6">
-                  <img
-              src={professional.image}
-                    alt={professional.name}
-              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-                  />
+                  {(professional.image && professional.image !== '/images/placeholder.jpeg') ? (
+                    <img
+                      src={professional.image}
+                      alt={professional.name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                      onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-lg flex items-center justify-center">
+                      <span className="text-xl font-semibold text-gray-500">
+                        {professional.name?.charAt(0)?.toUpperCase() || 'P'}
+                      </span>
+                    </div>
+                  )}
                 <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
@@ -846,10 +912,10 @@ const ProfessionalProfile = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Info</h3>
               <div className="space-y-3">
-                {professional.user?.phone && (
+                {(professional.phone || professional.user?.phone) && (
                   <div className="flex items-center gap-3">
                     <FaPhone className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-700">{professional.user.phone}</span>
+                    <span className="text-gray-700">{professional.phone || professional.user?.phone}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-3">

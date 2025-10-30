@@ -26,11 +26,29 @@ const MessageBubble = ({
   canDelete = false,
   isSelected = false,
   onSelect = null,
-  showBulkActions = false
+  showBulkActions = false,
+  onActivateBulkActions = null
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.content?.text || '');
+  const [pressTimer, setPressTimer] = useState(null);
+
+  const beginLongPress = () => {
+    if (!onActivateBulkActions || !onSelect) return;
+    const timer = setTimeout(() => {
+      onActivateBulkActions();
+      onSelect(message._id);
+    }, 400);
+    setPressTimer(timer);
+  };
+
+  const cancelLongPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      setPressTimer(null);
+    }
+  };
 
   const handleEdit = () => {
     if (editText.trim() && editText !== message.content?.text) {
@@ -187,7 +205,7 @@ const MessageBubble = ({
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSelected ? 'bg-blue-50 rounded-lg p-2' : ''}`}>
       {/* Selection checkbox for bulk actions */}
-      {showBulkActions && isOwn && onSelect && (
+      {showBulkActions && onSelect && (
         <div className="flex items-center mr-2">
           <input
             type="checkbox"
@@ -213,6 +231,16 @@ const MessageBubble = ({
           }`}
           onMouseEnter={() => setShowActions(true)}
           onMouseLeave={() => setShowActions(false)}
+          onContextMenu={(e) => {
+            if (onActivateBulkActions && onSelect) {
+              e.preventDefault();
+              onActivateBulkActions();
+              onSelect(message._id);
+            }
+          }}
+          onTouchStart={beginLongPress}
+          onTouchEnd={cancelLongPress}
+          onTouchCancel={cancelLongPress}
         >
           {renderReplyPreview()}
           

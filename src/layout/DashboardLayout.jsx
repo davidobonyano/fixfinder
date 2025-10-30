@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
+import { getMyLocation } from '../utils/api';
 import { 
   FaHome, 
   FaUser, 
@@ -31,6 +32,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
   const { socket, isConnected } = useSocket();
   const { info } = useToast();
   const navigate = useNavigate();
+  const [myLocation, setMyLocation] = useState(null);
 
   const handleLogout = () => {
     logout();
@@ -40,6 +42,13 @@ const DashboardLayout = ({ userType = 'user' }) => {
   // Fetch notifications on mount
   useEffect(() => {
     fetchNotifications();
+    // Also fetch my current location
+    (async () => {
+      try {
+        const res = await getMyLocation();
+        if (res?.location) setMyLocation(res.location);
+      } catch (_) {}
+    })();
   }, []);
 
   // Listen for real-time notifications via Socket.IO
@@ -267,6 +276,15 @@ const DashboardLayout = ({ userType = 'user' }) => {
             </button>
             
             <div className="flex items-center space-x-4">
+              {/* Current Location Chip */}
+              {myLocation && (
+                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs border border-blue-200">
+                  <span>📍 {myLocation.city || myLocation.state || 'Unknown'}</span>
+                  {myLocation.state && myLocation.city ? (
+                    <span className="opacity-70">({myLocation.state})</span>
+                  ) : null}
+                </div>
+              )}
               {/* Notifications Bell with Dropdown */}
               <div className="relative">
                 <button 

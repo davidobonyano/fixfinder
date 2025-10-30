@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaClock, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes } from 'react-icons/fa';
-import { getConnections, removeConnection, createOrGetConversation } from '../../utils/api';
+import { getConnections, removeConnection, createOrGetConversation, getUser, getProfessional } from '../../utils/api';
+import UserFullProfileModal from '../../components/UserFullProfileModal';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
+import { useLocation as useLocationHook } from '../../hooks/useLocation';
+import { calculateDistance as haversineDistance, formatDistance } from '../../utils/locationUtils';
 
 const ConnectedUsers = () => {
   const { user } = useAuth();
@@ -20,36 +23,208 @@ const ConnectedUsers = () => {
   });
   const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const [userToUnfriend, setUserToUnfriend] = useState(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
+  const [fullProfileUser, setFullProfileUser] = useState(null);
+  const { location: detectedLocation } = useLocationHook(false);
+  const savedLat = (user?.location?.coordinates?.lat ?? user?.location?.latitude);
+  const savedLng = (user?.location?.coordinates?.lng ?? user?.location?.longitude);
+  const userLat = detectedLocation?.latitude ?? (savedLat != null ? Number(savedLat) : undefined);
+  const userLng = detectedLocation?.longitude ?? (savedLng != null ? Number(savedLng) : undefined);
+
+  // Debug: log each connected professional's coords and computed distance whenever list or user location changes
+  useEffect(() => {
+    try {
+      if (!Array.isArray(connections) || !userLat || !userLng) return;
+      connections.forEach((c) => {
+        if (c?.userType === 'professional' && c?.location?.coordinates) {
+          const d = haversineDistance(
+            Number(userLat),
+            Number(userLng),
+            Number(c.location.coordinates.lat),
+            Number(c.location.coordinates.lng)
+          );
+          console.log('🧭 Connected Pro distance debug:', {
+            name: c.name,
+            userLat, userLng,
+            proLat: c.location.coordinates.lat,
+            proLng: c.location.coordinates.lng,
+            distanceKm: d
+          });
+        }
+      });
+    } catch (e) {}
+  }, [connections, userLat, userLng]);
+
+  // Use same image resolution approach as chat: prefer profilePicture, then avatarUrl
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const resolveImageUrl = (url) => {
+    if (!url) return '/images/placeholder.jpeg';
+    const trimmed = typeof url === 'string' ? url.trim() : url;
+    if (
+      trimmed.startsWith('http') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('//')
+    ) {
+      return trimmed;
+    }
+    // Handle relative paths with or without leading slash (e.g., "uploads/.." or "/uploads/..")
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${API_BASE}${normalized}`;
+  };
 
   useEffect(() => {
+    if (!user?.role) return; // Wait for role to be available to avoid wrong mapping
     loadConnections();
-  }, []);
+  }, [user?.role]);
 
   const loadConnections = async () => {
     try {
       setLoading(true);
       const response = await getConnections();
       if (response.success) {
-        // For professionals, we want to show the users who sent them connection requests
-        const userConnections = response.data.map(conn => {
-          // If current user is the professional, show the requester (user)
-          if (conn.professional?.user?.toString() === user?.id) {
+        // Normalize connected counterpart based on current user's role (stable and explicit)
+        const userConnections = (response.data || [])
+          .map((conn) => {
+            try {
+              console.log('🧩 Raw connection item:', {
+                requester: {
+                  id: conn?.requester?._id,
+                  name: conn?.requester?.name || conn?.requester?.fullName,
+                  profilePicture: conn?.requester?.profilePicture,
+                  avatarUrl: conn?.requester?.avatarUrl,
+                  imageUrl: conn?.requester?.imageUrl,
+                  photoUrl: conn?.requester?.photoUrl
+                },
+                professional: {
+                  id: conn?.professional?._id,
+                  name: conn?.professional?.name || conn?.professional?.businessName,
+                  photos: Array.isArray(conn?.professional?.photos) ? conn.professional.photos.slice(0, 1) : conn?.professional?.photos,
+                  profilePicture: conn?.professional?.profilePicture,
+                  avatarUrl: conn?.professional?.avatarUrl,
+                  image: conn?.professional?.image,
+                  user_profilePicture: conn?.professional?.user?.profilePicture,
+                  user_avatarUrl: conn?.professional?.user?.avatarUrl
+                }
+              });
+            } catch (e) {}
+            if (user?.role === 'professional') {
+              // Show the requester (a user document)
+              const requester = conn?.requester || {};
+              const image = requester.profilePicture
+                || requester.avatarUrl
+                || requester.imageUrl
+                || requester.photoUrl
+                || requester.user?.profilePicture
+                || requester.user?.avatarUrl
+                || requester.profile?.profilePicture
+                || requester.picture
+                || requester.image
+                || requester.photo;
+              return {
+                _id: requester._id || requester.id || conn?.requesterId,
+                name: requester.name || requester.fullName || 'Unknown',
+                // Keep legacy field for compatibility, but render with image
+                profilePicture: requester.profilePicture || requester.avatarUrl || requester.imageUrl || requester.photoUrl || requester.user?.profilePicture || requester.user?.avatarUrl || requester.profile?.profilePicture || requester.picture || requester.image || requester.photo,
+                image,
+                rating: requester.rating,
+                category: 'User',
+                connectionId: conn?._id,
+                userType: 'user',
+                location: requester.location
+              };
+            }
+            // Current user is a user; show the professional profile
+            const pro = conn?.professional || {};
+            // For cards, prefer profile avatar, not portfolio; portfolio can be used as cover elsewhere
+            const proImage = pro.user?.profilePicture
+              || pro.user?.avatarUrl
+              || pro.profilePicture
+              || pro.avatarUrl
+              || pro.image
+              || (Array.isArray(pro.photos) && pro.photos[0]);
             return {
-              ...conn.requester,
-              connectionId: conn._id,
-              userType: 'user'
+              _id: pro._id || pro.id || conn?.professionalId,
+              name: pro.name || pro.businessName || 'Unknown',
+              // Prefer portfolio photo, then pro.profilePicture/avatarUrl, then nested user.profilePicture
+              profilePicture: (Array.isArray(pro.photos) && pro.photos[0]) 
+                || pro.profilePicture 
+                || pro.avatarUrl 
+                || pro.image 
+                || pro.user?.profilePicture 
+                || pro.user?.avatarUrl,
+              image: proImage,
+              rating: pro.rating,
+              category: pro.category || 'Professional',
+              connectionId: conn?._id,
+              userType: 'professional',
+              location: pro.location
             };
-          }
-          // If current user is the requester, show the professional
-          else {
-            return {
-              ...conn.professional,
-              connectionId: conn._id,
-              userType: 'professional'
-            };
-          }
-        }).filter(conn => conn && conn.connectionId); // Filter out any invalid connections
+          })
+          .filter(c => c && c.connectionId && c._id);
+        try {
+          console.log('🔎 ConnectedUsers mapped:', userConnections.map(u => ({
+            id: u._id,
+            name: u.name,
+            profilePicture: u.profilePicture,
+            image: u.image,
+            userType: u.userType,
+            category: u.category
+          })));
+        } catch (e) {}
+
         setConnections(userConnections);
+
+        // Enrich missing media and locations
+        const needsEnrichment = userConnections.filter(u => (!u.image && !u.profilePicture) || !u.location || !u.location?.coordinates);
+        if (needsEnrichment.length > 0) {
+          try {
+            const enriched = await Promise.all(userConnections.map(async (u) => {
+              const hasMedia = !!(u.image || u.profilePicture);
+              const hasCoords = !!(u.location?.coordinates?.lat && u.location?.coordinates?.lng);
+              if (hasMedia && hasCoords) return u;
+              try {
+                if (u.userType === 'user') {
+                  const userData = await getUser(u._id);
+                  try { console.log('👤 getUser response:', userData); } catch (e) {}
+                  const userPayload = userData?.data || userData; // handle wrapped responses
+                  const rawImage = userPayload?.profilePicture
+                    || userPayload?.avatarUrl
+                    || userPayload?.imageUrl
+                    || userPayload?.photoUrl
+                    || userPayload?.profile?.profilePicture
+                    || userPayload?.picture
+                    || userPayload?.image
+                    || userPayload?.photo;
+                  const image = resolveImageUrl(rawImage);
+                  try { console.log('👤 chosen user image:', rawImage, '→', image); } catch (e) {}
+                  const location = userPayload?.location || u.location;
+                  return { ...u, image: rawImage ? image : u.image, location };
+                } else if (u.userType === 'professional') {
+                  const proData = await getProfessional(u._id, { byUser: false });
+                  try { console.log('🧑‍🔧 getProfessional response:', proData); } catch (e) {}
+                  const proPayload = proData?.data || proData; // handle wrapped responses
+                  const rawImage = (Array.isArray(proPayload?.photos) && proPayload.photos[0])
+                    || proPayload?.user?.profilePicture
+                    || proPayload?.user?.avatarUrl
+                    || proPayload?.profilePicture
+                    || proPayload?.avatarUrl
+                    || proPayload?.image;
+                  const image = resolveImageUrl(rawImage);
+                  try { console.log('🧑‍🔧 chosen pro image:', rawImage, '→', image); } catch (e) {}
+                  const location = proPayload?.location || u.location;
+                  return { ...u, image: rawImage ? image : u.image, location };
+                }
+              } catch (e) {
+                // Ignore enrichment errors per entry
+              }
+              return u;
+            }));
+            setConnections(enriched);
+          } catch (e) {
+            // Ignore enrichment batch errors
+          }
+        }
       }
     } catch (err) {
       console.error('Error loading connections:', err);
@@ -95,13 +270,32 @@ const ConnectedUsers = () => {
         console.log('✅ Conversation created/found:', response.data);
         // Use the correct dashboard route based on user type
         const basePath = user?.role === 'professional' ? '/dashboard/professional' : '/dashboard';
-        navigate(`${basePath}/messages/${response.data._id}`);
+        navigate(`${basePath}/messages/${response.data._id}`, { state: { conversation: response.data } });
       } else {
         error('Failed to create conversation');
       }
     } catch (err) {
       error('Failed to start chat');
       console.error('Error starting chat:', err);
+    }
+  };
+
+  const handleViewFullProfile = async (connectedUser) => {
+    try {
+      if (connectedUser.userType === 'user') {
+        const resp = await getUser(connectedUser._id);
+        const payload = resp?.data || resp;
+        setFullProfileUser(payload || connectedUser);
+        setShowFullProfile(true);
+      } else {
+        // For professionals, redirect to profile route for now
+        const path = `/professional/${connectedUser._id}`;
+        navigate(path);
+      }
+    } catch (e) {
+      // Fallback to showing what we have
+      setFullProfileUser(connectedUser);
+      setShowFullProfile(true);
     }
   };
 
@@ -115,7 +309,7 @@ const ConnectedUsers = () => {
     return matchesService && matchesLocation && matchesRating;
   });
 
-  if (loading) {
+  if (loading || !user?.role) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -198,33 +392,57 @@ const ConnectedUsers = () => {
               <div
                 key={connectedUser._id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                onClick={() => connectedUser.userType === 'user' ? handleViewFullProfile(connectedUser) : undefined}
+                style={{ cursor: connectedUser.userType === 'user' ? 'pointer' : undefined }}
               >
                 <div className="relative">
                   <img
-                    src={connectedUser.profilePicture || '/images/placeholder.jpeg'}
+                    src={resolveImageUrl(connectedUser.image || connectedUser.profilePicture)}
                     alt={connectedUser.name}
                     className="w-full h-48 object-cover"
+                    onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
                   />
                 </div>
                 
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{connectedUser.name}</h3>
-                    <div className="flex items-center gap-1">
-                      <FaStar className="w-4 h-4 text-yellow-400" />
-                      <span className="text-sm font-medium text-gray-700">
-                        {connectedUser.rating || '4.5'}
+                    {connectedUser.location?.coordinates && userLat && userLng && (
+                      <span className="text-sm font-medium text-green-700">
+                        {formatDistance(haversineDistance(
+                          Number(userLat),
+                          Number(userLng),
+                          Number(connectedUser.location.coordinates.lat),
+                          Number(connectedUser.location.coordinates.lng)
+                        ))}
                       </span>
-                    </div>
+                    )}
                   </div>
                   
                   <p className="text-gray-600 mb-2">{connectedUser.category || 'User'}</p>
+                {connectedUser.userType === 'professional' && connectedUser.location?.coordinates && userLat && userLng && (
+                  <div className="text-sm text-gray-700 mb-2">
+                    {formatDistance(
+                      haversineDistance(
+                        Number(userLat),
+                        Number(userLng),
+                        Number(connectedUser.location.coordinates.lat),
+                        Number(connectedUser.location.coordinates.lng)
+                      )
+                    )}
+                  </div>
+                )}
                   
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                     <div className="flex items-center gap-1">
                       <FaClock className="w-3 h-3" />
                       <span>Available</span>
                     </div>
+                    {connectedUser.location?.address && (
+                      <div className="truncate" title={connectedUser.location.address}>
+                        <span className="text-gray-500">{connectedUser.location.address}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex gap-2">
@@ -255,9 +473,10 @@ const ConnectedUsers = () => {
               >
                 <div className="flex items-start gap-4">
                   <img
-                    src={connectedUser.profilePicture || '/images/placeholder.jpeg'}
+                    src={resolveImageUrl(connectedUser.image || connectedUser.profilePicture)}
                     alt={connectedUser.name}
                     className="w-20 h-20 object-cover rounded-lg"
+                    onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
                   />
                   
                   <div className="flex-1">
@@ -266,21 +485,26 @@ const ConnectedUsers = () => {
                         <h3 className="text-lg font-semibold text-gray-900">{connectedUser.name}</h3>
                         <p className="text-gray-600">{connectedUser.category || 'User'}</p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <FaStar className="w-4 h-4 text-yellow-400" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {connectedUser.rating || '4.5'}
-                          </span>
-                        </div>
-                      </div>
+                      <div className="flex items-center gap-2" />
                     </div>
                     
                     <div className="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                    <div className="flex items-center gap-1">
+                      <FaClock className="w-3 h-3" />
+                      <span>Available</span>
+                    </div>
+                    {connectedUser.location?.coordinates && userLat && userLng && (
                       <div className="flex items-center gap-1">
-                        <FaClock className="w-3 h-3" />
-                        <span>Available</span>
+                        <span className="text-green-700 font-medium">
+                          {formatDistance(haversineDistance(
+                            Number(userLat),
+                            Number(userLng),
+                            Number(connectedUser.location.coordinates.lat),
+                            Number(connectedUser.location.coordinates.lng)
+                          ))}
+                        </span>
                       </div>
+                    )}
                     </div>
 
                     <div className="flex gap-3">
@@ -344,6 +568,13 @@ const ConnectedUsers = () => {
           </div>
         </div>
       )}
+
+      {/* Full Profile Modal */}
+      <UserFullProfileModal
+        isOpen={showFullProfile}
+        onClose={() => setShowFullProfile(false)}
+        user={fullProfileUser}
+      />
     </div>
   );
 };

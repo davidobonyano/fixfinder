@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   FaSearch, 
   FaPaperPlane, 
@@ -42,7 +42,10 @@ import {
   deleteMyMessagesInConversation,
   deleteConversation as deleteConversationApi,
   getConnections,
-  removeConnection
+  removeConnection,
+  getUser,
+  deleteAllMessagesForMe,
+  deleteConversationForMe
 } from '../../utils/api';
 import { compressImage, validateImageFile } from '../../utils/imageCompression';
 import FriendsMap from '../../components/FriendsMap';
@@ -51,9 +54,11 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import PrivacySettings from '../../components/PrivacySettings';
 import ChatWindow from '../../components/ChatWindow';
 import useLocationSessionManager from '../../hooks/useLocationSessionManager';
+import UserAvatar from '../../components/UserAvatar';
 
 const Messages = () => {
   const { conversationId } = useParams();
+  const location = useLocation();
   const { user } = useAuth();
   const { socket, isConnected, emit, on, off } = useSocket();
   const navigate = useNavigate();
@@ -62,6 +67,7 @@ const Messages = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [hiddenMessageIds, setHiddenMessageIds] = useState(new Set());
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -88,6 +94,106 @@ const Messages = () => {
 
   const messagesEndRef = useRef(null);
 
+  // Keep hydrated users in a map
+  const [hydratedUsers, setHydratedUsers] = useState({});
+
+  // Place helper functions before anything uses them:
+  const getOtherParticipantUser = (otherParticipant) => {
+    // If participant has user data, return it
+    if (otherParticipant?.user) {
+      return otherParticipant.user;
+    }
+    
+    // If participant has no user data but has userType, we need to fetch it
+    // For now, return a placeholder object
+    if (otherParticipant?.userType) {
+      return {
+        _id: otherParticipant._id,
+        name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
+        email: 'Unknown',
+        role: otherParticipant.userType
+      };
+    }
+    
+    return null;
+  };
+
+  const getOtherParticipant = (conversation) => {
+    if (!conversation || !user) return null;
+    
+    if (conversation.participants) {
+      // Find the participant that is not the current user
+      const otherParticipant = conversation.participants.find(p => {
+        // If participant has a user object, check by user._id
+        if (p.user && p.user._id) {
+          return p.user._id !== user.id;
+        }
+        
+        // If participant has no user object but has userType, check by userType
+        if (!p.user && p.userType) {
+          // If current user is professional, look for user type participant
+          if (user.role === 'professional' && p.userType === 'user') {
+            return true;
+          }
+          // If current user is user, look for professional type participant
+          if (user.role === 'user' && p.userType === 'professional') {
+            return true;
+          }
+        }
+        
+        return false;
+      });
+      
+      // If we found a participant but it doesn't have user data, try to create a placeholder
+      if (otherParticipant && !otherParticipant.user && otherParticipant.userType) {
+        return {
+          ...otherParticipant,
+          user: {
+            _id: otherParticipant._id,
+            name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
+            email: 'Unknown',
+            role: otherParticipant.userType
+          }
+        };
+      }
+      
+      return otherParticipant;
+    }
+    
+    return null;
+  };
+
+  // Before any use or hydration:
+  const filteredConversations = conversations.filter(conv => {
+    const otherParticipant = getOtherParticipant(conv);
+    const matchName = otherParticipant?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchJob = conv.job?.title?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchName || matchJob;
+  });
+
+  // Hydrate users in conversations sidebar if image missing
+  useEffect(() => {
+    async function hydrateAll() {
+      const updates = {};
+      await Promise.all(filteredConversations.map(async conv => {
+        const participant = getOtherParticipant(conv)?.user;
+        if (participant?._id && !(participant.profilePicture || participant.avatarUrl)) {
+          try {
+            const res = await getUser(participant._id);
+            if (res && res.data) {
+              updates[participant._id] = { ...participant, ...res.data };
+            }
+          } catch (_) {}
+        } else if (participant?._id) {
+          updates[participant._id] = participant;
+        }
+      }));
+      setHydratedUsers(prev => ({ ...prev, ...updates }));
+    }
+    hydrateAll();
+    // eslint-disable-next-line
+  }, [filteredConversations.map(conv => getOtherParticipant(conv)?.user?._id).join(','), filteredConversations.length]);
+
   // Location session manager
   const {
     timeRemaining,
@@ -103,9 +209,12 @@ const Messages = () => {
         const response = await getConversations();
         if (response.success) {
           setConversations(response.data);
-          
-          // If conversationId is provided, select that conversation
-          if (conversationId) {
+          // Prefer conversation passed via navigation state (fresh create)
+          const stateConversation = location.state?.conversation;
+          if (stateConversation) {
+            setSelectedConversation(stateConversation);
+          } else if (conversationId) {
+            // If conversationId is provided, select that conversation
             const conversation = response.data.find(conv => conv._id === conversationId);
             if (conversation) {
               setSelectedConversation(conversation);
@@ -120,12 +229,23 @@ const Messages = () => {
     };
 
     loadConversations();
-  }, [conversationId, user]);
+  }, [conversationId, user, location.state]);
 
   // Load messages for selected conversation
   useEffect(() => {
     if (selectedConversation) {
       loadMessages(selectedConversation._id);
+      // load hidden ids for this conversation from localStorage
+      try {
+        const raw = localStorage.getItem(`hiddenMsgs:${selectedConversation._id}`);
+        if (raw) {
+          setHiddenMessageIds(new Set(JSON.parse(raw)));
+        } else {
+          setHiddenMessageIds(new Set());
+        }
+      } catch (_) {
+        setHiddenMessageIds(new Set());
+      }
       
       // Join conversation room for real-time updates
       if (socket && isConnected) {
@@ -326,6 +446,20 @@ const Messages = () => {
     }
   };
 
+  const hideMessagesForMe = (ids) => {
+    if (!selectedConversation || !ids || ids.length === 0) return;
+    setHiddenMessageIds(prev => {
+      const next = new Set(prev);
+      ids.forEach(id => next.add(id));
+      try {
+        localStorage.setItem(`hiddenMsgs:${selectedConversation._id}` , JSON.stringify(Array.from(next)));
+      } catch (_) {}
+      return next;
+    });
+  };
+
+  const visibleMessages = messages.filter(m => !hiddenMessageIds.has(m._id));
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -433,71 +567,6 @@ const Messages = () => {
     }
   };
 
-  const getOtherParticipantUser = (otherParticipant) => {
-    // If participant has user data, return it
-    if (otherParticipant?.user) {
-      return otherParticipant.user;
-    }
-    
-    // If participant has no user data but has userType, we need to fetch it
-    // For now, return a placeholder object
-    if (otherParticipant?.userType) {
-      return {
-        _id: otherParticipant._id,
-        name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
-        email: 'Unknown',
-        role: otherParticipant.userType
-      };
-    }
-    
-    return null;
-  };
-
-  const getOtherParticipant = (conversation) => {
-    if (!conversation || !user) return null;
-    
-    if (conversation.participants) {
-      // Find the participant that is not the current user
-      const otherParticipant = conversation.participants.find(p => {
-        // If participant has a user object, check by user._id
-        if (p.user && p.user._id) {
-          return p.user._id !== user.id;
-        }
-        
-        // If participant has no user object but has userType, check by userType
-        if (!p.user && p.userType) {
-          // If current user is professional, look for user type participant
-          if (user.role === 'professional' && p.userType === 'user') {
-            return true;
-          }
-          // If current user is user, look for professional type participant
-          if (user.role === 'user' && p.userType === 'professional') {
-            return true;
-          }
-        }
-        
-        return false;
-      });
-      
-      // If we found a participant but it doesn't have user data, try to create a placeholder
-      if (otherParticipant && !otherParticipant.user && otherParticipant.userType) {
-        return {
-          ...otherParticipant,
-          user: {
-            _id: otherParticipant._id,
-            name: otherParticipant.userType === 'user' ? 'User' : 'Professional',
-            email: 'Unknown',
-            role: otherParticipant.userType
-          }
-        };
-      }
-      
-      return otherParticipant;
-    }
-    
-    return null;
-  };
-
   const formatTime = (date) => {
     const d = new Date(date);
     const now = new Date();
@@ -521,13 +590,6 @@ const Messages = () => {
     if (hours < 24) return `last seen ${hours} hour${hours>1?'s':''} ago`;
     return `last seen on ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
-
-  const filteredConversations = conversations.filter(conv => {
-    const otherParticipant = getOtherParticipant(conv);
-    const matchName = otherParticipant?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchJob = conv.job?.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchName || matchJob;
-  });
 
   const handleDeleteConfirm = () => {
     setShowDeleteConfirmModal(true);
@@ -555,7 +617,7 @@ const Messages = () => {
     if (!selectedConversation) return;
     
     try {
-      const response = await deleteMyMessagesInConversation(selectedConversation._id);
+      const response = await deleteAllMessagesForMe(selectedConversation._id);
       if (response.success) {
         // Clear messages
         setMessages([]);
@@ -566,13 +628,59 @@ const Messages = () => {
     }
   };
 
+  const handleDeleteAllMessagesInChat = async () => {
+    if (!selectedConversation) return;
+    try {
+      const response = await deleteConversationApi(selectedConversation._id);
+      if (response.success) {
+        setMessages([]);
+        // Optionally, remove from sidebar too:
+        setConversations(prev => prev.filter(c => c._id !== selectedConversation._id));
+        setSelectedConversation(null);
+        console.log('✅ All messages in chat deleted');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting all messages in chat:', error);
+    }
+  };
+
+  const handleDeleteAllMessagesForMe = async () => {
+    if (!selectedConversation) return;
+    try {
+      const response = await deleteAllMessagesForMe(selectedConversation._id);
+      if (response.success) {
+        setMessages([]);
+        console.log('✅ All messages in this chat are now hidden for me');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting all messages for me:', error);
+    }
+  };
+
+  const handleClearChatForMe = async () => {
+    if (!selectedConversation) return;
+    try {
+      const response = await deleteAllMessagesForMe(selectedConversation._id);
+      if (response.success) {
+        setMessages([]);
+        console.log('✅ All messages in this chat are now hidden for me');
+      }
+    } catch (error) {
+      console.error('❌ Error hiding all messages for me:', error);
+    }
+  };
+
   const handleViewProfile = () => {
     if (!selectedConversation) return;
     const otherParticipant = getOtherParticipant(selectedConversation);
     const otherUser = getOtherParticipantUser(otherParticipant);
     if (otherUser?._id) {
-      // Navigate to the professional's profile
-      navigate(`/professional/${otherUser._id}`);
+      // Navigate to full profile based on role
+      if (otherUser.role === 'professional') {
+        navigate(`/professional/${otherUser._id}`);
+      } else {
+        navigate(`/user/${otherUser._id}`);
+      }
     }
   };
 
@@ -580,6 +688,21 @@ const Messages = () => {
   const handleSavePrivacySettings = (settings) => {
     setPrivacySettings(settings);
     setShowPrivacySettings(false);
+  };
+
+  const handleDeleteConversationForMe = async () => {
+    if (!selectedConversation) return;
+    try {
+      const response = await deleteConversationForMe(selectedConversation._id);
+      if (response.success) {
+        setConversations(prev => prev.filter(c => c._id !== selectedConversation._id));
+        setSelectedConversation(null);
+        console.log('✅ Conversation removed from my feed');
+      }
+    } catch (error) {
+      console.error('❌ Error removing conversation:', error);
+    }
+    setShowDeleteConfirmModal(false);
   };
 
   if (loading) {
@@ -654,11 +777,7 @@ const Messages = () => {
                 >
                   <div className="flex items-start gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-lg font-semibold text-gray-600">
-                          {otherParticipant?.user.name?.charAt(0) || '?'}
-                        </span>
-                      </div>
+                      <UserAvatar user={hydratedUsers[otherParticipant?.user?._id] || otherParticipant?.user} size="lg" />
                       {hasUnread && (
                         <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                           <span className="text-xs text-white font-bold">
@@ -671,10 +790,10 @@ const Messages = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium text-gray-900 truncate">
-                          {otherParticipant?.user.name || 'Unknown User'}
+                          {(hydratedUsers[otherParticipant?.user?._id] || otherParticipant?.user)?.name || 'Unknown User'}
                         </h3>
                         <span className="text-xs text-gray-500">
-                          {formatTime(conversation.updatedAt)}
+                          {presenceByUser[otherParticipant?.user._id]?.isOnline ? 'Online' : formatLastSeen(presenceByUser[otherParticipant?.user._id]?.lastSeen)}
                         </span>
                       </div>
                       
@@ -701,7 +820,7 @@ const Messages = () => {
         {selectedConversation ? (
           <ChatWindow
             conversation={selectedConversation}
-            messages={messages}
+            messages={visibleMessages}
             onMessageSent={(message, tempId, remove) => {
               if (remove) {
                 // Remove the optimistic message
@@ -740,13 +859,14 @@ const Messages = () => {
                 );
               }
             }}
+            onHideMessages={hideMessagesForMe}
             onUpdateMessages={(updater) => {
               setMessages(updater);
             }}
             onBack={() => setSelectedConversation(null)}
             onViewProfile={handleViewProfile}
             onDeleteConversation={handleDeleteConfirm}
-            onDeleteAllMessages={handleDeleteAllMyMessages}
+            onDeleteAllMessages={handleClearChatForMe}
             formatTime={formatTime}
             formatLastSeen={formatLastSeen}
           />
@@ -783,7 +903,7 @@ const Messages = () => {
                 
                 <div className="flex gap-3">
                   <button
-                    onClick={sendLocation}
+                    onClick={handleLocationShareConfirm}
                     disabled={sending}
                     className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
@@ -916,10 +1036,10 @@ const Messages = () => {
         <ConfirmationModal
           isOpen={showDeleteConfirmModal}
           onClose={() => setShowDeleteConfirmModal(false)}
-          onConfirm={deleteConversation}
-          title="Delete Conversation"
-          message={`Are you sure you want to delete this conversation with ${getOtherParticipant(selectedConversation)?.user.name || 'this person'}? This action cannot be undone and all messages will be permanently deleted.`}
-          confirmText="Delete Conversation"
+          onConfirm={handleDeleteConversationForMe}
+          title="Remove Conversation from My Feed"
+          message={`Are you sure you want to remove this conversation with ${getOtherParticipant(selectedConversation)?.user.name || 'this person'} from your feed? This action cannot be undone.`}
+          confirmText="Remove Conversation"
           cancelText="Cancel"
           type="delete"
         />

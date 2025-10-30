@@ -21,6 +21,8 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/useAuth';
 import { getProfessional, getUser } from '../utils/api';
+import UserFullProfileModal from './UserFullProfileModal';
+import { useNavigate } from 'react-router-dom';
 
 const ChatProfileModal = ({ 
   isOpen, 
@@ -30,10 +32,12 @@ const ChatProfileModal = ({
   onViewFullProfile 
 }) => {
   const { user: currentUser } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [professionalData, setProfessionalData] = useState(null);
   const [error, setError] = useState(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -73,13 +77,12 @@ const ChatProfileModal = ({
   if (!isOpen || !user) return null;
 
   return (
+    <>
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">
-            {isProfessional ? 'Professional Profile' : 'User Profile'}
-          </h2>
+          {/* Remove the h2 header "User Profile" or "Professional Profile" */}
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -316,25 +319,17 @@ const ChatProfileModal = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t bg-gray-50">
-          <div className="flex gap-2">
-            <button
-              onClick={onViewFullProfile}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <FaUser className="w-4 h-4" />
-              View Full Profile
-            </button>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        {/* Remove the footer actions (Close button) at:
+            <div className="p-4 border-t bg-gray-50"> ... <button ...>Close</button> ... </div>
+        */}
       </div>
     </div>
+    <UserFullProfileModal
+      isOpen={showFullProfile}
+      onClose={() => setShowFullProfile(false)}
+      user={profileData || user}
+    />
+    </>
   );
 };
 

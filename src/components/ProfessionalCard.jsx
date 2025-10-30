@@ -47,6 +47,20 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
     ? calculateDistance(userLocation[0], userLocation[1], pro.coordinates[0], pro.coordinates[1])
     : null;
 
+  // Debug: log coordinates and computed distance for verification
+  try {
+    if (pro?.coordinates && Array.isArray(pro.coordinates)) {
+      console.log('🧭 ProfessionalCard distance debug:', {
+        name: pro.name,
+        userLat: userLocation?.[0],
+        userLng: userLocation?.[1],
+        proLat: pro.coordinates?.[0],
+        proLng: pro.coordinates?.[1],
+        distanceKm: distance
+      });
+    }
+  } catch (e) {}
+
   return (
     <div className="bg-white rounded-xl shadow-md p-5 transition hover:shadow-xl flex flex-col justify-between">
       <img
