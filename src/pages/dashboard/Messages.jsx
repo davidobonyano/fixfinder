@@ -267,6 +267,13 @@ const Messages = () => {
 
     // Listen for new messages
     const handleNewMessage = (message) => {
+      const existsInList = conversations.some(conv => conv._id === message.conversation);
+      if (!existsInList) {
+        // Refresh conversations so newly unhidden/active thread appears
+        getConversations().then(resp => {
+          if (resp.success) setConversations(resp.data);
+        }).catch(() => {});
+      }
       if (message.conversation === selectedConversation?._id) {
         setMessages(prev => {
           // Check if message already exists to avoid duplicates
@@ -288,6 +295,14 @@ const Messages = () => {
           )
         );
       }
+    };
+
+    // Listen for user-level incoming message notifications to refresh sidebar
+    const handleIncomingMessage = (data) => {
+      // Always refresh conversations so hidden/removed threads reappear only on new activity
+      getConversations().then(resp => {
+        if (resp.success) setConversations(resp.data);
+      }).catch(() => {});
     };
 
     // Listen for typing indicators
@@ -378,6 +393,7 @@ const Messages = () => {
     };
 
     on('receive_message', handleNewMessage);
+    on('incoming_message', handleIncomingMessage);
     on('user_typing', handleTyping);
     on('message_read', handleMessageRead);
     on('presence:update', handlePresence);
@@ -389,6 +405,7 @@ const Messages = () => {
 
     return () => {
       off('receive_message', handleNewMessage);
+      off('incoming_message', handleIncomingMessage);
       off('user_typing', handleTyping);
       off('message_read', handleMessageRead);
       off('presence:update', handlePresence);
@@ -398,7 +415,7 @@ const Messages = () => {
       off('locationStopped', handleLocationStopped);
       off('locationSharingStopped', handleLocationSharingStopped);
     };
-  }, [socket, isConnected, selectedConversation, user, on, off]);
+  }, [socket, isConnected, selectedConversation, user, on, off, conversations]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

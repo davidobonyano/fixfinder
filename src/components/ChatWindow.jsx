@@ -14,7 +14,11 @@ import {
   deleteMessage,
   shareLocation,
   stopLocationShare,
-  deleteMyMessagesInConversation
+  deleteMyMessagesInConversation,
+  createJobRequestInChat,
+  acceptJobRequest,
+  proMarkCompleted,
+  confirmJobCompletion
 } from '../utils/api';
 import MessageBubble from './MessageBubble';
 import ChatHeader from './ChatHeader';
@@ -57,6 +61,15 @@ const ChatWindow = ({
   const [selectedMessages, setSelectedMessages] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [activeJob, setActiveJob] = useState(conversation?.job || null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [jobForm, setJobForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    budgetMin: '',
+    budgetMax: ''
+  });
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
@@ -111,6 +124,7 @@ const ChatWindow = ({
 
   // Seed shared locations from existing messages
   useEffect(() => {
+    setActiveJob(conversation?.job || null);
     try {
       // Only keep last message per user
       const byUser = new Map();
@@ -770,6 +784,86 @@ const ChatWindow = ({
     window.open(mapsUrl, '_blank');
   };
 
+  // ---- Job lifecycle handlers ----
+  const handleCreateJobRequest = async () => {
+    if (!conversation || !user) return;
+    try {
+      setSending(true);
+      const payload = {
+        title: jobForm.title || 'Service Request',
+        description: jobForm.description || 'Details provided in chat.',
+        category: jobForm.category || (otherParticipant?.user?.category) || 'General',
+        location: user?.location ? {
+          address: user.location.address || 'N/A',
+          city: user.location.city || 'N/A',
+          state: user.location.state || 'N/A',
+          coordinates: user.location.coordinates || undefined
+        } : undefined,
+        budget: {
+          min: Number(jobForm.budgetMin) || 0,
+          max: Number(jobForm.budgetMax) || 0
+        },
+        preferredDate: new Date().toISOString(),
+        preferredTime: 'Flexible',
+        urgency: 'Regular'
+      };
+      const resp = await createJobRequestInChat(conversation._id, payload);
+      if (resp?.success) {
+        setActiveJob(resp.data);
+        setShowJobModal(false);
+      }
+    } catch (e) {
+      console.error('Create job request failed:', e);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleAcceptJob = async () => {
+    if (!activeJob) return;
+    try {
+      setSending(true);
+      const resp = await acceptJobRequest(activeJob._id);
+      if (resp?.success) {
+        setActiveJob(resp.data || { ...activeJob, lifecycleState: 'in_progress' });
+      }
+    } catch (e) {
+      console.error('Accept job failed:', e);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleProMarkCompleted = async () => {
+    if (!activeJob) return;
+    try {
+      setSending(true);
+      const resp = await proMarkCompleted(activeJob._id);
+      if (resp?.success) {
+        setActiveJob(resp.data || { ...activeJob, lifecycleState: 'completed_by_pro' });
+      }
+    } catch (e) {
+      console.error('Pro complete failed:', e);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleUserConfirmCompletion = async () => {
+    if (!activeJob) return;
+    try {
+      setSending(true);
+      const resp = await confirmJobCompletion(activeJob._id);
+      if (resp?.success) {
+        setActiveJob(resp.data || { ...activeJob, lifecycleState: 'closed' });
+      }
+    } catch (e) {
+      console.error('Confirm completion failed:', e);
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -803,6 +897,90 @@ const ChatWindow = ({
         distanceFormatted={headerDistance}
         otherAddressLabel={headerAddress}
       />
+
+      {/* Job lifecycle banner */}
+      <div className="px-4 pt-3">
+        {!activeJob && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 flex items-center justify-between">
+            <span>
+              {String(user?.role).toLowerCase() === 'professional' 
+                ? 'Waiting for user to create a job request to start work.'
+                : 'Create a job request so the pro can start work.'}
+            </span>
+            {String(user?.role).toLowerCase() !== 'professional' && (
+              <button
+                onClick={() => setShowJobModal(true)}
+                className="ml-3 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                Create Job Request
+              </button>
+            )}
+          </div>
+        )}
+
+        {activeJob && activeJob.lifecycleState === 'job_requested' && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 flex items-center justify-between">
+            <span>
+              {String(user?.role).toLowerCase() === 'professional' 
+                ? 'Job requested by user. Review and accept to start.'
+                : 'Job created! Waiting for pro to accept.'}
+            </span>
+            {String(user?.role).toLowerCase() === 'professional' && (
+              <button
+                onClick={handleAcceptJob}
+                disabled={sending}
+                className="ml-3 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50"
+              >
+                {sending ? 'Accepting...' : 'Accept Job'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {activeJob && activeJob.lifecycleState === 'in_progress' && (
+          <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-3 flex items-center justify-between">
+            <span>Job is in progress.</span>
+            {String(user?.role).toLowerCase() === 'professional' && (
+              <button
+                onClick={handleProMarkCompleted}
+                disabled={sending}
+                className="ml-3 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50"
+              >
+                {sending ? 'Submitting...' : 'Mark Completed'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {activeJob && activeJob.lifecycleState === 'completed_by_pro' && (
+          <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-lg p-3 flex items-center justify-between">
+            <span>Pro marked this job as completed. Please confirm if work is done.</span>
+            {String(user?.role).toLowerCase() !== 'professional' && (
+              <div className="ml-3 flex gap-2">
+                <button
+                  onClick={handleUserConfirmCompletion}
+                  disabled={sending}
+                  className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
+                >
+                  {sending ? 'Confirming...' : 'Confirm Completion'}
+                </button>
+                <button
+                  onClick={() => {}}
+                  className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded text-sm"
+                >
+                  Dispute
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeJob && activeJob.lifecycleState === 'closed' && (
+          <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3">
+            Job closed. Thank you!
+          </div>
+        )}
+      </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -1047,6 +1225,69 @@ const ChatWindow = ({
         isSharing={isSharingLocation}
         onStartSharing={() => setShowLocationModal(true)}
       />
+
+  {/* Create Job Request Modal */}
+  {showJobModal && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-md w-full p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Job Request</h3>
+        <div className="space-y-3">
+          <input
+            type="text"
+            placeholder="Title"
+            value={jobForm.title}
+            onChange={(e) => setJobForm(prev => ({ ...prev, title: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded"
+          />
+          <input
+            type="text"
+            placeholder="Category (e.g., Electrician)"
+            value={jobForm.category}
+            onChange={(e) => setJobForm(prev => ({ ...prev, category: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded"
+          />
+          <textarea
+            placeholder="Description"
+            value={jobForm.description}
+            onChange={(e) => setJobForm(prev => ({ ...prev, description: e.target.value }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded"
+            rows={3}
+          />
+          <div className="flex gap-2">
+            <input
+              type="number"
+              placeholder="Budget Min"
+              value={jobForm.budgetMin}
+              onChange={(e) => setJobForm(prev => ({ ...prev, budgetMin: e.target.value }))}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded"
+            />
+            <input
+              type="number"
+              placeholder="Budget Max"
+              value={jobForm.budgetMax}
+              onChange={(e) => setJobForm(prev => ({ ...prev, budgetMax: e.target.value }))}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded"
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={handleCreateJobRequest}
+            disabled={sending}
+            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {sending ? 'Creating...' : 'Create'}
+          </button>
+          <button
+            onClick={() => setShowJobModal(false)}
+            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )}
 
       {/* Profile Modal */}
       <ChatProfileModal

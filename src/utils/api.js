@@ -425,3 +425,25 @@ export const deleteConversationForMe = (conversationId) => request(`/api/message
   method: 'DELETE',
   auth: true,
 });
+
+// ----- Job lifecycle (chat-driven) -----
+export const createJobRequestInChat = (conversationId, payload) => request(`/api/jobs/chat/${conversationId}/request`, {
+  method: 'POST',
+  body: payload,
+  auth: true
+});
+
+export const acceptJobRequest = (jobId) => request(`/api/jobs/${jobId}/accept-request`, {
+  method: 'POST',
+  auth: true
+});
+
+export const proMarkCompleted = (jobId) => request(`/api/jobs/${jobId}/complete-by-pro`, {
+  method: 'POST',
+  auth: true
+});
+
+export const confirmJobCompletion = (jobId) => request(`/api/jobs/${jobId}/confirm-completion`, {
+  method: 'POST',
+  auth: true
+});
