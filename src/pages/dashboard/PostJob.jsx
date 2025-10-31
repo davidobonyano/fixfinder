@@ -22,6 +22,7 @@ const PostJob = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    requirements: '',
     category: '',
     location: {},
     budget: {
@@ -80,16 +81,17 @@ const PostJob = () => {
   };
 
   const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newMedia = files.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-      type: file.type.startsWith('image/') ? 'image' : 'video'
-    }));
-    
+    const files = Array.from(e.target.files || []);
+    const firstImage = files.find(f => f.type.startsWith('image/'));
+    if (!firstImage) return;
+    const newItem = {
+      file: firstImage,
+      preview: URL.createObjectURL(firstImage),
+      type: 'image'
+    };
     setFormData(prev => ({
       ...prev,
-      media: [...prev.media, ...newMedia]
+      media: [newItem]
     }));
   };
 
@@ -214,35 +216,29 @@ const PostJob = () => {
       } catch {}
 
       const composedAddress = [locationForm.neighbourhood, lga, state, 'Nigeria'].filter(Boolean).join(', ');
-      const jobData = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        category: formData.category.trim(),
-        location: {
-          address: composedAddress || `${lga || ''}${lga && state ? ', ' : ''}${state || ''}`,
-          city: lga || '',
-          state: state || '',
-          coordinates: lat && lon ? { lat, lng: lon } : undefined
-        },
-        budget: {
-          min: parseFloat(formData.budget.min),
-          max: parseFloat(formData.budget.max)
-        },
-        preferredDate: new Date(formData.preferredDate).toISOString(),
-        preferredTime: formData.preferredTime,
-        urgency: formData.urgency,
-        media: formData.media.map(item => ({
-          type: item.type,
-          url: item.preview, // In real implementation, this would be uploaded to Cloudinary first
-          filename: item.file.name,
-          size: item.file.size
-        }))
-      };
+      // Build multipart FormData for single image upload + JSON fields
+      const form = new FormData();
+      form.append('title', formData.title.trim());
+      form.append('description', formData.description.trim());
+      if (formData.requirements?.trim()) form.append('requirements', formData.requirements.trim());
+      form.append('category', formData.category.trim());
+      form.append('location.address', composedAddress || `${lga || ''}${lga && state ? ', ' : ''}${state || ''}`);
+      form.append('location.city', lga || '');
+      form.append('location.state', state || '');
+      if (lat && lon) {
+        form.append('location.coordinates.lat', String(lat));
+        form.append('location.coordinates.lng', String(lon));
+      }
+      form.append('budget.min', String(parseFloat(formData.budget.min)));
+      form.append('budget.max', String(parseFloat(formData.budget.max)));
+      form.append('preferredDate', new Date(formData.preferredDate).toISOString());
+      form.append('preferredTime', formData.preferredTime);
+      form.append('urgency', formData.urgency);
+      if (formData.media[0]?.file) {
+        form.append('media', formData.media[0].file);
+      }
 
-      console.log('Sending job data:', JSON.stringify(jobData, null, 2));
-      console.log('User:', user);
-      console.log('Auth token:', localStorage.getItem('token'));
-      const response = await createJob(jobData);
+      const response = await createJob(form);
       
       if (response.success) {
         // Redirect to my jobs page
@@ -347,6 +343,27 @@ const PostJob = () => {
             />
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+            )}
+          </div>
+
+          {/* Requirements (optional) */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Requirements (optional) ({formData.requirements.length}/500)
+            </label>
+            <textarea
+              name="requirements"
+              value={formData.requirements}
+              onChange={handleChange}
+              rows={3}
+              placeholder="List any specific requirements, materials, access, or constraints..."
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                errors.requirements ? 'border-red-500' : 'border-gray-300'
+              }`}
+              maxLength={500}
+            />
+            {errors.requirements && (
+              <p className="mt-1 text-sm text-red-600">{errors.requirements}</p>
             )}
           </div>
 
@@ -518,17 +535,16 @@ const PostJob = () => {
           </div>
         </div>
 
-        {/* Media Upload */}
+        {/* Media Upload (single photo) */}
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Photos/Videos (Optional)</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Photo (Optional)</h2>
           
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             <FaUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">Upload photos or videos of your project</p>
+            <p className="text-gray-600 mb-2">Upload one photo of your project</p>
             <input
               type="file"
-              multiple
-              accept="image/*,video/*"
+              accept="image/*"
               onChange={handleFileUpload}
               className="hidden"
               id="media-upload"
@@ -537,7 +553,7 @@ const PostJob = () => {
               htmlFor="media-upload"
               className="inline-block px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
             >
-              Choose Files
+              Choose Photo
             </label>
           </div>
 
@@ -546,19 +562,11 @@ const PostJob = () => {
             <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
               {formData.media.map((item, index) => (
                 <div key={index} className="relative">
-                  {item.type === 'image' ? (
-                    <img
-                      src={item.preview}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <video
-                      src={item.preview}
-                      className="w-full h-24 object-cover rounded-lg"
-                      controls
-                    />
-                  )}
+                  <img
+                    src={item.preview}
+                    alt={`Preview ${index + 1}`}
+                    className="w-full h-24 object-cover rounded-lg"
+                  />
                   <button
                     type="button"
                     onClick={() => removeMedia(index)}

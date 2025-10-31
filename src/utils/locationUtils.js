@@ -179,6 +179,41 @@ export const formatLocation = (location) => {
 };
 
 /**
+ * Reduce a full address to LGA + Country when possible
+ * Example: "Ademola Aransiola , Oshodi Road, Oshodi, Oshodi/Isolo, Lagos, 100271, Nigeria"
+ *  → "Oshodi/Isolo, Nigeria"
+ * Falls back gracefully if it cannot parse.
+ * @param {string} address
+ * @returns {string}
+ */
+export const formatAddressShort = (address) => {
+  if (!address || typeof address !== 'string') return 'Location';
+  const parts = address
+    .split(',')
+    .map(p => p.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return 'Location';
+
+  const country = parts[parts.length - 1];
+  // Prefer any segment that looks like an LGA (commonly contains "/")
+  const lgaCandidate = parts.find(p => p.includes('/'));
+  if (lgaCandidate) return `${lgaCandidate}, ${country}`;
+
+  // Otherwise, pick the nearest meaningful segment before the country
+  for (let i = parts.length - 2; i >= 0; i--) {
+    const seg = parts[i];
+    // Skip postal codes and very short tokens
+    const isNumeric = /^\d{3,}$/.test(seg.replace(/\s+/g, ''));
+    if (!isNumeric && seg.length > 2) {
+      return `${seg}, ${country}`;
+    }
+  }
+
+  // Fallback to country only
+  return country;
+};
+
+/**
  * Generate map URL for OpenStreetMap
  * @param {number} lat 
  * @param {number} lng 

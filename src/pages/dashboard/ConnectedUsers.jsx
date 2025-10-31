@@ -7,7 +7,7 @@ import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { useLocation as useLocationHook } from '../../hooks/useLocation';
-import { calculateDistance as haversineDistance, formatDistance } from '../../utils/locationUtils';
+import { calculateDistance as haversineDistance, formatDistance, formatAddressShort } from '../../utils/locationUtils';
 
 const ConnectedUsers = () => {
   const { user } = useAuth();
@@ -392,8 +392,6 @@ const ConnectedUsers = () => {
               <div
                 key={connectedUser._id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                onClick={() => connectedUser.userType === 'user' ? handleViewFullProfile(connectedUser) : undefined}
-                style={{ cursor: connectedUser.userType === 'user' ? 'pointer' : undefined }}
               >
                 <div className="relative">
                   <img
@@ -401,6 +399,8 @@ const ConnectedUsers = () => {
                     alt={connectedUser.name}
                     className="w-full h-48 object-cover"
                     onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
+                    onClick={() => connectedUser.userType === 'user' ? handleViewFullProfile(connectedUser) : undefined}
+                    style={{ cursor: connectedUser.userType === 'user' ? 'pointer' : undefined }}
                   />
                 </div>
                 
@@ -439,8 +439,8 @@ const ConnectedUsers = () => {
                       <span>Available</span>
                     </div>
                     {connectedUser.location?.address && (
-                      <div className="truncate" title={connectedUser.location.address}>
-                        <span className="text-gray-500">{connectedUser.location.address}</span>
+                      <div className="truncate" title={formatAddressShort(connectedUser.location.address)}>
+                        <span className="text-gray-500">{formatAddressShort(connectedUser.location.address)}</span>
                       </div>
                     )}
                   </div>

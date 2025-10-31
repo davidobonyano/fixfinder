@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FaCheck, FaTimes, FaSpinner } from 'react-icons/fa';
-import { verifyEmail } from '../utils/api';
+import { verifyEmail, getMe } from '../utils/api';
+import { useAuth } from '../context/useAuth';
 
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('');
 
@@ -26,16 +28,22 @@ export default function VerifyEmail() {
         if (response.success) {
           setStatus('success');
           setMessage('Email verified successfully! You can now use all features of FixFinder.');
-          
-          // Redirect to dashboard after 3 seconds
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 3000);
+          // Send to dedicated success page
+          navigate('/verify-email/success', { replace: true });
         } else {
           setStatus('error');
           setMessage(response.message || 'Verification failed');
         }
       } catch (error) {
+        // If token is already used/expired or user already verified, treat as success UX
+        const msg = (error?.message || '').toLowerCase();
+        const likelyAlreadyVerified = msg.includes('already') || msg.includes('verified') || msg.includes('not authorized');
+        if (likelyAlreadyVerified) {
+          setStatus('success');
+          setMessage('Your email is already verified.');
+          navigate('/verify-email/success', { replace: true });
+          return;
+        }
         setStatus('error');
         setMessage(error.message || 'Verification failed. Please try again.');
       }
@@ -71,16 +79,16 @@ export default function VerifyEmail() {
             <p className="text-gray-600 mb-4">{message}</p>
             <div className="space-y-2">
               <button
-                onClick={() => navigate('/dashboard/profile')}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Go to Profile
-              </button>
-              <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
                 className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
               >
-                Go to Dashboard
+                Go Home
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Login
               </button>
             </div>
           </>

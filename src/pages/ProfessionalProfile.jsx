@@ -30,7 +30,7 @@ import {
   FaPlus,
   FaTrash
 } from 'react-icons/fa';
-import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, getUser } from '../utils/api';
+import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, getUser, createOrGetConversation } from '../utils/api';
 import { compressImage, validateImageFile } from '../utils/imageCompression';
 import { compressVideo, validateVideoFile } from '../utils/videoCompression';
 import { useAuth } from '../context/useAuth';
@@ -391,6 +391,28 @@ const ProfessionalProfile = () => {
     }
   };
 
+  const handleStartChat = async () => {
+    try {
+      const otherUserId = (typeof professional.user === 'string')
+        ? professional.user
+        : (professional.user?._id || professional.user?.id);
+      if (!otherUserId) {
+        error('Unable to open chat: missing professional user id.');
+        return;
+      }
+      const resp = await createOrGetConversation({ otherUserId });
+      if (resp?.success && resp?.data?._id) {
+        const basePath = user?.role === 'professional' ? '/dashboard/professional' : '/dashboard';
+        navigate(`${basePath}/messages/${resp.data._id}`, { state: { conversation: resp.data } });
+      } else {
+        error('Failed to open chat. Please try again.');
+      }
+    } catch (e) {
+      console.error('Error starting chat from ProfessionalProfile:', e);
+      error('Failed to open chat. Please try again.');
+    }
+  };
+
   const handleSave = () => {
     setSaved(!saved);
     // TODO: Implement save/unsave functionality
@@ -674,13 +696,13 @@ const ProfessionalProfile = () => {
                       // Connected - show Message and Unfriend buttons
                       return (
                         <>
-                          <Link
-                            to={`/dashboard/messages?professional=${professional._id}`}
+                          <button
+                            onClick={handleStartChat}
                             className="px-6 py-3 rounded-lg flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
                           >
                             <FaComments className="w-4 h-4" />
                             Message
-                          </Link>
+                          </button>
                           <button
                             onClick={handleUnfriend}
                             className="px-6 py-3 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"

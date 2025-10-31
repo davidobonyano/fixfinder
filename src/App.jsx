@@ -32,6 +32,7 @@ import ProAnalytics from "./pages/dashboard/ProAnalytics";
 import ProReviews from "./pages/dashboard/ProReviews";
 import PostJob from "./pages/dashboard/PostJob";
 import MyJobs from "./pages/dashboard/MyJobs";
+import JobApplications from "./pages/dashboard/JobApplications";
 import Messages from "./pages/dashboard/Messages";
 import ChangePassword from "./pages/dashboard/ChangePassword";
 import Login from "./pages/Login";
@@ -42,6 +43,7 @@ import Profile from "./pages/Profile";
 import ProfessionalDetail from "./pages/ProfessionalDetail";
 import ProfessionalForm from "./pages/ProfessionalForm";
 import VerifyEmail from "./pages/VerifyEmail";
+import VerifyEmailSuccess from "./pages/VerifyEmailSuccess";
 import ProfessionalDiscovery from "./pages/ProfessionalDiscovery";
 import ProfessionalsPage from "./pages/dashboard/ProfessionalsPage";
 import ConnectedUsers from "./pages/dashboard/ConnectedUsers";
@@ -86,6 +88,7 @@ const router = createBrowserRouter(
           <Route path="join" element={<Join />} />
           <Route path="verify" element={<Verify />} />
           <Route path="verify-email" element={<VerifyEmail />} />
+          <Route path="verify-email/success" element={<VerifyEmailSuccess />} />
           <Route path="profile" element={<Profile />} />
           <Route path="admin" element={<AdminDashboard />} />
           
@@ -110,6 +113,8 @@ const router = createBrowserRouter(
         <Route path="professionals" element={<ProfessionalsPage />} />
         <Route path="post-job" element={<PostJob />} />
         <Route path="my-jobs" element={<MyJobs />} />
+        <Route path="my-jobs/:jobId" element={<MyJobs />} />
+        <Route path="my-jobs/:jobId/applications" element={<JobApplications />} />
         <Route path="messages" element={<Messages />} />
         <Route path="messages/:conversationId" element={<Messages />} />
         <Route path="notifications" element={<Notifications />} />
@@ -125,6 +130,8 @@ const router = createBrowserRouter(
         <Route path="overview" element={<ProOverview />} />
         <Route path="connected-users" element={<ConnectedUsers />} />
         <Route path="my-jobs" element={<MyJobs />} />
+        <Route path="my-jobs/:jobId" element={<MyJobs />} />
+        <Route path="my-jobs/:jobId/applications" element={<JobApplications />} />
         <Route path="messages" element={<Messages />} />
         <Route path="messages/:conversationId" element={<Messages />} />
         <Route path="notifications" element={<Notifications />} />

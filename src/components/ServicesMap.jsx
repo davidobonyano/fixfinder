@@ -6,6 +6,7 @@ import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaExternalLinkAlt } from 'react-icons/fa';
+import { formatAddressShort } from '../utils/locationUtils';
 
 // Fix for default markers in react-leaflet (Vite/ESM-friendly)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -507,7 +508,7 @@ const ServicesMap = () => {
                     {/* Location */}
                     <div className="text-sm text-gray-600 mb-3">
                       <FaMapMarkerAlt className="w-3 h-3 inline mr-1" />
-                      {professional.location.address}
+                      {formatAddressShort(professional.location.address)}
                     </div>
                     
                     {/* Action Buttons */}

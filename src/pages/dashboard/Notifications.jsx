@@ -18,7 +18,7 @@ import {
   FaTimes as FaX,
   FaSpinner
 } from 'react-icons/fa';
-import { getNotifications, markNotificationAsRead, deleteNotification, acceptConnectionRequest, rejectConnectionRequest } from '../../utils/api';
+import { getNotifications, markNotificationAsRead, deleteNotification, acceptConnectionRequest, rejectConnectionRequest, clearAllNotifications, getConnections } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/ToastContext';
 
@@ -34,6 +34,8 @@ const Notifications = () => {
   const [filter, setFilter] = useState('all'); // all, unread, read
   const [searchQuery, setSearchQuery] = useState('');
   const [processingRequest, setProcessingRequest] = useState(null);
+  const [totalActive, setTotalActive] = useState(0);
+  const INBOX_CAP = 50;
 
   useEffect(() => {
     loadNotifications();
@@ -42,17 +44,46 @@ const Notifications = () => {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      
-      console.log('🔔 Loading notifications...');
-      const response = await getNotifications({ limit: 50 });
-      console.log('📡 Notifications API response:', response);
-      
+      const [response, connectionsResp] = await Promise.all([
+        getNotifications({ limit: INBOX_CAP }),
+        // Fetch accepted connections to reconcile stale connection_request notifications
+        getConnections().catch(() => ({ success: false, data: [] }))
+      ]);
       if (response.success) {
-        console.log('✅ Notifications loaded successfully:', response.data.notifications.length);
-        setNotifications(response.data.notifications || []);
+        const raw = response.data.notifications || [];
+        const acceptedConnectionIds = new Set(
+          Array.isArray(connectionsResp?.data)
+            ? connectionsResp.data.map(c => String(c?._id || c?.id)).filter(Boolean)
+            : []
+        );
+        // Normalize connection request states across duplicates
+        const normalized = (() => {
+          const rank = { connection_accepted: 2, connection_rejected: 1, connection_request: 0 };
+          const reqState = new Map();
+          for (const n of raw) {
+            const reqId = n?.data?.connectionRequestId?._id || n?.data?.connectionRequestId || n?.data?.requestId || n?.data?.metadata?.connectionRequestId || n?.data?.metadata?.requestId;
+            if (!reqId) continue;
+            const r = rank[n.type] ?? -1;
+            const prev = reqState.get(String(reqId)) ?? -1;
+            if (r > prev) reqState.set(String(reqId), r);
+          }
+          return raw.map(n => {
+            const reqId = n?.data?.connectionRequestId?._id || n?.data?.connectionRequestId || n?.data?.requestId || n?.data?.metadata?.connectionRequestId || n?.data?.metadata?.requestId;
+            if (!reqId) return n;
+            const r = reqState.get(String(reqId));
+            if (r === 2 && n.type !== 'connection_accepted') return { ...n, type: 'connection_accepted', isRead: true };
+            // If this request has become an accepted connection, promote to accepted and mark read
+            if (acceptedConnectionIds.has(String(reqId)) && n.type === 'connection_request') {
+              return { ...n, type: 'connection_accepted', isRead: true };
+            }
+            if (r === 1 && n.type !== 'connection_rejected') return { ...n, type: 'connection_rejected', isRead: true };
+            return n;
+          });
+        })();
+        setNotifications(normalized);
+        setTotalActive(response.data.pagination?.total || 0);
         return;
       } else {
-        console.log('❌ Notifications API failed:', response);
         throw new Error(response.message || 'Failed to load notifications');
       }
     } catch (apiError) {
@@ -82,6 +113,7 @@ const Notifications = () => {
     try {
       await deleteNotification(notificationId);
       setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
+      setTotalActive(prev => Math.max(prev - 1, 0));
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -104,43 +136,27 @@ const Notifications = () => {
   const handleAcceptConnection = async (notification) => {
     try {
       setProcessingRequest(notification._id);
-      
-      console.log('🔍 DEBUG - Full notification:', JSON.stringify(notification, null, 2));
-      console.log('🔍 DEBUG - Notification data:', JSON.stringify(notification.data, null, 2));
-      console.log('🔍 DEBUG - Available keys in data:', Object.keys(notification.data || {}));
-      
-      // Use the correct request ID from the notification data
       const requestId = notification.data?.connectionRequestId?._id || 
                        notification.data?.connectionRequestId || 
                        notification.data?.requestId || 
                        notification.data?.metadata?.connectionRequestId ||
                        notification.data?.metadata?.requestId;
-      console.log('🔍 DEBUG - Extracted requestId:', requestId);
-      console.log('🔍 DEBUG - Tried connectionRequestId._id:', notification.data?.connectionRequestId?._id);
-      console.log('🔍 DEBUG - Tried connectionRequestId:', notification.data?.connectionRequestId);
-      console.log('🔍 DEBUG - Tried requestId:', notification.data?.requestId);
-      
       if (!requestId) {
-        console.error('❌ DEBUG - No request ID found. Full notification:', notification);
-        throw new Error('This connection request is no longer valid. It may have been accepted, rejected, or expired.');
+        throw new Error('This connection request is no longer valid.');
       }
-      
-      console.log('🔗 Accepting connection request:', requestId);
       await acceptConnectionRequest(requestId);
-      
-      // Update notification
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif._id === notification._id 
-            ? { ...notif, isRead: true, type: 'connection_accepted' }
-            : notif
-        )
-      );
-      
-      success('Connection accepted! You can now chat with this professional.');
-      
-      // Redirect to connected users page for professionals
+      // Update ALL notifications for this request id to accepted
+      setNotifications(prev => prev.map(notif => {
+        const nReqId = notif.data?.connectionRequestId?._id || notif.data?.connectionRequestId || notif.data?.requestId || notif.data?.metadata?.connectionRequestId || notif.data?.metadata?.requestId;
+        if (nReqId && String(nReqId) === String(requestId)) {
+          return { ...notif, isRead: true, type: 'connection_accepted' };
+        }
+        return notif;
+      }));
+      success('Connection accepted!');
       if (isProDashboard) {
+        // Give backend a brief moment to persist before fetching on next page
+        try { await new Promise(resolve => setTimeout(resolve, 600)); } catch (e) {}
         navigate('/dashboard/professional/connected-users');
       }
     } catch (err) {
@@ -154,23 +170,23 @@ const Notifications = () => {
   const handleRejectConnection = async (notification) => {
     try {
       setProcessingRequest(notification._id);
-      
-      // Use the correct request ID from the notification data
       const requestId = notification.data?.connectionRequestId?._id || 
                        notification.data?.connectionRequestId || 
                        notification.data?.requestId || 
                        notification.data?.metadata?.connectionRequestId ||
                        notification.data?.metadata?.requestId;
       if (!requestId) {
-        throw new Error('This connection request is no longer valid. It may have been accepted, rejected, or expired.');
+        throw new Error('This connection request is no longer valid.');
       }
-      
-      console.log('🚫 Rejecting connection request:', requestId);
       await rejectConnectionRequest(requestId);
-      
-      // Remove notification
-      setNotifications(prev => prev.filter(notif => notif._id !== notification._id));
-      
+      // Update ALL notifications for this request id to rejected
+      setNotifications(prev => prev.map(notif => {
+        const nReqId = notif.data?.connectionRequestId?._id || notif.data?.connectionRequestId || notif.data?.requestId || notif.data?.metadata?.connectionRequestId || notif.data?.metadata?.requestId;
+        if (nReqId && String(nReqId) === String(requestId)) {
+          return { ...notif, isRead: true, type: 'connection_rejected' };
+        }
+        return notif;
+      }));
       success('Connection request rejected');
     } catch (err) {
       error('Failed to reject connection request');
@@ -226,7 +242,6 @@ const Notifications = () => {
     if (Number.isNaN(date.getTime())) return '';
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -238,11 +253,9 @@ const Notifications = () => {
     const matchesFilter = filter === 'all' || 
       (filter === 'unread' && !notif.isRead) || 
       (filter === 'read' && notif.isRead);
-    
     const matchesSearch = !searchQuery || 
       notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notif.message.toLowerCase().includes(searchQuery.toLowerCase());
-    
     return matchesFilter && matchesSearch;
   });
 
@@ -266,19 +279,34 @@ const Notifications = () => {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                Notifications
+                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                  {Math.min(totalActive, INBOX_CAP)}/{INBOX_CAP}
+                </span>
+              </h1>
               <p className="text-gray-600">
                 {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
               </p>
             </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-              >
-                Mark all as read
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  Mark all as read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button
+                  onClick={async () => { try { await clearAllNotifications(); await loadNotifications(); } catch (e) {} }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -410,49 +438,68 @@ const Notifications = () => {
                           View Profile
                         </Link>
                         )}
-                        <button
-                          onClick={() => handleAcceptConnection(notification)}
-                          disabled={processingRequest === notification._id}
-                          className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
-                        >
-                          {processingRequest === notification._id ? (
-                            <FaSpinner className="animate-spin w-3 h-3" />
-                          ) : (
-                            <FaCheck className="w-3 h-3" />
-                          )}
-                          Accept
-                        </button>
-                        <button
-                          onClick={() => handleRejectConnection(notification)}
-                          disabled={processingRequest === notification._id}
-                          className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
-                        >
-                          {processingRequest === notification._id ? (
-                            <FaSpinner className="animate-spin w-3 h-3" />
-                          ) : (
-                            <FaX className="w-3 h-3" />
-                          )}
-                          Reject
-                        </button>
+                        {notification.isRead ? (
+                          <span className="inline-block px-2 py-1 text-xs rounded border bg-gray-50 text-gray-700 border-gray-200">Processed</span>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleAcceptConnection(notification)}
+                              disabled={processingRequest === notification._id}
+                              className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {processingRequest === notification._id ? (
+                                <FaSpinner className="animate-spin w-3 h-3" />
+                              ) : (
+                                <FaCheck className="w-3 h-3" />
+                              )}
+                              Accept
+                            </button>
+                            <button
+                              onClick={() => handleRejectConnection(notification)}
+                              disabled={processingRequest === notification._id}
+                              className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {processingRequest === notification._id ? (
+                                <FaSpinner className="animate-spin w-3 h-3" />
+                              ) : (
+                                <FaX className="w-3 h-3" />
+                              )}
+                              Reject
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {(notification.type === 'connection_accepted' || notification.type === 'connection_rejected') && (
+                      <div className="mt-3">
+                        <span className={`inline-block px-2 py-1 text-xs rounded border ${notification.type === 'connection_accepted' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                          {notification.type === 'connection_accepted' ? 'Accepted' : 'Rejected'}
+                        </span>
                       </div>
                     )}
                     
-                    {notification.type === 'job_application' && notification.data?.jobId && (
+                    {notification.type === 'job_application' && (
                       <div className="mt-3 flex gap-2">
-                        <Link
-                          to={`${basePath}/my-jobs/${notification.data.jobId}`}
+                        <button
+                          onClick={async () => {
+                            try { await handleMarkAsRead(notification._id); } catch {}
+                            const jobId = (
+                              notification.data?.jobId?._id ||
+                              notification.data?.jobId ||
+                              notification.data?.job?._id ||
+                              null
+                            );
+                            if (jobId && typeof jobId === 'string') {
+                              navigate(`/dashboard/my-jobs/${jobId}/applications`);
+                            } else {
+                              navigate(`/dashboard/my-jobs`);
+                            }
+                          }}
                           className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
                         >
-                          View Job
-                        </Link>
-                        {notification.data?.professionalId && (
-                          <Link
-                            to={`${basePath}/professional/${notification.data.professionalId}`}
-                            className="px-3 py-1 bg-gray-600 text-white text-xs rounded-lg hover:bg-gray-700"
-                          >
-                            View Professional
-                          </Link>
-                        )}
+                          {`View applications for ${(notification.data?.jobTitle || notification.message || '').split(':').slice(1).join(':').trim() || 'this job'}`}
+                        </button>
                       </div>
                     )}
                     

@@ -113,16 +113,36 @@ export const getJobFeed = (params = {}) => {
 
 export const getJobDetails = (id) => request(`/api/jobs/${id}`, { auth: true });
 
-export const applyToJob = (id, data) => request(`/api/jobs/${id}/apply`, {
-  method: "POST",
-  body: data,
-  auth: true
-});
+export const applyToJob = (id, data) => {
+  // If a File is provided under data.cvFile, send multipart FormData with field name "cv"
+  if (data && data.cvFile instanceof File) {
+    const form = new FormData();
+    form.append('proposal', data.proposal);
+    form.append('proposedPrice', String(data.proposedPrice ?? ''));
+    form.append('estimatedDuration', data.estimatedDuration || '');
+    form.append('cv', data.cvFile);
+    return request(`/api/jobs/${id}/apply`, {
+      method: 'POST',
+      body: form,
+      auth: true
+    });
+  }
+  return request(`/api/jobs/${id}/apply`, {
+    method: 'POST',
+    body: data,
+    auth: true
+  });
+};
 
 export const acceptApplication = (jobId, applicationId) => request(`/api/jobs/${jobId}/accept/${applicationId}`, {
   method: "POST",
   auth: true
 });
+
+export const getApplicationCvUrl = (jobId, applicationId) => request(`/api/jobs/${jobId}/applications/${applicationId}/cv-url`, { auth: true });
+
+export const deleteJobApplication = (jobId, applicationId) =>
+  request(`/api/jobs/${jobId}/applications/${applicationId}`, { method: 'DELETE', auth: true });
 
 export const completeJob = (id) => request(`/api/jobs/${id}/complete`, {
   method: "POST",
@@ -132,6 +152,11 @@ export const completeJob = (id) => request(`/api/jobs/${id}/complete`, {
 export const cancelJob = (id, data) => request(`/api/jobs/${id}/cancel`, {
   method: "POST",
   body: data,
+  auth: true
+});
+
+export const deleteJobApi = (id) => request(`/api/jobs/${id}`, {
+  method: 'DELETE',
   auth: true
 });
 
@@ -233,6 +258,11 @@ export const markNotificationAsRead = (id) => request(`/api/notifications/${id}/
 
 export const markAllNotificationsAsRead = () => request("/api/notifications/read-all", {
   method: "PUT",
+  auth: true
+});
+
+export const clearAllNotifications = () => request('/api/notifications', {
+  method: 'DELETE',
   auth: true
 });
 

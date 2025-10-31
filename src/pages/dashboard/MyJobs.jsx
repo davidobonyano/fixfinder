@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { 
   FaSearch, 
   FaFilter, 
@@ -19,11 +19,13 @@ import {
   FaBriefcase
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { getMyJobs, getProJobs, completeJob, cancelJob } from '../../utils/api';
+import { getMyJobs, getProJobs, completeJob, cancelJob, deleteJobApi, acceptApplication, createOrGetConversation } from '../../utils/api';
+import { useNavigate as useRouterNavigate } from 'react-router-dom';
 
 const MyJobs = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { jobId } = useParams();
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +45,14 @@ const MyJobs = () => {
           const list = response.data.jobs || response.data || [];
           setJobs(list);
           setFilteredJobs(list);
+          // Auto-open job modal if jobId param is present
+          if (jobId) {
+            const found = list.find(j => String(j._id) === String(jobId));
+            if (found) {
+              setSelectedJob(found);
+              setShowModal(true);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading jobs:', error);
@@ -154,7 +164,7 @@ const MyJobs = () => {
     };
 
     loadJobs();
-  }, [user?.role]);
+  }, [user?.role, jobId]);
 
   // Filter jobs based on search and status
   useEffect(() => {
@@ -318,7 +328,12 @@ const MyJobs = () => {
           </div>
         ) : (
           filteredJobs.map((job) => (
-            <div key={job._id} className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div key={job._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              {Array.isArray(job.media) && job.media[0]?.url && (
+                <div className="w-full bg-gray-50">
+                  <img src={job.media[0].url} alt="job" className="w-full max-h-80 object-cover" />
+                </div>
+              )}
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -384,6 +399,9 @@ const MyJobs = () => {
                     <h4 className="font-medium text-gray-900 mb-2">
                       Applications ({job.applications.length})
                     </h4>
+                    <div className="mb-2">
+                      <Link to={`/dashboard/my-jobs/${job._id}/applications`} className="text-blue-600 text-sm hover:underline">View Applications</Link>
+                    </div>
                     <div className="space-y-2">
                       {job.applications.slice(0, 2).map((app) => (
                         <div key={app._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -392,7 +410,7 @@ const MyJobs = () => {
                               <FaUser className="w-4 h-4 text-gray-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{app.professional.name}</p>
+                              <p className="font-medium text-gray-900">{app.professional?.name || 'Unknown Professional'}</p>
                               <p className="text-sm text-gray-600">{app.proposal}</p>
                             </div>
                           </div>
@@ -453,6 +471,17 @@ const MyJobs = () => {
                         Cancel
                       </button>
                     )}
+                    {job.status === 'Cancelled' && (
+                      <button
+                        onClick={async () => { setActionLoading(true); try { await deleteJobApi(job._id); await reloadJobs(); } finally { setActionLoading(false); } }}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                        title="Delete this cancelled job"
+                      >
+                        <FaTrash className="w-4 h-4" />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -468,6 +497,11 @@ const MyJobs = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
+                <div>
+                  {selectedJob?.applications?.length > 0 && (
+                    <Link to={`/dashboard/my-jobs/${selectedJob._id}/applications`} className="text-blue-600 text-sm hover:underline">View Applications</Link>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -477,31 +511,56 @@ const MyJobs = () => {
               </div>
               
               <div className="space-y-4">
+                {/* Header */}
                 <div>
-                  <h3 className="font-semibold text-gray-900">{selectedJob.title}</h3>
-                  <p className="text-gray-600">{selectedJob.description}</p>
+                  <h3 className="text-2xl font-bold text-gray-900">Looking for: <span className="font-extrabold">{selectedJob.title}</span></h3>
+                  <p className="text-sm text-gray-600 mt-1">{selectedJob.location?.address || selectedJob.location?.city || '—'} • {selectedJob.category}</p>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                {/* Media */}
+                {Array.isArray(selectedJob.media) && selectedJob.media[0]?.url && (
                   <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-medium">{selectedJob.category}</p>
+                    <img src={selectedJob.media[0].url} alt="job" className="w-full max-h-96 object-cover rounded border border-gray-200" />
+                  </div>
+                )}
+
+                {/* Labeled details */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-gray-500">Title</div>
+                    <div className="text-gray-900">{selectedJob.title || '—'}</div>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Budget</p>
-                    <p className="font-medium">
-                      {formatCurrency(selectedJob.budget.min)} - {formatCurrency(selectedJob.budget.max)}
-                    </p>
+                    <div className="text-xs uppercase tracking-wide text-gray-500">Description</div>
+                    <div className="text-gray-900 whitespace-pre-wrap">{selectedJob.description || '—'}</div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Location</p>
-                    <p className="font-medium">
-                      {selectedJob.location.address}, {selectedJob.location.city}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Preferred Date</p>
-                    <p className="font-medium">{formatDate(selectedJob.preferredDate)}</p>
+                  {selectedJob.requirements && (
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Requirements</div>
+                      <div className="text-gray-900 whitespace-pre-wrap">{selectedJob.requirements}</div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Budget</div>
+                      <div className="text-gray-900">{formatCurrency(selectedJob.budget.min)} - {formatCurrency(selectedJob.budget.max)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Urgency</div>
+                      <div className="text-gray-900">{selectedJob.urgency || '—'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Preferred Date</div>
+                      <div className="text-gray-900">{formatDate(selectedJob.preferredDate)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Preferred Time</div>
+                      <div className="text-gray-900">{selectedJob.preferredTime || '—'}</div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <div className="text-xs uppercase tracking-wide text-gray-500">Location</div>
+                      <div className="text-gray-900">{selectedJob.location?.address || selectedJob.location?.city || '—'}</div>
+                    </div>
                   </div>
                 </div>
 
@@ -525,6 +584,44 @@ const MyJobs = () => {
                           <div className="flex items-center justify-between text-sm">
                             <span className="font-medium">{formatCurrency(app.proposedPrice)}</span>
                             <span className="text-gray-600">{app.estimatedDuration}</span>
+                          </div>
+                          <div className="mt-3 flex gap-2">
+                            {selectedJob.status === 'Pending' && app.status === 'Pending' && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    setActionLoading(true);
+                                    const resp = await acceptApplication(selectedJob._id, app._id);
+                                    if (resp?.success) {
+                                      await reloadJobs();
+                                      // Try to open chat with this professional (by user id if available)
+                                      const otherUserId = app.professional?.user || app.professional?._id;
+                                      if (otherUserId) {
+                                        try {
+                                          const conv = await createOrGetConversation({ userId: otherUserId });
+                                          const convId = conv?.data?._id || conv?._id;
+                                          if (convId) {
+                                            navigate(`/dashboard/messages/${convId}`);
+                                          } else {
+                                            navigate(`/dashboard/messages`);
+                                          }
+                                        } catch (_) {
+                                          navigate(`/dashboard/messages`);
+                                        }
+                                      } else {
+                                        navigate(`/dashboard/messages`);
+                                      }
+                                    }
+                                  } finally {
+                                    setActionLoading(false);
+                                  }
+                                }}
+                                disabled={actionLoading}
+                                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Accept & Open Chat
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))}
