@@ -6,7 +6,7 @@ export const saveService = async (data) => {
 };
 
 // ---- Real API client ----
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://fixfinder-backend-8yjj.onrender.com";
 
 export const getAuthToken = () => localStorage.getItem("token") || "";
 export const setAuthToken = (token) => {
@@ -481,3 +481,15 @@ export const confirmJobCompletion = (jobId) => request(`/api/jobs/${jobId}/confi
   method: 'POST',
   auth: true
 });
+
+// ----- Reviews API -----
+export const createReview = (payload) => request(`/api/reviews`, {
+  method: 'POST',
+  body: payload,
+  auth: true
+});
+
+export const getProfessionalReviews = (professionalId, params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/reviews/${professionalId}${query ? `?${query}` : ''}`, { auth: true });
+};

@@ -113,7 +113,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/notifications?limit=20`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com'}/api/notifications?limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -131,7 +131,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/notifications/read-all`, {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com'}/api/notifications/read-all`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -161,7 +161,6 @@ const DashboardLayout = ({ userType = 'user' }) => {
     { path: '/dashboard/post-job', icon: FaPlus, label: 'Post a Job' },
     { path: '/dashboard/my-jobs', icon: FaBriefcase, label: 'My Jobs' },
     { path: '/dashboard/messages', icon: FaComments, label: 'Messages' },
-    { path: '/dashboard/saved', icon: FaHeart, label: 'Saved Pros' },
     { path: '/dashboard/notifications', icon: FaBell, label: 'Notifications' },
     { path: '/dashboard/profile', icon: FaUser, label: 'Profile' }
   ];

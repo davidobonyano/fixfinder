@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes, FaUser } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaFilter, FaSearch, FaTh, FaList, FaTimes, FaUser } from 'react-icons/fa';
 import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation, getProfessional } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
 import { useLocation as useLocationHook } from '../../hooks/useLocation';
@@ -664,22 +664,6 @@ const ProfessionalsPage = () => {
                     alt={professional.name}
                     className="w-full h-48 object-cover"
                   />
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSave(professional._id);
-                      }}
-                      className={`p-2 rounded-full ${
-                        savedProfessionals.has(professional._id)
-                          ? 'bg-red-500 text-white'
-                          : 'bg-white text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <FaHeart className="w-4 h-4" />
-                    </button>
-                  </div>
                   <div className="absolute bottom-3 left-3 bg-white bg-opacity-90 rounded-full px-3 py-1 flex items-center gap-1">
                     <FaMapMarkerAlt className="w-3 h-3 text-gray-600" />
                     <span className="text-sm font-medium text-gray-800">
@@ -812,20 +796,6 @@ const ProfessionalsPage = () => {
                             {professional.rating || '4.5'}
                           </span>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSave(professional._id);
-                          }}
-                          className={`p-2 rounded-full ${
-                            savedProfessionals.has(professional._id)
-                              ? 'bg-red-500 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          <FaHeart className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                     

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaStar, FaClock, FaComments, FaHeart, FaFilter, FaSearch, FaTh, FaList, FaTimes } from 'react-icons/fa';
-import { getConnections, removeConnection, createOrGetConversation, getUser, getProfessional } from '../../utils/api';
+import { getConnections, removeConnection, createOrGetConversation, getUser, getProfessional, getProfessionalReviews } from '../../utils/api';
 import UserFullProfileModal from '../../components/UserFullProfileModal';
 import { useAuth } from '../../context/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -56,7 +56,7 @@ const ConnectedUsers = () => {
   }, [connections, userLat, userLng]);
 
   // Use same image resolution approach as chat: prefer profilePicture, then avatarUrl
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com';
   const resolveImageUrl = (url) => {
     if (!url) return '/images/placeholder.jpeg';
     const trimmed = typeof url === 'string' ? url.trim() : url;
@@ -176,7 +176,7 @@ const ConnectedUsers = () => {
         setConnections(userConnections);
 
         // Enrich missing media and locations
-        const needsEnrichment = userConnections.filter(u => (!u.image && !u.profilePicture) || !u.location || !u.location?.coordinates);
+        const needsEnrichment = userConnections.filter(u => (!u.image && !u.profilePicture) || !u.location || !u.location?.coordinates || (u.userType === 'professional' && (u.rating == null || u.ratingCount == null)));
         if (needsEnrichment.length > 0) {
           try {
             const enriched = await Promise.all(userConnections.map(async (u) => {
@@ -213,7 +213,16 @@ const ConnectedUsers = () => {
                   const image = resolveImageUrl(rawImage);
                   try { console.log('🧑‍🔧 chosen pro image:', rawImage, '→', image); } catch (e) {}
                   const location = proPayload?.location || u.location;
-                  return { ...u, image: rawImage ? image : u.image, location };
+                  let ratingAvg = proPayload?.ratingAvg || proPayload?.rating || 0;
+                  let ratingCount = proPayload?.ratingCount || proPayload?.reviewCount || 0;
+                  try {
+                    // fetch 2 recent reviews
+                    const r = await getProfessionalReviews(proPayload?._id || u._id, { limit: 2 });
+                    const items = r?.data?.reviews || r?.data || [];
+                    return { ...u, image: rawImage ? image : u.image, location, ratingAvg, ratingCount, reviews: items };
+                  } catch (_) {
+                    return { ...u, image: rawImage ? image : u.image, location, ratingAvg, ratingCount };
+                  }
                 }
               } catch (e) {
                 // Ignore enrichment errors per entry

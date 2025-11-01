@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaStar, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { getProOverview } from '../../utils/api';
+import { getProOverview, getProfessional, getProfessionalReviews } from '../../utils/api';
 
 const ProReviews = () => {
   const { user } = useAuth();
@@ -13,9 +13,65 @@ const ProReviews = () => {
     const load = async () => {
       try {
         setLoading(true);
-        // Try backend overview first for ratings summary; fall back to mock
+        console.log('📝 ProReviews: Loading reviews for user:', user?.id);
+        
+        // Resolve professional id by user
+        let proId = null;
         try {
+          const p = await getProfessional(user?.id, { byUser: true });
+          console.log('👤 ProReviews: Professional response:', p);
+          proId = p?.data?._id || p?._id || p?.data?.professional?._id || p?.professional?._id;
+          console.log('🆔 ProReviews: Resolved professional ID:', proId);
+        } catch (err) {
+          console.error('❌ ProReviews: Error getting professional:', err);
+        }
+
+        // Fetch all reviews
+        if (proId) {
+          try {
+            console.log('📋 ProReviews: Fetching reviews for professional ID:', proId);
+            const r = await getProfessionalReviews(proId, { limit: 50 });
+            console.log('📊 ProReviews: Reviews API response:', r);
+            
+            // Handle different response formats
+            let items = [];
+            if (Array.isArray(r)) {
+              items = r;
+            } else if (r?.data?.reviews) {
+              items = Array.isArray(r.data.reviews) ? r.data.reviews : [];
+            } else if (r?.data) {
+              items = Array.isArray(r.data) ? r.data : [];
+            } else if (r?.reviews) {
+              items = Array.isArray(r.reviews) ? r.reviews : [];
+            }
+            
+            console.log('✅ ProReviews: Parsed reviews:', items.length, items);
+            
+            // Show all reviews - calculate summary from all reviews
+            const avg = items.length ? (items.reduce((s, x) => s + Number(x.rating || 0), 0) / items.length) : 0;
+            setSummary({ averageRating: Number(avg.toFixed(1)), totalReviews: items.length });
+            setReviews(items.map(x => ({
+              _id: x._id || x.id,
+              reviewerName: x.user?.name || x.reviewerName || 'Anonymous',
+              rating: Number(x.rating || 0),
+              comment: x.comment || x.review || '',
+              createdAt: x.createdAt || new Date().toISOString(),
+              jobTitle: typeof x.jobId === 'object' && x.jobId?.title ? x.jobId.title : (x.job?.title || ''),
+              jobId: typeof x.jobId === 'object' ? (x.jobId?._id || x.jobId) : (typeof x.job === 'string' ? x.job : (x.job?._id || x.jobId))
+            })));
+            return;
+          } catch (e) {
+            console.error('❌ ProReviews: Error fetching reviews:', e);
+          }
+        } else {
+          console.warn('⚠️ ProReviews: No professional ID found for user:', user?.id);
+        }
+
+        // Fallback to overview summary if detailed list not available
+        try {
+          console.log('📊 ProReviews: Trying getProOverview fallback...');
           const res = await getProOverview();
+          console.log('📊 ProReviews: Overview response:', res);
           if (res?.success) {
             const { averageRating = 0, totalReviews = 0, recentReviews = [] } = res.data || {};
             setSummary({ averageRating, totalReviews });
@@ -24,34 +80,24 @@ const ProReviews = () => {
               return;
             }
           }
-        } catch (_) {}
+        } catch (err) {
+          console.error('❌ ProReviews: Error fetching overview:', err);
+        }
 
-        // Mock reviews
-        const mock = [
-          {
-            _id: 'r1',
-            reviewerName: 'John Doe',
-            rating: 5,
-            comment: 'Excellent service and quick response!',
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
-          },
-          {
-            _id: 'r2',
-            reviewerName: 'Amaka U.',
-            rating: 4,
-            comment: 'Great job, would hire again.',
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
-          }
-        ];
-        const avg = mock.reduce((s, r) => s + r.rating, 0) / mock.length;
-        setSummary({ averageRating: Number(avg.toFixed(1)), totalReviews: mock.length });
-        setReviews(mock);
+        // Final fallback: empty
+        console.warn('⚠️ ProReviews: No reviews found, showing empty state');
+        setSummary({ averageRating: 0, totalReviews: 0 });
+        setReviews([]);
       } finally {
         setLoading(false);
       }
     };
-    load();
-  }, [user?._id]);
+    if (user?.id) {
+      load();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -90,7 +136,7 @@ const ProReviews = () => {
             </div>
             <p className="text-gray-700 text-sm">{rev.comment}</p>
             <p className="text-gray-400 text-xs mt-2">
-              {new Date(rev.createdAt).toLocaleDateString()}
+              {new Date(rev.createdAt).toLocaleDateString()} {rev.jobTitle ? `• ${rev.jobTitle}` : ''}
             </p>
           </div>
         ))}

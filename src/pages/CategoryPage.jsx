@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProfessionals } from '../utils/api';
+import { getProfessionals, getProfessionalReviews } from '../utils/api';
 import ProfessionalCard from '../components/ProfessionalCard';
 import ReviewModal from '../components/ReviewModal';
 import SkeletonCard from '../components/SkeletonCard';
@@ -59,12 +59,7 @@ const CategoryPage = () => {
 
         console.log('Unique professionals after deduplication:', uniqueProfessionals.length);
         
-        // Attach saved reviews from localStorage
-        const stored = localStorage.getItem(LOCAL_KEY);
-        const storedReviews = stored ? JSON.parse(stored) : {};
-
         const enriched = uniqueProfessionals.map((pro) => {
-          const saved = storedReviews[pro.name] || {};
           
           // Convert location coordinates to array format for distance calculation
           let coordinates = null;
@@ -96,11 +91,10 @@ const CategoryPage = () => {
             finalPhotos = ['/images/placeholder.jpeg'];
           }
           
-          return {
+          const base = {
             ...pro,
-            ratingAvg: saved.rating || pro.ratingAvg || 0,
-            ratingCount: saved.reviewCount || pro.ratingCount || 0,
-            reviews: saved.reviews || [],
+            ratingAvg: pro.ratingAvg || 0,
+            ratingCount: pro.ratingCount || 0,
             coordinates,
             // Use real photos if available, otherwise show placeholder
             photos: finalPhotos,
@@ -111,6 +105,7 @@ const CategoryPage = () => {
             // Ensure price exists
             pricePerHour: pro.pricePerHour || 0,
           };
+          return base;
         });
 
         // Sort professionals
@@ -135,7 +130,21 @@ const CategoryPage = () => {
           }
         });
 
-        setPros(sorted);
+        // Fetch top 2 recent reviews for first 6 pros to build confidence
+        const top = sorted.slice(0, 6);
+        try {
+          const withRecent = await Promise.all(top.map(async (p) => {
+            try {
+              const r = await getProfessionalReviews(p._id || p.id, { limit: 2 });
+              const items = r?.data?.reviews || r?.data || [];
+              return { ...p, reviews: items.map(x => ({ text: x.comment || x.review || '', rating: Number(x.rating||0) })) };
+            } catch (_) { return p; }
+          }));
+          const merged = sorted.map(s => withRecent.find(w => (w._id||w.id) === (s._id||s.id)) || s);
+          setPros(merged);
+        } catch (_) {
+          setPros(sorted);
+        }
       } catch (err) {
         console.error('Error fetching professionals:', err);
         setError(err.message || 'Failed to fetch professionals');

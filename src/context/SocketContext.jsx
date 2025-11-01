@@ -20,7 +20,7 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated && user) {
       // Connect to Socket.IO server (with reconnection enabled)
-      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000', {
+      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com', {
         auth: {
           token: localStorage.getItem('token'),
           userId: user.id,

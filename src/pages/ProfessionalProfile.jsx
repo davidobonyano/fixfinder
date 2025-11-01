@@ -30,7 +30,7 @@ import {
   FaPlus,
   FaTrash
 } from 'react-icons/fa';
-import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, getUser, createOrGetConversation } from '../utils/api';
+import { getProfessionalProfile, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, getUser, createOrGetConversation, getProfessionalReviews } from '../utils/api';
 import { compressImage, validateImageFile } from '../utils/imageCompression';
 import { compressVideo, validateVideoFile } from '../utils/videoCompression';
 import { useAuth } from '../context/useAuth';
@@ -59,7 +59,7 @@ const ProfessionalProfile = () => {
   const [showMediaUpload, setShowMediaUpload] = useState(false);
 
   // Normalize/resolve image URLs
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com';
   const resolveImageUrl = (url) => {
     if (!url) return '/images/placeholder.jpeg';
     const trimmed = typeof url === 'string' ? url.trim() : url;
@@ -77,6 +77,17 @@ const ProfessionalProfile = () => {
 
   useEffect(() => {
     loadProfessionalProfile();
+    // Also load latest reviews list (limit to 3 for display)
+    (async () => {
+      try {
+        const r = await getProfessionalReviews(id, { limit: 3 });
+        if (r?.success) {
+          const items = r.data?.reviews || r.data || [];
+          // Don't override rating/reviewCount - use backend aggregated values
+          setProfessional(prev => prev ? { ...prev, reviews: items.slice(0, 3) } : prev);
+        }
+      } catch (_) {}
+    })();
     
     // Get user location if this is the current user's profile
     if (user?.id === id) {
@@ -902,26 +913,36 @@ const ProfessionalProfile = () => {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
               <div className="space-y-4">
-                {professional.reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                {professional.reviews.slice(0, 3).map((review) => (
+                  <div key={review._id || review.id} className="border-b border-gray-100 pb-4 last:border-b-0">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">{review.user}</span>
+                        <span className="font-medium text-gray-900">
+                          {typeof review.user === 'object' 
+                            ? (review.user?.name || review.reviewerName || 'Anonymous')
+                            : (review.user || 'Anonymous')}
+                        </span>
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
                             <FaStar
                               key={i}
                               className={`w-4 h-4 ${
-                                i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                                i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-300'
                               }`}
                             />
                           ))}
                         </div>
                       </div>
-                      <span className="text-sm text-gray-500">{review.date}</span>
+                      <span className="text-sm text-gray-500">
+                        {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : (review.date || '')}
+                      </span>
                     </div>
-                    <p className="text-gray-600 mb-2">{review.comment}</p>
-                    <span className="text-sm text-blue-600">{review.job}</span>
+                    <p className="text-gray-600 mb-2">{review.comment || review.review || ''}</p>
+                    {(review.jobId?.title || review.job) && (
+                      <span className="text-sm text-blue-600">
+                        {typeof review.jobId === 'object' ? review.jobId.title : (review.job || '')}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

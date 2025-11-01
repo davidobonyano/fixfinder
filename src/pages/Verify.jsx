@@ -10,7 +10,7 @@ export default function Verify() {
   const [videoBlob, setVideoBlob] = useState(null);
   const [status, setStatus] = useState("");
 
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "https://fixfinder-backend-8yjj.onrender.com";
 
   const getToken = () => localStorage.getItem("token") || "";
 

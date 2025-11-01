@@ -40,14 +40,185 @@ const MyJobs = () => {
     const loadJobs = async () => {
       setLoading(true);
       try {
-        const response = String(user?.role).toLowerCase() === 'professional' ? await getProJobs() : await getMyJobs();
+        const response = String(user?.role).toLowerCase() === 'professional' 
+          ? await getProJobs({ limit: 100 }) 
+          : await getMyJobs({ limit: 100 }); // Request up to 100 jobs
         if (response.success) {
-          const list = response.data.jobs || response.data || [];
-          setJobs(list);
-          setFilteredJobs(list);
+          const raw = response.data.jobs || response.data || [];
+          const day = (d) => new Date(d || 0).toISOString().slice(0,10);
+          const norm = (s) => String(s || '').trim().toLowerCase();
+          const toCurrency = (n) => Number(n || 0);
+          const statusRank = { 'Cancelled': 3, 'Completed': 2, 'In Progress': 1, 'Pending': 0 };
+          
+          // Helper to check if job is completed/closed
+          const isJobCompleted = (job) => {
+            const statusLc = String(job?.status || '').toLowerCase();
+            const lifecycleLc = String(job?.lifecycleState || '').toLowerCase();
+            return statusLc === 'completed' || statusLc === 'cancelled' ||
+                   ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc) ||
+                   job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+          };
+
+          const makeSignature = (j) => {
+            const title = norm(j.title);
+            const category = norm(j.category || j.service || j.serviceCategory);
+            const city = norm(j.location?.city || j.city);
+            const state = norm(j.location?.state || j.state);
+            const dateDay = day(j.preferredDate || j.createdAt);
+            const b = j.budget || {};
+            const min = toCurrency(b.min);
+            const max = toCurrency(b.max);
+            return `sig:${title}|${category}|${city}|${state}|${dateDay}|${min}-${max}`;
+          };
+
+          const byId = new Map(); // First pass: group by job ID
+          const byKey = new Map(); // Second pass: deduplicate by signature/conversation
+          
+          // First, group all jobs by their _id
+          raw.forEach(j => {
+            if (j._id) {
+              const idKey = String(j._id);
+              if (!byId.has(idKey)) {
+                byId.set(idKey, []);
+              }
+              byId.get(idKey).push(j);
+            }
+          });
+          
+          // For each unique job ID, keep only the most recent/advanced version
+          byId.forEach((jobs, idKey) => {
+            if (jobs.length === 1) {
+              byKey.set(idKey, jobs[0]);
+            } else {
+              // Multiple jobs with same ID - prefer non-completed jobs, then highest status, then most recent
+              let best = jobs[0];
+              for (let i = 1; i < jobs.length; i++) {
+                const curr = jobs[i];
+                const bestIsCompleted = isJobCompleted(best);
+                const currIsCompleted = isJobCompleted(curr);
+                
+                // If best is completed and current is not, always prefer current
+                if (bestIsCompleted && !currIsCompleted) {
+                  best = curr;
+                  continue;
+                }
+                
+                // If current is completed and best is not, keep best
+                if (currIsCompleted && !bestIsCompleted) {
+                  continue;
+                }
+                
+                // Both are completed or both are not - use status rank and recency
+                const bestRank = statusRank[String(best.status)] ?? -1;
+                const currRank = statusRank[String(curr.status)] ?? -1;
+                const bestUpdated = new Date(best.updatedAt || best.completedAt || best.createdAt || 0).getTime();
+                const currUpdated = new Date(curr.updatedAt || curr.completedAt || curr.createdAt || 0).getTime();
+                const bestHasConv = !!best.conversation;
+                const currHasConv = !!curr.conversation;
+                
+                if (currRank > bestRank || 
+                    (currRank === bestRank && currUpdated >= bestUpdated) ||
+                    (currRank === bestRank && currUpdated === bestUpdated && currHasConv && !bestHasConv)) {
+                  best = curr;
+                }
+              }
+              byKey.set(idKey, best);
+            }
+          });
+          
+          // Then deduplicate jobs that might have same signature but different IDs
+          // This handles cases where backend creates a new job when sending to DM (same content, different ID)
+          const finalList = [];
+          const seenIds = new Set();
+          const seenSignatures = new Map(); // Maps signature -> job object
+          
+          Array.from(byKey.values()).forEach(j => {
+            const jobId = String(j._id || j.id || '');
+            
+            // Skip jobs without IDs (shouldn't happen, but safety check)
+            if (!jobId) return;
+            
+            // Skip if we've already seen this exact job ID
+            if (seenIds.has(jobId)) return;
+            
+            // Check signature for potential duplicates (same content, different ID)
+            const sig = makeSignature(j);
+            const existingBySig = seenSignatures.get(sig);
+            
+            if (existingBySig) {
+              // Same signature - this is likely a duplicate
+              // Priority: prefer non-completed jobs > conversation > status rank > most recent
+              const existingIsCompleted = isJobCompleted(existingBySig);
+              const currentIsCompleted = isJobCompleted(j);
+              
+              // If existing is completed and current is not, always replace
+              if (existingIsCompleted && !currentIsCompleted) {
+                const existingId = String(existingBySig._id || existingBySig.id);
+                const index = finalList.findIndex(item => String(item._id || item.id) === existingId);
+                if (index >= 0) {
+                  seenIds.delete(existingId);
+                  finalList[index] = j;
+                  seenSignatures.set(sig, j);
+                  seenIds.add(jobId);
+                }
+                return;
+              }
+              
+              // If current is completed and existing is not, keep existing (skip current)
+              if (currentIsCompleted && !existingIsCompleted) {
+                return; // Skip current, keep existing
+              }
+              
+              // Both are completed or both are not - use other criteria
+              const existingRank = statusRank[String(existingBySig.status)] ?? -1;
+              const currentRank = statusRank[String(j.status)] ?? -1;
+              const existingHasConv = !!existingBySig.conversation;
+              const currentHasConv = !!j.conversation;
+              const existingUpdated = new Date(existingBySig.updatedAt || existingBySig.createdAt || 0).getTime();
+              const currentUpdated = new Date(j.updatedAt || j.createdAt || 0).getTime();
+              
+              let shouldReplace = false;
+              
+              // If both completed, prefer more recent
+              if (existingIsCompleted && currentIsCompleted) {
+                shouldReplace = currentUpdated > existingUpdated;
+              } else {
+                // Both not completed - prefer conversation, then status, then recency
+                if (currentHasConv && !existingHasConv) {
+                  shouldReplace = true;
+                } else if (!currentHasConv && existingHasConv) {
+                  shouldReplace = false;
+                } else if (currentRank > existingRank) {
+                  shouldReplace = true;
+                } else if (currentRank === existingRank && currentUpdated > existingUpdated) {
+                  shouldReplace = true;
+                }
+              }
+              
+              if (shouldReplace) {
+                const existingId = String(existingBySig._id || existingBySig.id);
+                const index = finalList.findIndex(item => String(item._id || item.id) === existingId);
+                if (index >= 0) {
+                  seenIds.delete(existingId);
+                  finalList[index] = j;
+                  seenSignatures.set(sig, j);
+                  seenIds.add(jobId);
+                }
+              }
+              // If not replacing, skip this job (don't add it)
+            } else {
+              // New signature - add it
+              finalList.push(j);
+              seenSignatures.set(sig, j);
+              seenIds.add(jobId);
+            }
+          });
+
+          setJobs(finalList);
+          setFilteredJobs(finalList);
           // Auto-open job modal if jobId param is present
           if (jobId) {
-            const found = list.find(j => String(j._id) === String(jobId));
+            const found = finalList.find(j => String(j._id) === String(jobId));
             if (found) {
               setSelectedJob(found);
               setShowModal(true);
@@ -179,11 +350,24 @@ const MyJobs = () => {
     }
 
     if (statusFilter) {
-      filtered = filtered.filter(job => job.status === statusFilter);
+      filtered = filtered.filter(job => deriveStatus(job) === statusFilter);
     }
 
     setFilteredJobs(filtered);
   }, [jobs, searchTerm, statusFilter]);
+
+  const deriveStatus = (job) => {
+    const raw = String(job?.status || '').toLowerCase();
+    const lifecycle = String(job?.lifecycleState || '').toLowerCase();
+    const hasCompletedFlag = job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+    const hasCancelledFlag = job?.cancelled === true || !!job?.cancelledAt;
+    const isAssigned = !!job?.professional || !!job?.assignedProfessional || !!job?.conversation;
+
+    if (hasCancelledFlag || lifecycle === 'cancelled' || raw === 'cancelled') return 'Cancelled';
+    if (hasCompletedFlag || lifecycle === 'completed_by_pro' || lifecycle === 'completed_by_user' || raw === 'completed') return 'Completed';
+    if (lifecycle === 'in_progress' || raw === 'in progress' || raw === 'in_progress' || isAssigned) return 'In Progress';
+    return 'Pending';
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -201,7 +385,9 @@ const MyJobs = () => {
 
   const reloadJobs = async () => {
     try {
-      const response = String(user?.role).toLowerCase() === 'professional' ? await getProJobs() : await getMyJobs();
+      const response = String(user?.role).toLowerCase() === 'professional' 
+        ? await getProJobs({ limit: 100 }) 
+        : await getMyJobs({ limit: 100 }); // Request up to 100 jobs
       if (response.success) {
         const list = response.data.jobs || response.data || [];
         setJobs(list);
@@ -339,8 +525,8 @@ const MyJobs = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(job.status)}`}>
-                        {job.status}
+                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(deriveStatus(job))}`}>
+                        {deriveStatus(job)}
                       </span>
                       <span className={`px-2 py-1 text-xs rounded-full ${getUrgencyColor(job.urgency)}`}>
                         {job.urgency}
@@ -451,7 +637,7 @@ const MyJobs = () => {
                       <FaEye className="w-4 h-4" />
                       View Details
                     </button>
-                    {job.status === 'In Progress' && (
+                    {deriveStatus(job) === 'In Progress' && (
                       <button
                         onClick={() => handleJobAction(job._id, 'complete')}
                         disabled={actionLoading}
@@ -461,7 +647,7 @@ const MyJobs = () => {
                         Mark Complete
                       </button>
                     )}
-                    {(job.status === 'Pending' || job.status === 'In Progress') && (
+                    {(deriveStatus(job) === 'Pending' || deriveStatus(job) === 'In Progress') && (
                       <button
                         onClick={() => handleJobAction(job._id, 'cancel', { reason: 'Cancelled by user' })}
                         disabled={actionLoading}
@@ -471,7 +657,7 @@ const MyJobs = () => {
                         Cancel
                       </button>
                     )}
-                    {job.status === 'Cancelled' && (
+                    {deriveStatus(job) === 'Cancelled' && (
                       <button
                         onClick={async () => { setActionLoading(true); try { await deleteJobApi(job._id); await reloadJobs(); } finally { setActionLoading(false); } }}
                         disabled={actionLoading}
@@ -586,7 +772,7 @@ const MyJobs = () => {
                             <span className="text-gray-600">{app.estimatedDuration}</span>
                           </div>
                           <div className="mt-3 flex gap-2">
-                            {selectedJob.status === 'Pending' && app.status === 'Pending' && (
+                            {deriveStatus(selectedJob) === 'Pending' && app.status === 'Pending' && (
                               <button
                                 onClick={async () => {
                                   try {

@@ -64,6 +64,39 @@ const ProJobFeed = () => {
             return j;
           });
         }
+        // Filter out completed/closed jobs first - be very strict
+        list = list.filter(j => {
+          const statusLc = String(j?.status || '').toLowerCase();
+          const lifecycleLc = String(j?.lifecycleState || '').toLowerCase();
+          
+          // Strictly exclude any completed/cancelled status
+          if (statusLc === 'completed' || statusLc === 'cancelled') {
+            return false;
+          }
+          
+          // Strictly exclude any closed lifecycle states
+          if (['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc)) {
+            return false;
+          }
+          
+          // Exclude jobs with completion flags
+          if (j?.completed === true || j?.isCompleted === true || !!j?.completedAt) {
+            return false;
+          }
+          
+          // Only include jobs with explicitly open status
+          if (!['pending', 'open'].includes(statusLc)) {
+            return false;
+          }
+          
+          // If job has professional assigned and no conversation, exclude it (already assigned)
+          if (j?.professional && !j?.conversation) {
+            return false;
+          }
+          
+          return true;
+        });
+        
         // Client-side filters (state, service, search) for reliability and instant UX
         if (stateFilter) {
           list = list.filter(j => (j.location?.state || j.state || '').toLowerCase() === stateFilter.toLowerCase());
@@ -79,7 +112,68 @@ const ProJobFeed = () => {
             (j.description || '').toLowerCase().includes(q)
           );
         }
-        setJobs(list);
+        // De-duplicate jobs that are the same posting/thread
+        const day = (d) => new Date(d || 0).toISOString().slice(0,10);
+        const norm = (s) => String(s || '').trim().toLowerCase();
+        const toCurrency = (n) => Number(n || 0);
+        const makeSignature = (j) => {
+          const title = norm(j.title);
+          const category = norm(j.category || j.service || j.serviceCategory);
+          const city = norm(j.location?.city || j.city);
+          const state = norm(j.location?.state || j.state);
+          const dateDay = day(j.preferredDate || j.createdAt);
+          const b = j.budget || {};
+          const min = toCurrency(b.min);
+          const max = toCurrency(b.max);
+          return `sig:${title}|${category}|${city}|${state}|${dateDay}|${min}-${max}`;
+        };
+        const byKey = new Map();
+        // Helper to check if job is completed (safety check even after filtering)
+        const isJobCompleted = (job) => {
+          const statusLc = String(job?.status || '').toLowerCase();
+          const lifecycleLc = String(job?.lifecycleState || '').toLowerCase();
+          return statusLc === 'completed' || statusLc === 'cancelled' ||
+                 ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc) ||
+                 job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+        };
+        
+        list.forEach(j => {
+          // Extra safety: skip if somehow a completed job made it through
+          if (isJobCompleted(j)) {
+            return; // Skip this job entirely
+          }
+          
+          const primaryKey = j.conversation ? `conv:${j.conversation}` : makeSignature(j);
+          const prev = byKey.get(primaryKey);
+          
+          if (!prev) {
+            byKey.set(primaryKey, j);
+          } else {
+            // Extra safety: if prev is completed, always replace with current (which should not be completed)
+            if (isJobCompleted(prev)) {
+              if (!isJobCompleted(j)) {
+                byKey.set(primaryKey, j);
+              }
+              return;
+            }
+            
+            // Both are not completed - prefer the one with conversation or more recent
+            const prevHasConv = !!prev.conversation;
+            const currHasConv = !!j.conversation;
+            const prevUpdated = new Date(prev.updatedAt || prev.createdAt || 0).getTime();
+            const currUpdated = new Date(j.updatedAt || j.createdAt || 0).getTime();
+            
+            if (currHasConv && !prevHasConv) {
+              byKey.set(primaryKey, j);
+            } else if (prevHasConv && !currHasConv) {
+              // Keep prev
+            } else if (currUpdated > prevUpdated) {
+              byKey.set(primaryKey, j);
+            }
+            // Otherwise keep prev
+          }
+        });
+        setJobs(Array.from(byKey.values()));
       } catch (e) {
         console.error('Failed to load nearby jobs', e);
         // Fallback to legacy feed
@@ -253,7 +347,8 @@ const JobCard = ({ job }) => {
   const isExplicitlyOpen = ['pending','open'].includes(statusLc);
   const closedByLifecycle = ['in_progress','completed_by_pro','completed_by_user','closed','cancelled'].includes(lifecycleLc);
   const closedByFlags = job?.completed === true || job?.isCompleted === true || !!job?.completedAt || !!job?.cancelledAt;
-  const isClosed = (!isExplicitlyOpen) || closedByLifecycle || closedByFlags;
+  const closedByAssignment = !!job?.professional || !!job?.conversation;
+  const isClosed = (!isExplicitlyOpen) || closedByLifecycle || closedByFlags || closedByAssignment;
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl hover:shadow-sm overflow-hidden">

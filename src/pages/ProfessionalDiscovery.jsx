@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaHeart, FaTimes, FaFilter, FaSearch, FaMap, FaTh, FaList, FaSortAmountDown, FaSync, FaUser } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaStar, FaClock, FaPhone, FaComments, FaTimes, FaFilter, FaSearch, FaMap, FaTh, FaList, FaSortAmountDown, FaSync, FaUser } from 'react-icons/fa';
 import { getProfessionals, sendConnectionRequest, getConnectionRequests, getConnections, removeConnection, cancelConnectionRequest, createOrGetConversation } from '../utils/api';
 import { calculateDistance as haversineDistance, formatDistance } from '../utils/locationUtils';
 import { useLocation as useLocationHook } from '../hooks/useLocation';
@@ -855,10 +855,6 @@ const ProfessionalDiscovery = () => {
                             <span className="text-sm text-gray-600">{professional.rating || 0}</span>
                             <span className="text-xs text-gray-500 ml-1">({professional.ratingCount || 0})</span>
                           </div>
-                          <div className="flex items-center text-red-500">
-                            <FaHeart className="w-3 h-3 mr-1" />
-                            <span className="text-xs">{professional.likes || 0}</span>
-                          </div>
                         </div>
                         <span className="text-lg font-semibold text-blue-600">
                           ₦{professional.hourlyRate?.toLocaleString()}/hr
@@ -887,31 +883,19 @@ const ProfessionalDiscovery = () => {
                           });
                           
                           if (isConnected) {
-                            // Connected - show Message and Unfriend buttons
+                            // Connected - show Message button only
                             return (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleStartChat(professional);
-                                  }}
-                                  className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
-                                >
-                                  <FaComments className="w-4 h-4" />
-                                  Chat
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleUnfriendClick(professional);
-                                  }}
-                                  className="px-3 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors text-sm font-medium"
-                                >
-                                  Unfriend
-                                </button>
-                              </>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleStartChat(professional);
+                                }}
+                                className="w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
+                              >
+                                <FaComments className="w-4 h-4" />
+                                Chat
+                              </button>
                             );
                           } else if (hasRequestSent) {
                             // Request sent - show "Request Sent" with three dots menu
@@ -971,20 +955,6 @@ const ProfessionalDiscovery = () => {
                             );
                           }
                         })()}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleSave(professional);
-                          }}
-                          className={`p-2 border rounded-lg transition-colors ${
-                            savedProfessionals.has(professional._id)
-                              ? 'text-red-600 border-red-300 bg-red-50'
-                              : 'text-gray-600 hover:text-red-600 border-gray-300 hover:border-red-300'
-                          }`}
-                        >
-                          <FaHeart className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   </>
@@ -1016,10 +986,6 @@ const ProfessionalDiscovery = () => {
                               <span className="text-sm text-gray-600">{professional.rating || 0}</span>
                               <span className="text-xs text-gray-500 ml-1">({professional.ratingCount || 0})</span>
                             </div>
-                            <div className="flex items-center text-red-500 mr-4">
-                              <FaHeart className="w-3 h-3 mr-1" />
-                              <span className="text-xs">{professional.likes || 0}</span>
-                            </div>
                             <FaMapMarkerAlt className="w-3 h-3" />
                             <span className="text-sm text-gray-500 ml-1 truncate">{professional.location?.address}</span>
                           </div>
@@ -1035,30 +1001,18 @@ const ProfessionalDiscovery = () => {
                               const hasRequestSent = connectionRequests.has(professional._id);
                               
                               if (isConnected) {
-                                // Connected - show Message and Unfriend buttons
+                                // Connected - show Message button only
                                 return (
-                                  <>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        handleStartChat(professional);
-                                      }}
-                                      className="py-1 px-3 rounded text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                    >
-                                      Chat
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        handleUnfriendClick(professional);
-                                      }}
-                                      className="py-1 px-2 rounded text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                    >
-                                      Unfriend
-                                    </button>
-                                  </>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleStartChat(professional);
+                                    }}
+                                    className="py-1 px-3 rounded text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                  >
+                                    Chat
+                                  </button>
                                 );
                               } else if (hasRequestSent) {
                                 // Request sent - show "Request Sent" with three dots menu
@@ -1115,20 +1069,6 @@ const ProfessionalDiscovery = () => {
                                 );
                               }
                             })()}
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleSave(professional);
-                              }}
-                              className={`p-1 transition-colors ${
-                                savedProfessionals.has(professional._id)
-                                  ? 'text-red-600'
-                                  : 'text-gray-600 hover:text-red-600'
-                              }`}
-                            >
-                              <FaHeart className="w-4 h-4" />
-                            </button>
                           </div>
                         </div>
                       </div>

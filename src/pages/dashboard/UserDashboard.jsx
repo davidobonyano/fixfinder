@@ -21,11 +21,13 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
 import { getMyJobs, getProfessionals, getNotifications } from '../../utils/api';
+import { useToast } from '../../context/ToastContext';
 import ServiceSelector from '../../components/ServiceSelector';
 
 const UserDashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { error: showError } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [nearbyPros, setNearbyPros] = useState([]);
   const [recentJobs, setRecentJobs] = useState([]);
@@ -33,10 +35,40 @@ const UserDashboard = () => {
   const [stats, setStats] = useState({
     totalJobs: 0,
     activeJobs: 0,
-    completedJobs: 0,
-    savedPros: 0
+    completedJobs: 0
   });
   const [loading, setLoading] = useState(true);
+  
+  // Helper function to handle authentication errors
+  const handleAuthError = (err) => {
+    if (err?.status === 401 || err?.status === 403) {
+      const errorMessage = err?.data?.message || 'Your session has expired. Please log in again.';
+      showError(errorMessage, 5000);
+      logout();
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+      return true;
+    }
+    return false;
+  };
+
+  // Image resolution helper
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com';
+  const resolveImageUrl = (url) => {
+    if (!url) return '/images/placeholder.jpeg';
+    const trimmed = typeof url === 'string' ? url.trim() : url;
+    if (
+      trimmed.startsWith('http') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('//')
+    ) {
+      return trimmed;
+    }
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${API_BASE}${normalized}`;
+  };
 
   // Load dashboard data from API
   useEffect(() => {
@@ -73,15 +105,25 @@ const UserDashboard = () => {
         // Load nearby professionals
         const prosResponse = await getProfessionals({ limit: 3 });
         if (prosResponse.success) {
-          setNearbyPros(prosResponse.professionals.map(pro => ({
-            id: pro._id,
-            name: pro.name,
-            service: pro.category,
-            rating: pro.rating || 0,
-            distance: 'Nearby', // This would be calculated based on location
-            verified: pro.isVerified || false,
-            image: pro.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-          })));
+          setNearbyPros(prosResponse.professionals.map(pro => {
+            // Prefer user's profile picture/avatar, then professional's profile picture, then placeholder
+            const imageUrl = pro.user?.profilePicture
+              || pro.user?.avatarUrl
+              || pro.profilePicture
+              || pro.avatarUrl
+              || pro.image
+              || '/images/placeholder.jpeg';
+            
+            return {
+              id: pro._id,
+              name: pro.name,
+              service: pro.category,
+              rating: pro.rating || 0,
+              distance: 'Nearby', // This would be calculated based on location
+              verified: pro.isVerified || false,
+              image: resolveImageUrl(imageUrl)
+            };
+          }));
         }
 
         // Load notifications
@@ -98,97 +140,13 @@ const UserDashboard = () => {
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         
-        // Fallback to mock data on error
-        setNearbyPros([
-          { 
-            id: 1, 
-            name: 'John Electrician', 
-            service: 'Electrician', 
-            rating: 4.8, 
-            distance: '0.5 km', 
-            verified: true,
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-          },
-          { 
-            id: 2, 
-            name: 'Sarah Plumber', 
-            service: 'Plumber', 
-            rating: 4.9, 
-            distance: '1.2 km', 
-            verified: true,
-            image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
-          },
-          { 
-            id: 3, 
-            name: 'Mike Carpenter', 
-            service: 'Carpenter', 
-            rating: 4.7, 
-            distance: '0.8 km', 
-            verified: false,
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
-          }
-        ]);
-
-        setRecentJobs([
-          { 
-            id: 1, 
-            title: 'Fix Kitchen Sink', 
-            status: 'In Progress', 
-            date: '2024-01-15', 
-            pro: 'John Electrician',
-            category: 'Plumber',
-            budget: '₦15,000 - ₦25,000'
-          },
-          { 
-            id: 2, 
-            title: 'Install New Door', 
-            status: 'Completed', 
-            date: '2024-01-10', 
-            pro: 'Mike Carpenter',
-            category: 'Carpenter',
-            budget: '₦8,000 - ₦12,000'
-          },
-          { 
-            id: 3, 
-            title: 'Repair Toilet', 
-            status: 'Pending', 
-            date: '2024-01-20', 
-            pro: null,
-            category: 'Plumber',
-            budget: '₦5,000 - ₦8,000'
-          }
-        ]);
-
-        setNotifications([
-          { 
-            id: 1, 
-            message: 'John Electrician applied to your job', 
-            time: '2 hours ago', 
-            unread: true,
-            type: 'job_application'
-          },
-          { 
-            id: 2, 
-            message: 'Your job "Fix Kitchen Sink" is in progress', 
-            time: '1 day ago', 
-            unread: false,
-            type: 'job_update'
-          },
-          { 
-            id: 3, 
-            message: 'New message from Sarah Plumber', 
-            time: '2 days ago', 
-            unread: true,
-            type: 'new_message'
-          }
-        ]);
-
-        setStats({
-          totalJobs: 12,
-          activeJobs: 3,
-          completedJobs: 8,
-          savedPros: 5
-        });
+        // Handle authentication errors
+        if (handleAuthError(error)) {
+          return; // Don't set loading to false, let the redirect happen
+        }
+        
+        // Show error message for other errors
+        showError('Failed to load dashboard data. Please try again.', 3000);
       } finally {
         setLoading(false);
       }
@@ -279,7 +237,7 @@ const UserDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
@@ -312,18 +270,6 @@ const UserDashboard = () => {
             </div>
             <div className="p-3 bg-gray-100 rounded-full">
               <FaCheckCircle className="w-6 h-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Saved Pros</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.savedPros}</p>
-            </div>
-            <div className="p-3 bg-gray-100 rounded-full">
-              <FaHeart className="w-6 h-6 text-gray-600" />
             </div>
           </div>
         </div>
@@ -427,9 +373,10 @@ const UserDashboard = () => {
             {nearbyPros.map((pro) => (
               <div key={pro.id} className="flex items-center p-3 border border-gray-100 rounded-lg">
                 <img
-                  src={pro.image}
+                  src={pro.image || '/images/placeholder.jpeg'}
                   alt={pro.name}
                   className="w-10 h-10 rounded-full object-cover mr-3"
+                  onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

@@ -15,37 +15,78 @@ const JobApplications = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [connectedProIds, setConnectedProIds] = useState(new Set());
   const [pendingProIds, setPendingProIds] = useState(new Set());
+  const [dmSentAppIds, setDmSentAppIds] = useState(new Set());
   const { success, error } = useToast();
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  const loadJobData = async () => {
+    setLoading(true);
+    try {
+      const resp = await getJobDetails(jobId);
+      if (resp?.success) setJob(resp.data);
+      // Load connections and pending requests to reflect button state
       try {
-        const resp = await getJobDetails(jobId);
-        if (resp?.success) setJob(resp.data);
-        // Load connections and pending requests to reflect button state
-        try {
-          const cons = await getConnections();
-          const connected = new Set();
-          (cons?.data || []).forEach(c => {
-            if (c?.professional?._id) connected.add(String(c.professional._id));
-          });
-          setConnectedProIds(connected);
-        } catch (_) {}
-        try {
-          const reqs = await getConnectionRequests();
-          const pending = new Set();
-          (reqs?.data || reqs?.data?.requests || []).forEach(r => {
-            if (r?.professional?._id) pending.add(String(r.professional._id));
-          });
-          setPendingProIds(pending);
-        } catch (_) {}
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+        const cons = await getConnections();
+        const connected = new Set();
+        (cons?.data || []).forEach(c => {
+          if (c?.professional?._id) connected.add(String(c.professional._id));
+        });
+        setConnectedProIds(connected);
+      } catch (_) {}
+      try {
+        const reqs = await getConnectionRequests();
+        const pending = new Set();
+        (reqs?.data || reqs?.data?.requests || []).forEach(r => {
+          if (r?.professional?._id) pending.add(String(r.professional._id));
+        });
+        setPendingProIds(pending);
+      } catch (_) {}
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadJobData();
   }, [jobId]);
+
+  const deriveJobStatus = (jobObj) => {
+    if (!jobObj) return 'Pending';
+    const raw = String(jobObj?.status || '').toLowerCase();
+    const lifecycle = String(jobObj?.lifecycleState || '').toLowerCase();
+    const hasCompletedFlag = jobObj?.completed === true || jobObj?.isCompleted === true || !!jobObj?.completedAt;
+    const hasCancelledFlag = jobObj?.cancelled === true || !!jobObj?.cancelledAt;
+    const isAssigned = !!jobObj?.professional || !!jobObj?.assignedProfessional || !!jobObj?.conversation || (Array.isArray(jobObj?.applications) && jobObj.applications.some(a => String(a?.status).toLowerCase() === 'accepted'));
+
+    if (hasCancelledFlag || lifecycle === 'cancelled' || raw === 'cancelled') return 'Cancelled';
+    if (hasCompletedFlag || lifecycle === 'completed_by_pro' || lifecycle === 'completed_by_user' || lifecycle === 'closed' || raw === 'completed') return 'Completed';
+    if (lifecycle === 'in_progress' || raw === 'in progress' || raw === 'in_progress' || isAssigned) return 'In Progress';
+    return 'Pending';
+  };
+
+  const deriveApplicationStatus = (application) => {
+    if (!application) return 'Pending';
+    const appStatus = String(application?.status || '').toLowerCase();
+    if (appStatus === 'accepted') return 'Accepted';
+    return 'Pending';
+  };
+
+  const isApplicationAccepted = (application) => {
+    return deriveApplicationStatus(application) === 'Accepted';
+  };
+
+  const canSendJobToDM = (application) => {
+    // Don't allow if job is completed or cancelled
+    if (jobStatus === 'Completed' || jobStatus === 'Cancelled') return false;
+    // Don't allow if this application is already accepted
+    if (isApplicationAccepted(application)) return false;
+    // Don't allow if job is in progress (another application was accepted)
+    if (jobStatus === 'In Progress') return false;
+    // Don't allow if already sent
+    if (dmSentAppIds.has(String(application._id))) return false;
+    return true;
+  };
+
+  const jobStatus = deriveJobStatus(job);
 
   // Hydrate missing professional names if not present
   useEffect(() => {
@@ -157,6 +198,8 @@ const JobApplications = () => {
       }
       await createJobRequestInChat(conversationId, payload);
       success('Job sent to DM as a request');
+      // Mark this application as DM-sent locally to update UI state immediately
+      setDmSentAppIds(prev => new Set([...Array.from(prev), String(application._id)]));
       // Navigate to the conversation
       navigate(`/dashboard/messages/${conversationId}`);
     } catch (e) {
@@ -183,7 +226,12 @@ const JobApplications = () => {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-            <p className="text-gray-600">{job?.title}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-gray-600">{job?.title}</p>
+              <span className={`px-2 py-0.5 text-xs rounded-full ${jobStatus === 'Completed' ? 'bg-gray-100 text-gray-800' : jobStatus === 'In Progress' ? 'bg-gray-200 text-gray-900' : jobStatus === 'Cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-50 text-gray-700'}`}>
+                {jobStatus}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -231,6 +279,16 @@ const JobApplications = () => {
                   {app.professional?.rating != null && (
                     <span className="text-xs text-gray-500">• {app.professional.rating}★</span>
                   )}
+                  {(() => {
+                    const appStatus = deriveApplicationStatus(app);
+                    if (appStatus === 'Accepted') {
+                      return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border border-green-200">Accepted</span>;
+                    }
+                    if (dmSentAppIds.has(String(app._id))) {
+                      return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">Sent to DM</span>;
+                    }
+                    return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Pending</span>;
+                  })()}
                 </div>
               </div>
               <div className="text-right space-y-1">
@@ -300,28 +358,70 @@ const JobApplications = () => {
                       error(e?.data?.message || e?.message || 'Failed to delete application');
                     }
                   }}
-                  className="px-3 py-1.5 bg-red-50 text-red-700 rounded border border-red-200 hover:bg-red-100 text-sm"
+                  disabled={isApplicationAccepted(app) || jobStatus === 'Completed' || jobStatus === 'In Progress'}
+                  className={`px-3 py-1.5 rounded border text-sm ${
+                    isApplicationAccepted(app) || jobStatus === 'Completed' || jobStatus === 'In Progress'
+                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                      : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                  }`}
+                  title={
+                    isApplicationAccepted(app) 
+                      ? 'Cannot delete accepted application' 
+                      : jobStatus === 'Completed' || jobStatus === 'In Progress'
+                        ? 'Cannot delete application for active/completed job'
+                        : 'Delete this application'
+                  }
                 >
                   Delete
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
+                {isApplicationAccepted(app) && (
+                  <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded border border-green-200 text-sm">✓ Accepted</span>
+                )}
+
                 {connectedProIds.has(String(app.professional?._id)) ? (
                   <>
                     <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded border border-green-200 text-sm">Connected</span>
                     <button
                       type="button"
                       onClick={() => handleSendJobToDm(app)}
-                      disabled={actionLoading === `send_${app._id}`}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                      disabled={!canSendJobToDM(app) || actionLoading === `send_${app._id}`}
+                      className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                        !canSendJobToDM(app) || actionLoading === `send_${app._id}`
+                          ? 'bg-gray-200 text-gray-600 cursor-not-allowed opacity-60' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                      title={
+                        jobStatus === 'Completed' 
+                          ? 'Job is completed' 
+                          : isApplicationAccepted(app)
+                            ? 'Application already accepted'
+                            : jobStatus === 'In Progress'
+                              ? 'Job is in progress'
+                              : dmSentAppIds.has(String(app._id))
+                                ? 'Already sent to DM'
+                                : 'Send job request to DM'
+                      }
                     >
-                      {actionLoading === `send_${app._id}` ? 'Sending...' : 'Send job to DM'}
+                      {actionLoading === `send_${app._id}` 
+                        ? 'Sending...' 
+                        : jobStatus === 'Completed' 
+                          ? 'Completed' 
+                          : isApplicationAccepted(app)
+                            ? 'Accepted'
+                            : jobStatus === 'In Progress' 
+                              ? 'In Progress' 
+                              : dmSentAppIds.has(String(app._id)) 
+                                ? 'Sent to DM' 
+                                : 'Send job to DM'
+                      }
                     </button>
                   </>
                 ) : pendingProIds.has(String(app.professional?._id)) ? (
                   <span className="px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded border border-yellow-200 text-sm">Request Sent</span>
-                ) : (
+                ) : !isApplicationAccepted(app) && (
                   <button type="button"
                     onClick={async () => {
                       try {

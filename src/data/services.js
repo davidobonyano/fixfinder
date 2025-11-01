@@ -19,7 +19,9 @@ export const SERVICES = {
     'Gardener': ['gardener', 'gardening', 'landscaping', 'plants'],
     'Cleaner': ['cleaner', 'cleaning', 'housekeeping', 'maid'],
     'AC Technician': ['ac technician', 'air conditioning', 'cooling', 'hvac'],
-    'Generator Repair': ['generator', 'power backup', 'inverter', 'electrical repair']
+    'Generator Repair': ['generator', 'power backup', 'inverter', 'electrical repair'],
+    'Bricklayer': ['bricklayer', 'brickwork', 'mason', 'masonry', 'construction', 'building'],
+    'Engineer': ['engineer', 'civil engineer', 'structural engineer', 'engineering']
   },
 
   // Education & Tutoring
@@ -75,7 +77,10 @@ export const SERVICES = {
   'Transportation': {
     'Driver': ['driver', 'chauffeur', 'personal driver', 'car service'],
     'Delivery Service': ['delivery', 'courier', 'package delivery', 'logistics'],
-    'Taxi Service': ['taxi', 'cab', 'ride service', 'transport']
+    'Taxi Service': ['taxi', 'cab', 'ride service', 'transport'],
+    'Mechanic': ['mechanic', 'auto mechanic', 'car mechanic', 'vehicle repair', 'automotive repair', 'car repair'],
+    'Errand Boy': ['errand boy', 'errand service', 'personal assistant', 'task runner', 'errand runner'],
+    'Errand Girl': ['errand girl', 'errand service', 'personal assistant', 'task runner', 'errand runner']
   },
 
   // Health & Fitness

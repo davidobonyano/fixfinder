@@ -23,10 +23,15 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
 import { useSocket } from '../../context/SocketContext';
+import { useToast } from '../../context/ToastContext';
+import { useNavigate } from 'react-router-dom';
+import { getMyJobs, getNotifications, getProfessional } from '../../utils/api';
 
 const ProfessionalDashboard = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { socket, isConnected, emit } = useSocket();
+  const { error: showError } = useToast();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalJobs: 0,
     activeJobs: 0,
@@ -41,6 +46,20 @@ const ProfessionalDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isSharingLocation, setIsSharingLocation] = useState(false);
   const [locationPermission, setLocationPermission] = useState(null);
+  
+  // Helper function to handle authentication errors
+  const handleAuthError = (err) => {
+    if (err?.status === 401 || err?.status === 403) {
+      const errorMessage = err?.data?.message || 'Your session has expired. Please log in again.';
+      showError(errorMessage, 5000);
+      logout();
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     loadDashboardData();
@@ -112,98 +131,86 @@ const ProfessionalDashboard = () => {
     try {
       setLoading(true);
       
-      // Mock data for now - replace with real API calls later
-      setStats({
-        totalJobs: 47,
-        activeJobs: 3,
-        completedJobs: 42,
-        totalEarnings: 485000,
-        rating: 4.8,
-        reviewCount: 127
-      });
-
-      setRecentJobs([
-        {
-          id: 1,
-          title: 'Fix Kitchen Sink',
-          client: 'Sarah Johnson',
-          status: 'In Progress',
-          date: '2024-01-15',
-          budget: '₦15,000 - ₦25,000',
-          location: 'Victoria Island, Lagos',
-          priority: 'high'
-        },
-        {
-          id: 2,
-          title: 'Bathroom Renovation',
-          client: 'Michael Brown',
-          status: 'Pending',
-          date: '2024-01-20',
-          budget: '₦50,000 - ₦80,000',
-          location: 'Ikoyi, Lagos',
-          priority: 'medium'
-        },
-        {
-          id: 3,
-          title: 'Emergency Pipe Repair',
-          client: 'Grace Williams',
-          status: 'Completed',
-          date: '2024-01-10',
-          budget: '₦8,000 - ₦12,000',
-          location: 'Surulere, Lagos',
-          priority: 'high'
+      // Load professional stats and jobs
+      const jobsResponse = await getMyJobs({ limit: 3 });
+      if (jobsResponse.success) {
+        const jobs = jobsResponse.data.jobs || [];
+        const totalJobs = jobsResponse.data.pagination?.total || 0;
+        const activeJobs = jobs.filter(job => job.status === 'In Progress' || job.status === 'Active').length;
+        const completedJobs = jobs.filter(job => job.status === 'Completed').length;
+        
+        setRecentJobs(jobs.map(job => ({
+          id: job._id,
+          title: job.title,
+          client: job.client?.name || job.requester?.name || 'Unknown',
+          status: job.status,
+          date: new Date(job.createdAt).toLocaleDateString(),
+          budget: job.budget ? `₦${job.budget.min?.toLocaleString() || '0'} - ₦${job.budget.max?.toLocaleString() || '0'}` : 'Not specified',
+          location: job.location?.address || 'Location not specified',
+          priority: job.priority || 'medium'
+        })));
+        
+        setStats(prev => ({
+          ...prev,
+          totalJobs,
+          activeJobs,
+          completedJobs
+        }));
+      }
+      
+      // Load professional profile for rating and earnings
+      if (user?.id) {
+        try {
+          const proResponse = await getProfessional(user.id, { byUser: true });
+          if (proResponse.success) {
+            const proData = proResponse.data;
+            setStats(prev => ({
+              ...prev,
+              rating: proData.ratingAvg || proData.rating || 0,
+              reviewCount: proData.ratingCount || 0,
+              totalEarnings: proData.totalEarnings || 0
+            }));
+          }
+        } catch (err) {
+          // If professional profile doesn't exist yet, that's okay
+          if (!handleAuthError(err)) {
+            console.log('Professional profile not found yet');
+          }
         }
-      ]);
-
-      setRecentMessages([
-        {
-          id: 1,
-          client: 'Sarah Johnson',
-          message: 'Hi David, when can you start the kitchen sink repair?',
-          time: '2 hours ago',
-          unread: true
-        },
-        {
-          id: 2,
-          client: 'Michael Brown',
-          message: 'Thanks for the bathroom renovation quote. I\'ll get back to you soon.',
-          time: '1 day ago',
-          unread: false
-        },
-        {
-          id: 3,
-          client: 'Grace Williams',
-          message: 'The pipe repair looks great! Thank you so much.',
-          time: '2 days ago',
-          unread: false
+      }
+      
+      // Load notifications
+      try {
+        const notificationsResponse = await getNotifications({ limit: 3 });
+        if (notificationsResponse.success) {
+          setNotifications(notificationsResponse.data.notifications.map(notif => ({
+            id: notif._id,
+            type: notif.type,
+            message: notif.message,
+            time: notif.age || 'Just now',
+            unread: !notif.isRead
+          })));
         }
-      ]);
-
-      setNotifications([
-        {
-          id: 1,
-          type: 'job_application',
-          message: 'New job application for "Fix Kitchen Sink"',
-          time: '1 hour ago',
-          unread: true
-        },
-        {
-          id: 2,
-          type: 'review',
-          message: 'Grace Williams left you a 5-star review',
-          time: '2 hours ago',
-          unread: true
-        },
-        {
-          id: 3,
-          type: 'payment',
-          message: 'Payment of ₦12,000 received for Emergency Pipe Repair',
-          time: '1 day ago',
-          unread: false
+      } catch (err) {
+        if (!handleAuthError(err)) {
+          console.error('Error loading notifications:', err);
         }
-      ]);
+      }
+      
+      // Note: Recent messages would typically come from a messages API
+      // For now, we'll leave it empty until that API is available
+      setRecentMessages([]);
+      
     } catch (error) {
       console.error('Error loading dashboard data:', error);
+      
+      // Handle authentication errors
+      if (handleAuthError(error)) {
+        return; // Don't set loading to false, let the redirect happen
+      }
+      
+      // Show error message for other errors
+      showError('Failed to load dashboard data. Please try again.', 3000);
     } finally {
       setLoading(false);
     }

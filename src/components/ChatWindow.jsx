@@ -19,7 +19,10 @@ import {
   acceptJobRequest,
   proMarkCompleted,
   confirmJobCompletion,
-  cancelJob
+  cancelJob,
+  createReview,
+  getProfessionalReviews,
+  getProfessional
 } from '../utils/api';
 import MessageBubble from './MessageBubble';
 import ChatHeader from './ChatHeader';
@@ -27,6 +30,7 @@ import LocationModal from './LocationModal';
 import MapView from './MapView';
 import LocationButton from './LocationButton';
 import ChatProfileModal from './ChatProfileModal';
+import ReviewModal from './ReviewModal';
 import { useLocation as useLocationHook } from '../hooks/useLocation';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import ServiceSelector from './ServiceSelector';
@@ -74,6 +78,9 @@ const ChatWindow = ({
   });
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [hasPromptedReview, setHasPromptedReview] = useState(false);
+  const [reviewedJobs, setReviewedJobs] = useState([]);
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
@@ -897,6 +904,62 @@ const ChatWindow = ({
 
   const effectiveState = deriveEffectiveState(activeJob);
 
+  // Load reviewed jobs from localStorage
+  useEffect(() => {
+    const key = 'ff_reviewed_jobs';
+    const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
+    setReviewedJobs(reviewed);
+  }, [activeJob?._id]);
+
+  // Prompt for review when job is closed (client only)
+  useEffect(() => {
+    if (!activeJob) return;
+    const isClient = String(user?.role).toLowerCase() !== 'professional';
+    const closed = String(activeJob?.lifecycleState || '').toLowerCase() === 'closed' || String(activeJob?.status || '').toLowerCase() === 'completed';
+    if (isClient && closed && !hasPromptedReview) {
+      (async () => {
+        try {
+          // Prevent double reviews: check local and remote
+          const key = 'ff_reviewed_jobs';
+          const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
+          if (reviewed.includes(activeJob._id)) {
+            setReviewedJobs(reviewed);
+            return;
+          }
+          // Resolve professional ID from user ID
+          const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
+          let proId = otherParticipant?.user?.professionalId;
+          if (!proId && otherUserId) {
+            try {
+              const proData = await getProfessional(otherUserId, { byUser: true });
+              proId = proData?.data?._id || proData?._id;
+            } catch (_) {}
+          }
+          if (!proId) proId = otherUserId; // Fallback
+          
+          if (proId) {
+            try {
+              const r = await getProfessionalReviews(proId, { limit: 100 });
+              const items = r?.data?.reviews || r?.data || [];
+              const mine = items.find(x => (String(x.jobId || (x.job?._id || x.job)) === String(activeJob._id)) && (String(x.user?._id || x.userId) === String(user?.id)));
+              if (mine) {
+                // Already reviewed - update local storage
+                if (!reviewed.includes(activeJob._id)) {
+                  reviewed.push(activeJob._id);
+                  localStorage.setItem(key, JSON.stringify(reviewed));
+                  setReviewedJobs(reviewed);
+                }
+                return;
+              }
+            } catch (_) {}
+          }
+          setHasPromptedReview(true);
+          setShowReviewModal(true);
+        } catch (_) {}
+      })();
+    }
+  }, [activeJob, user?.role, hasPromptedReview]);
+
   if (!conversation) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -1027,8 +1090,25 @@ const ChatWindow = ({
         )}
 
         {activeJob && activeJob.lifecycleState === 'closed' && (
-          <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3">
-            Job closed. Thank you!
+          <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3 flex items-center justify-between">
+            <span>Job closed. Thank you!</span>
+            {String(user?.role).toLowerCase() !== 'professional' && (() => {
+              const alreadyReviewed = reviewedJobs.includes(activeJob._id);
+              return (
+                <button 
+                  onClick={() => !alreadyReviewed && setShowReviewModal(true)} 
+                  disabled={alreadyReviewed}
+                  className={`px-3 py-1.5 text-white rounded text-sm transition-colors ${
+                    alreadyReviewed 
+                      ? 'bg-gray-400 cursor-not-allowed opacity-60' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                  title={alreadyReviewed ? 'You have already reviewed this job' : 'Leave a review for this completed job'}
+                >
+                  {alreadyReviewed ? '✓ Review Submitted' : 'Leave a review'}
+                </button>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -1275,6 +1355,66 @@ const ChatWindow = ({
         onStopSharing={handleStopLocationShare}
         isSharing={isSharingLocation}
         onStartSharing={() => setShowLocationModal(true)}
+      />
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        serviceName={otherParticipant?.user?.name || 'Professional'}
+        onSubmit={async ({ review, rating }) => {
+          try {
+            if (!activeJob) return;
+            // Get the other participant's user ID
+            const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
+            if (!otherUserId) {
+              console.error('Cannot create review: No user ID found for other participant');
+              return;
+            }
+            
+            // Resolve professional ID from user ID
+            let professionalId = otherParticipant?.user?.professionalId;
+            if (!professionalId && otherUserId) {
+              try {
+                const proData = await getProfessional(otherUserId, { byUser: true });
+                professionalId = proData?.data?._id || proData?._id;
+                console.log('🔍 Resolved professional ID for review:', professionalId);
+              } catch (err) {
+                console.error('❌ Failed to resolve professional ID:', err);
+                // Fallback: use user ID (backend will handle it if needed)
+                professionalId = otherUserId;
+              }
+            }
+            
+            if (!professionalId) {
+              console.error('Cannot create review: No professional ID found');
+              return;
+            }
+            
+            console.log('📝 Creating review with professional ID:', professionalId);
+            const response = await createReview({ professional: professionalId, jobId: activeJob._id, rating, comment: review });
+            
+            if (response?.success || response?._id) {
+              // Persist that this job was reviewed to prevent duplicates
+              const key = 'ff_reviewed_jobs';
+              const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
+              if (!reviewed.includes(activeJob._id)) {
+                reviewed.push(activeJob._id);
+                localStorage.setItem(key, JSON.stringify(reviewed));
+                setReviewedJobs(reviewed); // Update state to disable button
+              }
+              
+              // Close modal after successful submission
+              setTimeout(() => {
+                setShowReviewModal(false);
+              }, 2000);
+            } else {
+              throw new Error('Review submission failed');
+            }
+          } catch (e) {
+            console.error('Failed to submit review', e);
+          }
+        }}
       />
 
   {/* Create Job Request Modal */}
