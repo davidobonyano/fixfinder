@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaCamera, FaTrash, FaSpinner, FaCheck, FaEdit, FaSave, FaTimes, FaCalendarAlt, FaSync } from "react-icons/fa";
-import { getUserProfile, updateUserProfile, uploadProfilePicture, removeProfilePicture, sendEmailVerification, deleteAccount } from "../utils/api";
+import { FaUser, FaCamera, FaTrash, FaSpinner, FaCheck, FaEdit, FaSave, FaTimes, FaCalendarAlt, FaSync, FaMapMarkerAlt } from "react-icons/fa";
+import { getUserProfile, updateUserProfile, uploadProfilePicture, removeProfilePicture, sendEmailVerification, deleteAccount, saveLocation } from "../utils/api";
 import { compressImage, validateImageFile } from "../utils/imageCompression";
 import { useAuth } from "../context/useAuth";
+import { getCurrentLocation } from "../utils/locationUtils";
+import { useToast } from "../context/ToastContext";
 
 export default function Profile() {
   const { user: authUser, login, logout } = useAuth();
   const navigate = useNavigate();
+  const { success: showSuccess } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -20,15 +23,12 @@ export default function Profile() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [updatingLocation, setUpdatingLocation] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: ""
   });
-  // Location is read-only on Profile; we show what's stored on the account
-  const [reportOpen, setReportOpen] = useState(false);
-  const [reportMessage, setReportMessage] = useState("");
-  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   useEffect(() => {
     loadProfile();
@@ -104,7 +104,43 @@ export default function Profile() {
     }
   };
 
-  // No manual or GPS update from Profile; location updates are automatic elsewhere
+  const handleUpdateLocation = async () => {
+    try {
+      setUpdatingLocation(true);
+      setError("");
+      setSuccess("");
+      
+      // Get current location directly from geolocation API
+      const position = await getCurrentLocation();
+      const lat = position.latitude;
+      const lng = position.longitude;
+
+      // Save location to backend (backend will snap to LGA automatically)
+      const response = await saveLocation(lat, lng);
+      
+      if (response.success) {
+        setSuccess('Location updated successfully!');
+        showSuccess('Location updated successfully!', 3000);
+        // Update user in auth context if location data is returned
+        if (response.data?.location && authUser) {
+          login(authUser.token || localStorage.getItem('token'), {
+            ...authUser,
+            location: response.data.location
+          });
+        }
+        // Reload profile to show updated location
+        await loadProfile(true);
+      } else {
+        throw new Error(response.message || 'Failed to update location');
+      }
+    } catch (error) {
+      console.error('Error updating location:', error);
+      const errorMessage = error.message || 'Failed to update location. Please ensure location permissions are granted and try again.';
+      setError(errorMessage);
+    } finally {
+      setUpdatingLocation(false);
+    }
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -519,106 +555,39 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Location Section (read-only) */}
+      {/* Location Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Location</h2>
-        <p className="text-sm text-gray-600">
-          {user?.location?.city && user?.location?.state ? (
-            <>Detected: <span className="font-medium">{user.location.city}, {user.location.state}</span></>
-          ) : (
-            <>We’ll detect your location and snap to your LGA for accurate matching.</>
-          )}
-          {user?.location?.address && (
-            <><br/>Address: <span className="font-medium">{user.location.address}</span></>
-          )}
-        </p>
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => setReportOpen(true)}
-            className="text-sm text-blue-700 hover:underline"
-          >
-            Report wrong location
-          </button>
-        </div>
-      </div>
-
-      {/* Report wrong location modal */}
-      {reportOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Report wrong location</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Current: {user?.location?.city || '—'}, {user?.location?.state || '—'}
-            </p>
-            <label className="block text-sm font-medium text-gray-700 mb-1">What seems wrong?</label>
-            <textarea
-              value={reportMessage}
-              onChange={(e) => setReportMessage(e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="e.g., Snapped to Lagos Island but I’m in Ikorodu"
-            />
-            <div className="mt-4 flex gap-2">
+        {/* Location quick update */}
+        <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-gray-50">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <FaMapMarkerAlt className="w-4 h-4" /> Location
+              </h3>
+              <div className="text-sm text-gray-700 mt-1">
+                <div>
+                  Current: {user?.location?.address || `${user?.location?.city || ''}${user?.location?.city && user?.location?.state ? ', ' : ''}${user?.location?.state || ''}` || 'Not set'}
+                </div>
+                {user?.location?.coordinates && (
+                  <div className="text-gray-500">
+                    ({user.location.coordinates.lat?.toFixed(4) || user.location.coordinates.latitude?.toFixed(4)}, {user.location.coordinates.lng?.toFixed(4) || user.location.coordinates.longitude?.toFixed(4)})
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="shrink-0">
               <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setReportSubmitting(true);
-                    setError("");
-                    setSuccess("");
-                    // Try geolocation now and ask backend to re-snap via normal flow
-                    if (navigator.geolocation) {
-                      await new Promise((resolve) => navigator.geolocation.getCurrentPosition(resolve, resolve, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }));
-                    }
-                    setSuccess('Thanks! We will verify and update if needed.');
-                    setReportOpen(false);
-                    setReportMessage("");
-                  } catch (e) {
-                    setError('Could not retry detection. Please try again later.');
-                  } finally {
-                    setReportSubmitting(false);
-                  }
-                }}
-                disabled={reportSubmitting}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                onClick={handleUpdateLocation}
+                disabled={updatingLocation}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {reportSubmitting ? 'Retrying…' : 'Retry detection now'}
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setReportSubmitting(true);
-                    setError("");
-                    setSuccess("");
-                    const { reportLocationIssue } = await import('../utils/api');
-                    await reportLocationIssue({ message: reportMessage || 'Wrong location reported' });
-                    setSuccess('Report submitted. We will review and fix.');
-                    setReportOpen(false);
-                    setReportMessage("");
-                  } catch (e) {
-                    setError(e.message || 'Failed to submit report');
-                  } finally {
-                    setReportSubmitting(false);
-                  }
-                }}
-                disabled={reportSubmitting}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              >
-                {reportSubmitting ? 'Submitting…' : 'Submit report'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setReportOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
+                {updatingLocation ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaMapMarkerAlt className="w-4 h-4" />}
+                {updatingLocation ? 'Updating…' : 'Update Location (Use my GPS)'}
               </button>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Account Security Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

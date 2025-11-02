@@ -62,13 +62,20 @@ const ProfessionalDashboard = () => {
   };
 
   useEffect(() => {
+    // Ensure user is a professional, redirect if not
+    if (user && user.role !== 'professional') {
+      console.warn('Non-professional user accessing professional dashboard, redirecting...');
+      navigate('/dashboard');
+      return;
+    }
+    
     loadDashboardData();
     
     // Auto-share location for professionals when they login
     if (user?.role === 'professional') {
       requestLocationPermission();
     }
-  }, [user]);
+  }, [user, navigate]);
 
   // Auto-share location for professionals
   const requestLocationPermission = async () => {
@@ -277,7 +284,7 @@ const ProfessionalDashboard = () => {
             </div>
             
             <Link
-              to="/dashboard/notifications"
+              to="/dashboard/professional/notifications"
               className="p-2 text-gray-400 hover:text-gray-600 relative"
             >
               <FaBell className="w-6 h-6" />
@@ -288,7 +295,7 @@ const ProfessionalDashboard = () => {
               )}
             </Link>
             <Link
-              to="/dashboard/profile"
+              to="/dashboard/professional/profile"
               className="p-2 text-gray-400 hover:text-gray-600"
             >
               <FaUser className="w-6 h-6" />
@@ -399,7 +406,7 @@ const ProfessionalDashboard = () => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
-            to="/dashboard/my-jobs"
+            to="/dashboard/professional/my-jobs"
             className="flex items-center p-4 bg-white border-2 border-blue-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all group"
           >
             <div className="p-3 bg-blue-100 rounded-full mr-4 group-hover:bg-blue-200 transition-colors">
@@ -412,7 +419,7 @@ const ProfessionalDashboard = () => {
           </Link>
 
           <Link
-            to="/dashboard/messages"
+            to="/dashboard/professional/messages"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
           >
             <div className="p-3 bg-gray-100 rounded-full mr-4 group-hover:bg-gray-200 transition-colors">
@@ -425,7 +432,7 @@ const ProfessionalDashboard = () => {
           </Link>
 
           <Link
-            to="/dashboard/profile"
+            to="/dashboard/professional/profile"
             className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
           >
             <div className="p-3 bg-gray-100 rounded-full mr-4 group-hover:bg-gray-200 transition-colors">
@@ -445,7 +452,7 @@ const ProfessionalDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
             <Link
-              to="/dashboard/my-jobs"
+              to="/dashboard/professional/my-jobs"
               className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
             >
               View all
@@ -481,7 +488,7 @@ const ProfessionalDashboard = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Recent Messages</h2>
             <Link
-              to="/dashboard/messages"
+              to="/dashboard/professional/messages"
               className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
             >
               View all
@@ -512,7 +519,7 @@ const ProfessionalDashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
           <Link
-            to="/dashboard/notifications"
+            to="/dashboard/professional/notifications"
             className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
           >
             View all

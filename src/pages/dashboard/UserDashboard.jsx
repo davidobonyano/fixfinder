@@ -17,17 +17,19 @@ import {
   FaArrowRight,
   FaEye,
   FaEnvelope,
-  FaUsers
+  FaUsers,
+  FaSync
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { getMyJobs, getProfessionals, getNotifications } from '../../utils/api';
+import { getMyJobs, getProfessionals, getNotifications, saveLocation } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
+import { getCurrentLocation } from '../../utils/locationUtils';
 import ServiceSelector from '../../components/ServiceSelector';
 
 const UserDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, login } = useAuth();
   const navigate = useNavigate();
-  const { error: showError } = useToast();
+  const { error: showError, success: showSuccess } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [nearbyPros, setNearbyPros] = useState([]);
   const [recentJobs, setRecentJobs] = useState([]);
@@ -38,6 +40,7 @@ const UserDashboard = () => {
     completedJobs: 0
   });
   const [loading, setLoading] = useState(true);
+  const [updatingLocation, setUpdatingLocation] = useState(false);
   
   // Helper function to handle authentication errors
   const handleAuthError = (err) => {
@@ -161,6 +164,39 @@ const UserDashboard = () => {
     }
   };
 
+  const handleUpdateLocation = async () => {
+    try {
+      setUpdatingLocation(true);
+      
+      // Get current location directly from geolocation API
+      const position = await getCurrentLocation();
+      const lat = position.latitude;
+      const lng = position.longitude;
+
+      // Save location to backend (backend will snap to LGA automatically)
+      const response = await saveLocation(lat, lng);
+      
+      if (response.success) {
+        showSuccess('Location updated successfully!', 3000);
+        // Update user in auth context if location data is returned
+        if (response.data?.location && user) {
+          login(user.token || localStorage.getItem('token'), {
+            ...user,
+            location: response.data.location
+          });
+        }
+      } else {
+        throw new Error(response.message || 'Failed to update location');
+      }
+    } catch (error) {
+      console.error('Error updating location:', error);
+      const errorMessage = error.message || 'Failed to update location. Please ensure location permissions are granted and try again.';
+      showError(errorMessage, 5000);
+    } finally {
+      setUpdatingLocation(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Completed': return 'bg-gray-100 text-gray-800';
@@ -272,6 +308,42 @@ const UserDashboard = () => {
               <FaCheckCircle className="w-6 h-6 text-gray-600" />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Location Section */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Your Location</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {user?.location?.city && user?.location?.state ? (
+                <span>{user.location.city}, {user.location.state}</span>
+              ) : (
+                <span>Location not set</span>
+              )}
+              {user?.location?.address && (
+                <span className="block text-xs text-gray-500 mt-1">{user.location.address}</span>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={handleUpdateLocation}
+            disabled={updatingLocation}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {updatingLocation ? (
+              <>
+                <FaSync className="w-4 h-4 animate-spin" />
+                <span>Updating…</span>
+              </>
+            ) : (
+              <>
+                <FaMapMarkerAlt className="w-4 h-4" />
+                <span>Update Location</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 

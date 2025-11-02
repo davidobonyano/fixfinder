@@ -156,10 +156,18 @@ export default function Login() {
           {loading ? "Signing in..." : "Sign In"}
         </button>
 
-        <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
-          Don't have an account?{" "}
-          <Link to="/signup" className="text-indigo-500 font-medium hover:underline cursor-pointer">Create one</Link>
-        </p>
+        <div className="mt-4 text-center">
+          <Link 
+            to="/forgot-password" 
+            className="text-sm text-indigo-500 font-medium hover:underline cursor-pointer block mb-3"
+          >
+            Forgot Password?
+          </Link>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-indigo-500 font-medium hover:underline cursor-pointer">Create one</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

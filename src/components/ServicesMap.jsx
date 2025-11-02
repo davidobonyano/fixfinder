@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -417,6 +418,7 @@ const getCategoryInfo = (category) => {
 };
 
 const ServicesMap = () => {
+  const navigate = useNavigate();
   const [professionals, setProfessionals] = useState(DUMMY_PROFESSIONALS);
   const [mapCenter] = useState([6.5244, 3.3792]); // Lagos center
 
@@ -515,8 +517,9 @@ const ServicesMap = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
-                          // Redirect to category professionals page
-                          window.location.href = `/services/${professional.category.toLowerCase()}`;
+                          // Navigate to category professionals page (will show mock data if no real pros)
+                          const categoryPath = professional.category.toLowerCase().replace(/\s+/g, '-');
+                          navigate(`/services/${categoryPath}`);
                         }}
                         className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700 flex items-center justify-center gap-1"
                       >
@@ -525,20 +528,21 @@ const ServicesMap = () => {
                       </button>
                       <button
                         onClick={() => {
-                          // Redirect to category professionals page
-                          window.location.href = `/services/${professional.category.toLowerCase()}`;
+                          // Navigate to category professionals page
+                          const categoryPath = professional.category.toLowerCase().replace(/\s+/g, '-');
+                          navigate(`/services/${categoryPath}`);
                         }}
                         className="p-2 bg-green-600 text-white rounded hover:bg-green-700"
-                        title="Browse Professionals"
+                        title="View Professionals"
                       >
-                        <FaPhone className="w-3 h-3" />
+                        <FaExternalLinkAlt className="w-3 h-3" />
                       </button>
                       <button
                         onClick={() => openInMaps(professional)}
                         className="p-2 bg-gray-600 text-white rounded hover:bg-gray-700"
                         title="Open in Maps"
                       >
-                        <FaExternalLinkAlt className="w-3 h-3" />
+                        <FaMapMarkerAlt className="w-3 h-3" />
                       </button>
                     </div>
                   </div>

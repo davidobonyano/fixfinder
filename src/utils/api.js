@@ -57,6 +57,8 @@ async function request(path, { method = "GET", body, auth = false, headers: extr
 export const registerUser = (payload) => request("/api/auth/register", { method: "POST", body: payload });
 export const loginUser = (payload) => request("/api/auth/login", { method: "POST", body: payload });
 export const getMe = () => request("/api/auth/me", { method: "GET", auth: true });
+export const forgotPassword = (email) => request("/api/auth/forgot-password", { method: "POST", body: { email } });
+export const resetPassword = (token, password) => request("/api/auth/reset-password", { method: "POST", body: { token, password } });
 export const getUser = (id) => request(`/api/users/${id}`, { auth: true });
 export const getServicesApi = async (params = {}) => {
   const q = new URLSearchParams(params).toString();
@@ -441,12 +443,6 @@ export const snapToLGAApi = (latitude, longitude) => {
   return request(`/api/location/snap?${q}`, { auth: true });
 };
 
-// Report wrong location (optionally ask server to retry snapping)
-export const reportLocationIssue = (payload) => request(`/api/location/report-issue`, {
-  method: 'POST',
-  body: payload,
-  auth: true
-});
 
 export const deleteAllMessagesForMe = (conversationId) => {
   return request(`/api/messages/conversations/${conversationId}/all-for-me`, {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
@@ -32,7 +32,40 @@ const DashboardLayout = ({ userType = 'user' }) => {
   const { socket, isConnected } = useSocket();
   const { info } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [myLocation, setMyLocation] = useState(null);
+
+  // Protect routes: Ensure user role matches dashboard type
+  useEffect(() => {
+    if (user) {
+      const isProfessionalRoute = location.pathname.startsWith('/dashboard/professional');
+      const isProfessional = user.role === 'professional';
+      
+      // If user is professional but on user dashboard routes, redirect to professional dashboard
+      if (isProfessional && !isProfessionalRoute) {
+        const currentPath = location.pathname.replace('/dashboard', '/dashboard/professional');
+        navigate(currentPath, { replace: true });
+        return;
+      }
+      
+      // If user is not professional but on professional routes, redirect to user dashboard
+      if (!isProfessional && isProfessionalRoute) {
+        const currentPath = location.pathname.replace('/dashboard/professional', '/dashboard');
+        navigate(currentPath, { replace: true });
+        return;
+      }
+      
+      // Ensure userType prop matches actual user role
+      if ((isProfessional && userType !== 'professional') || (!isProfessional && userType === 'professional')) {
+        // UserType mismatch - this shouldn't happen, but redirect to correct dashboard
+        if (isProfessional) {
+          navigate('/dashboard/professional', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    }
+  }, [user, navigate, userType, location.pathname]);
 
   const handleLogout = () => {
     logout();
