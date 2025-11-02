@@ -81,6 +81,7 @@ const ChatWindow = ({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [hasPromptedReview, setHasPromptedReview] = useState(false);
   const [reviewedJobs, setReviewedJobs] = useState([]);
+  const [showMessageLimitModal, setShowMessageLimitModal] = useState(false);
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
@@ -135,7 +136,13 @@ const ChatWindow = ({
 
   // Seed shared locations from existing messages
   useEffect(() => {
-    setActiveJob(conversation?.job || null);
+    const jobValue = conversation?.job || null;
+    console.log('🔄 Setting activeJob from conversation:', { 
+      hasJob: !!jobValue, 
+      jobValue,
+      conversationId: conversation?._id 
+    });
+    setActiveJob(jobValue);
     try {
       // Only keep last message per user
       const byUser = new Map();
@@ -366,7 +373,23 @@ const ChatWindow = ({
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !conversation || sending) return;
+    
+    // Check conditions before sending
+    if (!newMessage.trim() || !conversation || sending) {
+      return;
+    }
+
+    // Block if limit reached - this is critical
+    if (isMessageLimitReached) {
+      console.log('🚫 Message blocked by frontend: limit reached', { 
+        userMessageCount, 
+        MESSAGE_LIMIT_PER_USER, 
+        activeJob,
+        isMessageLimitReached 
+      });
+      setShowMessageLimitModal(true);
+      return;
+    }
 
     setSending(true);
     const messageText = newMessage.trim();
@@ -443,6 +466,28 @@ const ChatWindow = ({
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.status || error.response?.status,
+        data: error.data || error.response?.data,
+        code: error.data?.code || error.response?.data?.code
+      });
+      
+      // Handle message limit error - check multiple error formats
+      const statusCode = error.status || error.response?.status;
+      const errorData = error.data || error.response?.data;
+      const errorMessage = errorData?.message || error.message || '';
+      const errorCode = errorData?.code;
+      
+      if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
+          (statusCode === 403 && errorMessage.includes('Message limit'))) {
+        // Show modal instead of alert
+        setShowMessageLimitModal(true);
+      } else {
+        // Show other errors with alert (for now, can be converted to modal later)
+        alert(errorMessage || 'Failed to send message. Please try again.');
+      }
+      
       // Remove the optimistic message on error
       if (onMessageSent && tempId) {
         onMessageSent(null, tempId, true); // true = remove
@@ -590,8 +635,54 @@ const ChatWindow = ({
   };
 
   const handleShareLocation = async (location) => {
+    if (isMessageLimitReached) {
+      // Show job modal if limit reached
+      if (String(user?.role).toLowerCase() !== 'professional') {
+        setShowJobModal(true);
+      }
+      return;
+    }
+
     const tempId = `temp-loc-${Date.now()}`;
     
+    // Create optimistic message IMMEDIATELY for instant UI update
+    const optimisticLocationMessage = {
+      _id: tempId,
+      sender: {
+        _id: user?.id,
+        name: user?.name,
+        profilePicture: user?.profilePicture || user?.avatarUrl
+      },
+      content: {
+        location: {
+          lat: location.lat,
+          lng: location.lng,
+          accuracy: location.accuracy
+        }
+      },
+      messageType: 'location_share',
+      isRead: false,
+      isEdited: false,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+      conversation: conversation._id,
+      isOptimistic: true
+    };
+
+    // Add message to local state IMMEDIATELY for instant UI update (before API call)
+    if (onMessageSent) {
+      onMessageSent(optimisticLocationMessage);
+    }
+
+    // Update UI state immediately
+    setIsSharingLocation(true);
+    setUserLocation({
+      ...location,
+      avatarUrl: user?.profilePicture || user?.avatarUrl
+    });
+    // Close modal after confirming share
+    setShowLocationModal(false);
+
     try {
       setSending(true);
       const response = await shareLocation(conversation._id, {
@@ -601,43 +692,7 @@ const ChatWindow = ({
       });
 
       if (response.success) {
-        setIsSharingLocation(true);
-        setUserLocation({
-          ...location,
-          avatarUrl: user?.profilePicture || user?.avatarUrl
-        });
-        // Close modal after confirming share
-        setShowLocationModal(false);
-
-        // Add location message to local state immediately for instant update
-        const optimisticLocationMessage = {
-          _id: tempId,
-          sender: {
-            _id: user?.id,
-            name: user?.name,
-            profilePicture: user?.profilePicture || user?.avatarUrl
-          },
-          content: {
-            location: {
-              lat: location.lat,
-              lng: location.lng,
-              accuracy: location.accuracy
-            }
-          },
-          messageType: 'location_share',
-          isRead: false,
-          isEdited: false,
-          isDeleted: false,
-          createdAt: new Date().toISOString(),
-          conversation: conversation._id,
-          isOptimistic: true
-        };
-
-        if (onMessageSent) {
-          onMessageSent(optimisticLocationMessage);
-        }
-
-        // Replace with real data when available
+        // Replace optimistic message with real data when available
         if (response.data) {
           const locationMessage = {
             _id: response.data._id || response.data.messageId,
@@ -665,9 +720,18 @@ const ChatWindow = ({
           if (onMessageSent) {
             onMessageSent(locationMessage, tempId);
           }
+        } else {
+          // If no response.data, keep the optimistic message but mark it as confirmed
+          if (onMessageSent) {
+            onMessageSent({
+              ...optimisticLocationMessage,
+              _id: optimisticLocationMessage._id,
+              isOptimistic: false
+            }, tempId);
+          }
         }
         
-        // Emit location share via Socket.IO
+        // Emit location share via Socket.IO for real-time delivery
         if (socket && isConnected) {
           emit('shareLocation', {
             senderId: user?.id,
@@ -687,10 +751,29 @@ const ChatWindow = ({
       }
     } catch (error) {
       console.error('Error sharing location:', error);
+      
+      // Handle message limit error for location sharing
+      const statusCode = error.status || error.response?.status;
+      const errorData = error.data || error.response?.data;
+      const errorMessage = errorData?.message || error.message || '';
+      const errorCode = errorData?.code;
+      
+      if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
+          (statusCode === 403 && errorMessage.includes('Message limit'))) {
+        setShowMessageLimitModal(true);
+        // Don't re-open location modal if limit reached
+      } else {
+        // Revert UI state on error
+        setShowLocationModal(true); // Re-open modal to allow retry
+      }
+      
       // Remove optimistic message on error
       if (onMessageSent) {
         onMessageSent(null, tempId, true);
       }
+      // Revert UI state on error
+      setIsSharingLocation(false);
+      setUserLocation(null);
     } finally {
       setSending(false);
     }
@@ -902,63 +985,137 @@ const ChatWindow = ({
     return undefined;
   };
 
-  const effectiveState = deriveEffectiveState(activeJob);
+  // Calculate message count for current user (excluding system and location_share)
+  const userMessageCount = messages.filter(
+    msg => {
+      // Handle both populated sender objects and sender IDs
+      const senderId = msg.sender?._id || msg.sender?.id || msg.sender;
+      const currentUserId = user?.id || user?._id;
+      const isMyMessage = String(senderId) === String(currentUserId);
+      const isCountable = !msg.isDeleted && 
+                          msg.messageType !== 'system' && 
+                          msg.messageType !== 'location_share';
+      return isMyMessage && isCountable;
+    }
+  ).length;
 
-  // Load reviewed jobs from localStorage
+  const MESSAGE_LIMIT_PER_USER = 5;
+  
+  // Check if job is active (not completed/closed/cancelled)
+  // Only active jobs allow unlimited messaging
+  const effectiveState = deriveEffectiveState(activeJob);
+  // Job is active if it exists and is NOT closed/cancelled
+  const isJobActive = activeJob && effectiveState && !['closed', 'cancelled', 'completed_by_pro', 'completed_by_user'].includes(effectiveState);
+  
+  const isMessageLimitReached = !isJobActive && userMessageCount >= MESSAGE_LIMIT_PER_USER;
+  const messagesRemaining = Math.max(0, MESSAGE_LIMIT_PER_USER - userMessageCount);
+
+  // Debug logging - ALWAYS log for debugging
+  useEffect(() => {
+    console.log('📊 Message Limit Debug:', {
+      userMessageCount,
+      totalMessages: messages.length,
+      activeJob: activeJob ? 'EXISTS' : 'NULL',
+      conversationJob: conversation?.job ? 'EXISTS' : 'NULL',
+      isMessageLimitReached,
+      messagesRemaining,
+      user: { id: user?.id, _id: user?._id },
+      conversationId: conversation?._id,
+      myMessages: messages.filter(m => {
+        const senderId = m.sender?._id || m.sender?.id || m.sender;
+        return String(senderId) === String(user?.id || user?._id);
+      }).length,
+      sampleMessage: messages[0] ? {
+        senderId: messages[0].sender?._id || messages[0].sender?.id || messages[0].sender,
+        senderType: typeof messages[0].sender,
+        messageType: messages[0].messageType,
+        isDeleted: messages[0].isDeleted
+      } : null
+    });
+  }, [userMessageCount, messages.length, activeJob, isMessageLimitReached, messagesRemaining, user?.id, conversation?._id, conversation?.job]);
+
+  // Load reviewed jobs from localStorage and reset prompted state when job changes
   useEffect(() => {
     const key = 'ff_reviewed_jobs';
     const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
     setReviewedJobs(reviewed);
+    // Reset prompted state when job changes so we can check again for new jobs
+    setHasPromptedReview(false);
   }, [activeJob?._id]);
 
-  // Prompt for review when job is closed (client only)
+  // Prompt for review when job is closed (client only) - with 10s delay and dismiss tracking
   useEffect(() => {
     if (!activeJob) return;
     const isClient = String(user?.role).toLowerCase() !== 'professional';
     const closed = String(activeJob?.lifecycleState || '').toLowerCase() === 'closed' || String(activeJob?.status || '').toLowerCase() === 'completed';
-    if (isClient && closed && !hasPromptedReview) {
-      (async () => {
-        try {
-          // Prevent double reviews: check local and remote
-          const key = 'ff_reviewed_jobs';
-          const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
-          if (reviewed.includes(activeJob._id)) {
-            setReviewedJobs(reviewed);
-            return;
-          }
-          // Resolve professional ID from user ID
-          const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
-          let proId = otherParticipant?.user?.professionalId;
-          if (!proId && otherUserId) {
-            try {
-              const proData = await getProfessional(otherUserId, { byUser: true });
-              proId = proData?.data?._id || proData?._id;
-            } catch (_) {}
-          }
-          if (!proId) proId = otherUserId; // Fallback
-          
-          if (proId) {
-            try {
-              const r = await getProfessionalReviews(proId, { limit: 100 });
-              const items = r?.data?.reviews || r?.data || [];
-              const mine = items.find(x => (String(x.jobId || (x.job?._id || x.job)) === String(activeJob._id)) && (String(x.user?._id || x.userId) === String(user?.id)));
-              if (mine) {
-                // Already reviewed - update local storage
-                if (!reviewed.includes(activeJob._id)) {
-                  reviewed.push(activeJob._id);
-                  localStorage.setItem(key, JSON.stringify(reviewed));
-                  setReviewedJobs(reviewed);
-                }
-                return;
-              }
-            } catch (_) {}
-          }
-          setHasPromptedReview(true);
-          setShowReviewModal(true);
-        } catch (_) {}
-      })();
+    
+    if (!isClient || !closed || hasPromptedReview) return;
+
+    // Check if already reviewed or dismissed
+    const reviewKey = 'ff_reviewed_jobs';
+    const dismissKey = 'ff_dismissed_reviews';
+    const reviewed = JSON.parse(localStorage.getItem(reviewKey) || '[]');
+    const dismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
+    
+    // If already reviewed or dismissed, don't show
+    if (reviewed.includes(activeJob._id) || dismissed.includes(activeJob._id)) {
+      setReviewedJobs(reviewed);
+      setHasPromptedReview(true); // Mark as prompted so we don't check again
+      return;
     }
-  }, [activeJob, user?.role, hasPromptedReview]);
+
+    // Set up delayed check (10 seconds) to show review modal
+    const timeoutId = setTimeout(async () => {
+      try {
+        // Double-check we haven't reviewed or dismissed while waiting
+        const currentReviewed = JSON.parse(localStorage.getItem(reviewKey) || '[]');
+        const currentDismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
+        
+        if (currentReviewed.includes(activeJob._id) || currentDismissed.includes(activeJob._id)) {
+          setHasPromptedReview(true);
+          return;
+        }
+
+        // Check remote reviews
+        const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
+        let proId = otherParticipant?.user?.professionalId;
+        if (!proId && otherUserId) {
+          try {
+            const proData = await getProfessional(otherUserId, { byUser: true });
+            proId = proData?.data?._id || proData?._id;
+          } catch (_) {}
+        }
+        if (!proId) proId = otherUserId;
+        
+        if (proId) {
+          try {
+            const r = await getProfessionalReviews(proId, { limit: 100 });
+            const items = r?.data?.reviews || r?.data || [];
+            const mine = items.find(x => (String(x.jobId || (x.job?._id || x.job)) === String(activeJob._id)) && (String(x.user?._id || x.userId) === String(user?.id)));
+            if (mine) {
+              // Already reviewed
+              if (!currentReviewed.includes(activeJob._id)) {
+                currentReviewed.push(activeJob._id);
+                localStorage.setItem(reviewKey, JSON.stringify(currentReviewed));
+                setReviewedJobs(currentReviewed);
+              }
+              setHasPromptedReview(true);
+              return;
+            }
+          } catch (_) {}
+        }
+
+        // Show modal after 10 seconds
+        setHasPromptedReview(true);
+        setShowReviewModal(true);
+      } catch (_) {}
+    }, 10000); // 10 second delay
+
+    // Cleanup timeout if component unmounts or dependencies change
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [activeJob?._id, activeJob?.lifecycleState, activeJob?.status, user?.role, user?.id, otherParticipant?.user?._id]);
 
   if (!conversation) {
     return (
@@ -1212,17 +1369,65 @@ const ChatWindow = ({
             </button>
           </div>
         )}
+
+        {/* Message Limit Warning */}
+        {isMessageLimitReached && (
+          <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-orange-800 mb-1">
+                  Message limit reached ({userMessageCount}/{MESSAGE_LIMIT_PER_USER})
+                </p>
+                <p className="text-xs text-orange-700">
+                  Create a job request to continue this conversation and unlock unlimited messaging.
+                </p>
+              </div>
+              {String(user?.role).toLowerCase() !== 'professional' && (
+                <button
+                  onClick={() => setShowJobModal(true)}
+                  className="ml-3 px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap"
+                >
+                  Create Job Request
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Message Count Indicator - Always show for debugging */}
+        <div className={`mb-2 text-xs text-center border rounded p-2 bg-gray-50 ${
+          isMessageLimitReached 
+            ? 'text-red-600 font-medium border-red-300' 
+            : messagesRemaining <= 2 
+              ? 'text-orange-600 border-orange-300' 
+              : 'text-gray-500 border-gray-300'
+        }`}>
+          {isJobActive ? (
+            <span className="text-green-600">✓ Active job - unlimited messaging ({effectiveState || 'active'})</span>
+          ) : activeJob && !isJobActive ? (
+            <span className="text-yellow-600">⚠ Job {effectiveState || 'completed'} - limit applies ({userMessageCount}/{MESSAGE_LIMIT_PER_USER})</span>
+          ) : isMessageLimitReached ? (
+            <span>🚫 Limit reached: {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages sent</span>
+          ) : (
+            <span>📊 {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages • {messagesRemaining} {messagesRemaining === 1 ? 'message' : 'messages'} remaining</span>
+          )}
+        </div>
         
         <form onSubmit={handleSendMessage} className="flex items-end gap-2">
           <div className="flex-1">
             <textarea
               value={newMessage}
               onChange={handleTyping}
-              placeholder="Type a message..."
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-gray-400"
+              placeholder={isMessageLimitReached ? "Create a job request to continue messaging..." : "Type a message..."}
+              disabled={isMessageLimitReached}
+              className={`w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 ${
+                isMessageLimitReached 
+                  ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed focus:ring-gray-300' 
+                  : 'border-gray-300 focus:ring-gray-400'
+              }`}
               rows={1}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey && !isMessageLimitReached) {
                   e.preventDefault();
                   handleSendMessage(e);
                 }
@@ -1237,16 +1442,26 @@ const ChatWindow = ({
               onStopSharing={handleStopLocationShare}
               isSharing={isSharingLocation}
               isLoading={sending}
-              disabled={!conversation}
+              disabled={!conversation || isMessageLimitReached}
             />
 
             {/* Share Contact Button */}
             <button
               type="button"
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              title="Share contact"
+              disabled={isMessageLimitReached}
+              className={`p-2 transition-colors ${
+                isMessageLimitReached 
+                  ? 'text-gray-300 cursor-not-allowed' 
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+              title={isMessageLimitReached ? 'Create job request to continue' : 'Share contact'}
               onClick={async () => {
-                if (!conversation) return;
+                if (!conversation || isMessageLimitReached) {
+                  if (isMessageLimitReached && String(user?.role).toLowerCase() !== 'professional') {
+                    setShowJobModal(true);
+                  }
+                  return;
+                }
                 const tempId = `temp-${Date.now()}`;
                 const contactData = { 
                   name: user?.name, 
@@ -1310,7 +1525,18 @@ const ChatWindow = ({
                     }
                   }
                 } catch (e) {
-                  console.error(e);
+                  console.error('Error sharing contact:', e);
+                  // Handle message limit error for contact sharing too
+                  const statusCode = e.status || e.response?.status;
+                  const errorData = e.data || e.response?.data;
+                  const errorMessage = errorData?.message || e.message || '';
+                  const errorCode = errorData?.code;
+                  
+                  if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
+                      (statusCode === 403 && errorMessage.includes('Message limit'))) {
+                    setShowMessageLimitModal(true);
+                  }
+                  
                   if (onMessageSent) {
                     onMessageSent(null, tempId, true);
                   }
@@ -1323,8 +1549,9 @@ const ChatWindow = ({
             {/* Send Button */}
             <button
               type="submit"
-              disabled={!newMessage.trim() || sending}
+              disabled={!newMessage.trim() || sending || isMessageLimitReached}
               className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={isMessageLimitReached ? 'Create job request to continue messaging' : ''}
             >
               {sending ? (
                 <FaSpinner className="w-4 h-4 animate-spin" />
@@ -1360,7 +1587,18 @@ const ChatWindow = ({
       {/* Review Modal */}
       <ReviewModal
         isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
+        onClose={() => {
+          // Track dismissed review so it doesn't show again
+          if (activeJob?._id) {
+            const dismissKey = 'ff_dismissed_reviews';
+            const dismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
+            if (!dismissed.includes(activeJob._id)) {
+              dismissed.push(activeJob._id);
+              localStorage.setItem(dismissKey, JSON.stringify(dismissed));
+            }
+          }
+          setShowReviewModal(false);
+        }}
         serviceName={otherParticipant?.user?.name || 'Professional'}
         onSubmit={async ({ review, rating }) => {
           try {
@@ -1533,6 +1771,56 @@ const ChatWindow = ({
                 className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Limit Reached Modal */}
+      {showMessageLimitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                <span className="text-2xl">🚫</span>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Message Limit Reached</h3>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-gray-600 mb-2">
+                You've reached the message limit of {MESSAGE_LIMIT_PER_USER} messages in this conversation.
+              </p>
+              <p className="text-sm text-gray-500 mb-3">
+                To continue messaging, please create a job request. This helps ensure clear communication and proper service tracking.
+              </p>
+              <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-3">
+                <p className="text-sm text-orange-800">
+                  <strong>Current count:</strong> {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages sent
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              {String(user?.role).toLowerCase() !== 'professional' && (
+                <button
+                  onClick={() => {
+                    setShowMessageLimitModal(false);
+                    setShowJobModal(true);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create Job Request
+                </button>
+              )}
+              <button
+                onClick={() => setShowMessageLimitModal(false)}
+                className={`px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors ${
+                  String(user?.role).toLowerCase() === 'professional' ? 'flex-1' : ''
+                }`}
+              >
+                {String(user?.role).toLowerCase() === 'professional' ? 'Close' : 'Cancel'}
               </button>
             </div>
           </div>

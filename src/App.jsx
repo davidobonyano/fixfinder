@@ -95,6 +95,7 @@ const router = createBrowserRouter(
           <Route path="verify-email/success" element={<VerifyEmailSuccess />} />
           <Route path="profile" element={<Profile />} />
           <Route path="admin" element={<AdminDashboard />} />
+          <Route path="davidobonyanoefe" element={<AdminDashboard />} />
           
           {/* Professional Routes */}
           <Route path="professionals/:id" element={<ProfessionalDetail />} />

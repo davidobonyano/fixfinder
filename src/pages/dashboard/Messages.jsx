@@ -18,7 +18,6 @@ import {
   FaSpinner,
   FaMapMarkerAlt,
   FaUser,
-  FaMap,
   FaLocationArrow,
   FaShare,
   FaInfoCircle,
@@ -48,7 +47,6 @@ import {
   deleteConversationForMe
 } from '../../utils/api';
 import { compressImage, validateImageFile } from '../../utils/imageCompression';
-import FriendsMap from '../../components/FriendsMap';
 import MapView from '../../components/MapView';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import PrivacySettings from '../../components/PrivacySettings';
@@ -76,7 +74,6 @@ const Messages = () => {
   const [presenceByUser, setPresenceByUser] = useState({});
   const [showChatOptions, setShowChatOptions] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(false);
-  const [showFriendsMap, setShowFriendsMap] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [showLocationConfirmModal, setShowLocationConfirmModal] = useState(false);
@@ -774,17 +771,6 @@ const Messages = () => {
             </button>
           </div>
           
-          {/* Friends Map Button */}
-          <div className="mb-3">
-            <button
-              onClick={() => setShowFriendsMap(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <FaMap className="w-4 h-4" />
-              <span className="text-sm">Friends Map</span>
-            </button>
-          </div>
-          
           {/* Search */}
           <div className="relative">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -1063,13 +1049,6 @@ const Messages = () => {
           </div>
         </div>
       )}
-
-      {/* Friends Map */}
-      <FriendsMap
-        isOpen={showFriendsMap}
-        onClose={() => setShowFriendsMap(false)}
-        conversations={conversations}
-      />
 
       {/* Location Map */}
       <MapView

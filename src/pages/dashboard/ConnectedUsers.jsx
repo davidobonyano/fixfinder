@@ -297,14 +297,20 @@ const ConnectedUsers = () => {
         setFullProfileUser(payload || connectedUser);
         setShowFullProfile(true);
       } else {
-        // For professionals, redirect to profile route for now
-        const path = `/professional/${connectedUser._id}`;
+        // For professionals, navigate to dashboard professional profile route
+        console.log('Navigating to professional profile:', connectedUser._id);
+        const path = `/dashboard/professional/${connectedUser._id}`;
         navigate(path);
       }
     } catch (e) {
-      // Fallback to showing what we have
-      setFullProfileUser(connectedUser);
-      setShowFullProfile(true);
+      console.error('Error in handleViewFullProfile:', e);
+      // Fallback: try navigating directly if it's a professional
+      if (connectedUser.userType === 'professional') {
+        navigate(`/dashboard/professional/${connectedUser._id}`);
+      } else {
+        setFullProfileUser(connectedUser);
+        setShowFullProfile(true);
+      }
     }
   };
 
@@ -400,7 +406,13 @@ const ConnectedUsers = () => {
             {filteredConnections.map((connectedUser) => (
               <div
                 key={connectedUser._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Only navigate if clicking on the card itself, not buttons
+                  if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    handleViewFullProfile(connectedUser);
+                  }
+                }}
               >
                 <div className="relative">
                   <img
@@ -408,8 +420,6 @@ const ConnectedUsers = () => {
                     alt={connectedUser.name}
                     className="w-full h-48 object-cover"
                     onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
-                    onClick={() => connectedUser.userType === 'user' ? handleViewFullProfile(connectedUser) : undefined}
-                    style={{ cursor: connectedUser.userType === 'user' ? 'pointer' : undefined }}
                   />
                 </div>
                 
@@ -478,7 +488,13 @@ const ConnectedUsers = () => {
             {filteredConnections.map((connectedUser) => (
               <div
                 key={connectedUser._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Only navigate if clicking on the card itself, not buttons
+                  if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    handleViewFullProfile(connectedUser);
+                  }
+                }}
               >
                 <div className="flex items-start gap-4">
                   <img

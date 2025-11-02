@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaCamera, FaTrash, FaSpinner, FaCheck, FaEdit, FaSave, FaTimes, FaCalendarAlt, FaSync, FaMapMarkerAlt } from "react-icons/fa";
 import { getUserProfile, updateUserProfile, uploadProfilePicture, removeProfilePicture, sendEmailVerification, deleteAccount, saveLocation } from "../utils/api";
@@ -30,11 +30,7 @@ export default function Profile() {
     phone: ""
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async (isRefresh = false) => {
+  const loadProfile = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -43,21 +39,29 @@ export default function Profile() {
       }
       const response = await getUserProfile();
       if (response.success) {
-        setUser(response.data);
+        // Get current verification status before updating state
+        setUser(prevUser => {
+          const wasVerified = prevUser?.emailVerification?.isVerified;
+          const isNowVerified = response.data.emailVerification?.isVerified;
+          
+          // Only update auth context if email verification status actually changed
+          // This prevents unnecessary rerenders when status hasn't changed
+          if (authUser && wasVerified !== isNowVerified) {
+            login(authUser.token || localStorage.getItem('token'), {
+              ...authUser,
+              emailVerification: response.data.emailVerification
+            });
+          }
+          
+          return response.data;
+        });
+        
         setFormData({
           name: response.data.name || "",
           email: response.data.email || "",
           phone: response.data.phone || ""
         });
         // location shown read-only from response.data.location
-        
-        // Update auth context if email verification status changed
-        if (authUser && response.data.emailVerification?.isVerified !== authUser.emailVerification?.isVerified) {
-          login(authUser.token, {
-            ...authUser,
-            emailVerification: response.data.emailVerification
-          });
-        }
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -69,7 +73,11 @@ export default function Profile() {
         setLoading(false);
       }
     }
-  };
+  }, [authUser, login]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -235,20 +243,18 @@ export default function Profile() {
 
   // Check for verification status updates
   useEffect(() => {
-    const checkVerificationStatus = () => {
-      // Reload profile data every 5 seconds if not verified
-      if (user && !user.emailVerification?.isVerified) {
-        const interval = setInterval(() => {
-          loadProfile();
-        }, 5000);
-        
-        return () => clearInterval(interval);
-      }
-    };
+    // Only poll if user exists and is not verified
+    if (!user || user.emailVerification?.isVerified) {
+      return; // Don't set up polling if verified or no user
+    }
 
-    const cleanup = checkVerificationStatus();
-    return cleanup;
-  }, [user?.emailVerification?.isVerified]);
+    // Reload profile data every 20 seconds if not verified
+    const interval = setInterval(() => {
+      loadProfile(true); // Use refresh mode to avoid showing loading spinner
+    }, 20000);
+    
+    return () => clearInterval(interval);
+  }, [user?.emailVerification?.isVerified, loadProfile]);
 
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== "DELETE") {

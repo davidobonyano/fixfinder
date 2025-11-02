@@ -62,7 +62,18 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
   } catch (e) {}
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-5 transition hover:shadow-xl flex flex-col justify-between">
+    <Link 
+      to={`/dashboard/professional/${pro._id || pro.id}`}
+      className="bg-white rounded-xl shadow-md p-5 transition hover:shadow-xl flex flex-col justify-between block cursor-pointer"
+      onClick={(e) => {
+        // Don't navigate if clicking on buttons/links inside
+        if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.tagName === 'A') {
+          e.stopPropagation();
+          return;
+        }
+        console.log('ProfessionalCard: Card clicked, navigating to:', pro._id || pro.id);
+      }}
+    >
       <img
         src={image}
         alt={pro.name}
@@ -117,9 +128,13 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
 
         <div className="flex gap-2">
           <Link
-            to={`/professionals/${pro._id || pro.id}`}
+            to={`/dashboard/professional/${pro._id || pro.id}`}
             state={{ professional: pro }}
             className="text-sm text-blue-600 hover:underline font-medium"
+            onClick={(e) => {
+              console.log('ProfessionalCard: Navigating to profile:', pro._id || pro.id);
+              e.stopPropagation();
+            }}
           >
             View Profile
           </Link>
@@ -147,7 +162,7 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
           </ul>
         </div>
       )}
-    </div>
+    </Link>
   );
 };
 

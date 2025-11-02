@@ -56,6 +56,48 @@ const ChatHeader = ({
     action?.();
   };
 
+  const handleProfileNavigation = async () => {
+    console.log('handleProfileNavigation called');
+    console.log('hydratedUser:', hydratedUser);
+    console.log('otherParticipant:', otherParticipant);
+    
+    // Check if user is professional by role or userType
+    const isPro = hydratedUser?.role === 'professional' || otherParticipant?.userType === 'professional';
+    console.log('Is professional?', isPro, 'role:', hydratedUser?.role, 'userType:', otherParticipant?.userType);
+    
+    if (isPro && hydratedUser?._id) {
+      try {
+        console.log('Fetching professional profile for user ID:', hydratedUser._id);
+        // Try to get professional profile by user ID
+        const proResp = await getProfessional(hydratedUser._id, { byUser: true });
+        console.log('Professional response:', proResp);
+        const pro = proResp?.data || proResp;
+        const proId = pro?._id || pro?.id;
+        
+        if (proId) {
+          const route = `/dashboard/professional/${proId}`;
+          console.log('✅ Navigating to professional profile route:', route);
+          navigate(route);
+        } else {
+          console.warn('⚠️ No professional ID found, trying with user ID');
+          const route = `/dashboard/professional/${hydratedUser._id}`;
+          console.log('Navigating with user ID:', route);
+          navigate(route);
+        }
+      } catch (e) {
+        console.error('❌ Error getting professional ID:', e);
+        // Fallback: try navigating with user ID directly
+        const route = `/dashboard/professional/${hydratedUser._id}`;
+        console.log('🔙 Fallback: navigating with user ID:', route);
+        navigate(route);
+      }
+    } else {
+      // For regular users, use onViewProfile callback
+      console.log('👤 Regular user, using onViewProfile callback');
+      onViewProfile?.();
+    }
+  };
+
   return (
     <div className="p-4 border-b border-gray-200 bg-white">
       <div className="flex items-center justify-between">
@@ -69,48 +111,33 @@ const ChatHeader = ({
             </button>
           )}
           
-          <UserAvatar user={hydratedUser} size="md" onClick={async () => {
-            const isPro = hydratedUser?.role === 'professional';
-            if (isPro) {
-              try {
-                const proResp = await getProfessional(hydratedUser?._id, { byUser: true });
-                const pro = proResp?.data || proResp;
-                const proId = pro?._id || pro?.id || hydratedUser?._id;
-                navigate(`/dashboard/professional/${proId}`);
-              } catch (e) {
-                navigate(`/dashboard/professional/${hydratedUser?._id}`);
-              }
-            } else {
-              onViewProfile?.();
-            }
-          }} />
+          <div 
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Avatar/Name clicked, hydratedUser:', hydratedUser);
+              await handleProfileNavigation();
+            }}
+            className="flex items-center gap-3 cursor-pointer"
+          >
+            <UserAvatar 
+              user={hydratedUser} 
+              size="md" 
+              className="hover:opacity-80 transition-opacity"
+            />
           
-          <div>
-            <h2 className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600"
-                onClick={async () => {
-                  const isPro = hydratedUser?.role === 'professional';
-                  if (isPro) {
-                    try {
-                      const proResp = await getProfessional(hydratedUser?._id, { byUser: true });
-                      const pro = proResp?.data || proResp;
-                      const proId = pro?._id || pro?.id || hydratedUser?._id;
-                      navigate(`/dashboard/professional/${proId}`);
-                    } catch (e) {
-                      navigate(`/dashboard/professional/${hydratedUser?._id}`);
-                    }
-                  } else {
-                    onViewProfile?.();
-                  }
-                }}>
-              {hydratedUser?.name || 'Unknown User'}
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className={`inline-block w-2.5 h-2.5 rounded-full ${
-                presence?.isOnline ? 'bg-green-500' : 'bg-gray-300'
-              }`} />
-              <span className="text-sm text-gray-500">
-                {presence?.isOnline ? 'Online' : formatLastSeen(presence?.lastSeen)}
-              </span>
+            <div>
+              <h2 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+                {hydratedUser?.name || 'Unknown User'}
+              </h2>
+              <div className="flex items-center gap-2">
+                <span className={`inline-block w-2.5 h-2.5 rounded-full ${
+                  presence?.isOnline ? 'bg-green-500' : 'bg-gray-300'
+                }`} />
+                <span className="text-sm text-gray-500">
+                  {presence?.isOnline ? 'Online' : formatLastSeen(presence?.lastSeen)}
+                </span>
+              </div>
             </div>
           </div>
         </div>

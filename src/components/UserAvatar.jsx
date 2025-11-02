@@ -5,7 +5,7 @@ const sizeClasses = {
   lg: 'w-12 h-12 text-xl',
 };
 
-export default function UserAvatar({ user, size = 'md', onClick }) {
+export default function UserAvatar({ user, size = 'md', onClick, className = '' }) {
   const [imgError, setImgError] = useState(false);
   const initials = (user?.name?.split(' ') || [])
     .slice(0, 2)
@@ -16,8 +16,8 @@ export default function UserAvatar({ user, size = 'md', onClick }) {
 
   return (
     <div
-      className={`rounded-full bg-purple-200 flex items-center justify-center font-bold overflow-hidden ${sizeClasses[size] || sizeClasses.md} cursor-pointer`}
-      onClick={onClick}
+      className={`rounded-full bg-purple-200 flex items-center justify-center font-bold overflow-hidden ${sizeClasses[size] || sizeClasses.md} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      onClick={onClick ? (e) => { e.stopPropagation(); onClick(e); } : undefined}
       title={user?.name}
       style={{ userSelect: 'none' }}
     >

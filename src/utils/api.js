@@ -489,3 +489,6 @@ export const getProfessionalReviews = (professionalId, params = {}) => {
   const query = new URLSearchParams(params).toString();
   return request(`/api/reviews/${professionalId}${query ? `?${query}` : ''}`, { auth: true });
 };
+
+// Admin API functions (public endpoint - no auth required)
+export const getAdminStats = () => request("/api/admin/stats/public", { method: "GET", auth: false });
