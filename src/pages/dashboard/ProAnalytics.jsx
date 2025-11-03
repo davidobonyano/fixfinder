@@ -15,10 +15,9 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { getProAnalytics } from '../../utils/api';
+import { getProAnalytics, getProJobs, getConnections } from '../../utils/api';
 import { 
   FaBriefcase, 
-  FaDollarSign, 
   FaUsers, 
   FaStar, 
   FaSpinner,
@@ -29,10 +28,8 @@ import {
 const ProAnalytics = () => {
   const [data, setData] = useState({ 
     jobsPerMonth: [], 
-    earningsPerMonth: [], 
     connectionsCount: 0,
     totalJobs: 0,
-    totalEarnings: 0,
     averageRating: 0,
     reviewCount: 0
   });
@@ -43,26 +40,75 @@ const ProAnalytics = () => {
       try {
         setLoading(true);
         const res = await getProAnalytics();
-        const analyticsData = res?.data || res;
-        
-        // Process data for charts
-        const processedJobsData = processMonthlyData(analyticsData.jobsPerMonth || []);
-        const processedEarningsData = processMonthlyData(analyticsData.earningsPerMonth || []);
-        
+        const analyticsData = res?.data || res || {};
+
+        // Also fetch pro jobs and compute completed jobs per month using same logic as MyJobs
+        let jobsMonthlyCompleted = [];
+        try {
+          const jobsResp = await getProJobs({ limit: 300 });
+          const jobsList = jobsResp?.data?.jobs || jobsResp?.data || jobsResp || [];
+
+          const isJobCompleted = (job) => {
+            const statusLc = String(job?.status || '').toLowerCase();
+            const lifecycleLc = String(job?.lifecycleState || '').toLowerCase();
+            return statusLc === 'completed' || statusLc === 'cancelled' ||
+                   ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc) ||
+                   job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+          };
+
+          // Build last 6 months buckets
+          const now = new Date();
+          const buckets = [];
+          for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            buckets.push({ y: d.getFullYear(), m: d.getMonth() + 1, count: 0 });
+          }
+
+          jobsList.forEach((job) => {
+            if (!isJobCompleted(job)) return;
+            const completedAt = job.completedAt || job.updatedAt || job.createdAt;
+            const dt = completedAt ? new Date(completedAt) : null;
+            if (!dt || isNaN(dt)) return;
+            const y = dt.getFullYear();
+            const m = dt.getMonth() + 1;
+            const bucket = buckets.find(b => b.y === y && b.m === m);
+            if (bucket) bucket.count += 1;
+          });
+
+          // Convert to chart format
+          jobsMonthlyCompleted = processMonthlyData(buckets.map(b => ({ _id: { y: b.y, m: b.m }, count: b.count })));
+
+          // Compute total jobs as unique job IDs
+          const uniqueJobIds = new Set();
+          jobsList.forEach(j => { const id = j?._id || j?.id; if (id) uniqueJobIds.add(String(id)); });
+          analyticsData.totalJobs = uniqueJobIds.size;
+        } catch (e) {
+          // fallback to whatever analyticsData has or mock
+          jobsMonthlyCompleted = processMonthlyData(analyticsData.jobsPerMonth || []);
+        }
+
+        // Fetch connections count
+        try {
+          const consResp = await getConnections();
+          const count = (Array.isArray(consResp?.data) ? consResp.data.length
+                        : Array.isArray(consResp?.connections) ? consResp.connections.length
+                        : Array.isArray(consResp) ? consResp.length
+                        : Array.isArray(consResp?.data?.connections) ? consResp.data.connections.length
+                        : 0);
+          analyticsData.connectionsCount = count;
+        } catch (_) {}
+
         setData({
           ...analyticsData,
-          jobsPerMonth: processedJobsData,
-          earningsPerMonth: processedEarningsData
+          jobsPerMonth: jobsMonthlyCompleted
         });
       } catch (e) {
         console.error('Failed to load analytics', e);
         // Set mock data for demo
         setData({
           jobsPerMonth: generateMockMonthlyData('jobs'),
-          earningsPerMonth: generateMockMonthlyData('earnings'),
           connectionsCount: 12,
           totalJobs: 45,
-          totalEarnings: 12500,
           averageRating: 4.7,
           reviewCount: 23
         });
@@ -101,7 +147,7 @@ const ProAnalytics = () => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
     return months.map(month => ({
       month,
-      value: type === 'jobs' ? Math.floor(Math.random() * 10) + 1 : Math.floor(Math.random() * 3000) + 500
+      value: Math.floor(Math.random() * 10) + 1
     }));
   };
 
@@ -133,7 +179,7 @@ const ProAnalytics = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -146,17 +192,7 @@ const ProAnalytics = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-              <p className="text-3xl font-bold text-gray-900">₦{data.totalEarnings?.toLocaleString() || '0'}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <FaDollarSign className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
+        
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
@@ -185,7 +221,7 @@ const ProAnalytics = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
         {/* Jobs Chart */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-6">
@@ -217,30 +253,7 @@ const ProAnalytics = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Earnings Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Monthly Earnings</h3>
-            <FaDollarSign className="w-5 h-5 text-gray-400" />
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data.earningsPerMonth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #e5e7eb', 
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-                formatter={(value) => [`₦${value.toLocaleString()}`, 'Earnings']}
-              />
-              <Bar dataKey="value" fill="#10B981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        
       </div>
 
       {/* Performance Overview */}
@@ -252,12 +265,6 @@ const ProAnalytics = () => {
               {data.jobsPerMonth.reduce((sum, item) => sum + item.value, 0)}
             </div>
             <p className="text-sm text-gray-600">Jobs (6 months)</p>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600 mb-2">
-              ₦{data.earningsPerMonth.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
-            </div>
-            <p className="text-sm text-gray-600">Earnings (6 months)</p>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600 mb-2">

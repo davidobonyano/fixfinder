@@ -27,7 +27,6 @@ import NotFound from "./pages/NotFound";
 import UserDashboard from "./pages/dashboard/UserDashboard";
 import ProfessionalDashboard from "./pages/dashboard/ProfessionalDashboard";
 import ProJobFeed from "./pages/dashboard/ProJobFeed";
-import ProOverview from "./pages/dashboard/ProOverview";
 import ProAnalytics from "./pages/dashboard/ProAnalytics";
 import ProReviews from "./pages/dashboard/ProReviews";
 import PostJob from "./pages/dashboard/PostJob";
@@ -132,7 +131,6 @@ const router = createBrowserRouter(
       
       <Route path="dashboard/professional" element={<DashboardLayout userType="professional" />} errorElement={<ErrorElement />}>
         <Route index element={<ProJobFeed />} />
-        <Route path="overview" element={<ProOverview />} />
         <Route path="connected-users" element={<ConnectedUsers />} />
         <Route path="my-jobs" element={<MyJobs />} />
         <Route path="my-jobs/:jobId" element={<MyJobs />} />

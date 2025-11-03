@@ -60,7 +60,7 @@ const ProfessionalDetail = () => {
           return;
         }
 
-        const response = await getProfessional(id);
+        const response = await getProfessional(id, { byUser: false });
         const pro = response?.professional || response;
         if (!pro) throw new Error('Professional not found');
         setProfessional(pro);

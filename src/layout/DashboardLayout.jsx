@@ -38,25 +38,30 @@ const DashboardLayout = ({ userType = 'user' }) => {
   // Protect routes: Ensure user role matches dashboard type
   useEffect(() => {
     if (user) {
-      const isProfessionalRoute = location.pathname.startsWith('/dashboard/professional');
+      const isProfessionalRoute = /^\/dashboard\/professional(?:\/|$)/.test(location.pathname);
+      const isProfessionalDetailRoute = /^\/dashboard\/professional\/[^/]+$/.test(location.pathname);
+      const isUserAllProfessionalsRoute = /^\/dashboard\/professionals(?:\/?|$)/.test(location.pathname);
       const isProfessional = user.role === 'professional';
       
       // If user is professional but on user dashboard routes, redirect to professional dashboard
-      if (isProfessional && !isProfessionalRoute) {
-        const currentPath = location.pathname.replace('/dashboard', '/dashboard/professional');
+      // EXCEPTION: allow professionals to view the All Professionals page
+      if (isProfessional && !isProfessionalRoute && !isUserAllProfessionalsRoute) {
+        const currentPath = location.pathname.replace(/^\/dashboard(\/|$)/, '/dashboard/professional$1');
         navigate(currentPath, { replace: true });
         return;
       }
       
       // If user is not professional but on professional routes, redirect to user dashboard
-      if (!isProfessional && isProfessionalRoute) {
-        const currentPath = location.pathname.replace('/dashboard/professional', '/dashboard');
+      // EXCEPTION: allow non-professionals to view professional detail route
+      if (!isProfessional && isProfessionalRoute && !isProfessionalDetailRoute) {
+        const currentPath = location.pathname.replace(/^\/dashboard\/professional(\/|$)/, '/dashboard$1');
         navigate(currentPath, { replace: true });
         return;
       }
       
       // Ensure userType prop matches actual user role
-      if ((isProfessional && userType !== 'professional') || (!isProfessional && userType === 'professional')) {
+      // EXCEPTION: don't force redirect when viewing professional detail route
+      if (!isProfessionalDetailRoute && !isUserAllProfessionalsRoute && ((isProfessional && userType !== 'professional') || (!isProfessional && userType === 'professional'))) {
         // UserType mismatch - this shouldn't happen, but redirect to correct dashboard
         if (isProfessional) {
           navigate('/dashboard/professional', { replace: true });
@@ -201,7 +206,6 @@ const DashboardLayout = ({ userType = 'user' }) => {
   // Professional Dashboard Navigation
   const proNavItems = [
     { path: '/dashboard/professional', icon: FaBriefcase, label: 'Job Feed' },
-    { path: '/dashboard/professional/overview', icon: FaHome, label: 'Overview' },
     { path: '/dashboard/professional/connected-users', icon: FaUsers, label: 'Connected Users' },
     { path: '/dashboard/professional/my-jobs', icon: FaBriefcase, label: 'My Jobs' },
     { path: '/dashboard/professional/messages', icon: FaComments, label: 'Messages' },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FaStar, FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
-import { getProOverview, getProfessional, getProfessionalReviews } from '../../utils/api';
+import { getProfessional, getProfessionalReviews } from '../../utils/api';
 
 const ProReviews = () => {
   const { user } = useAuth();
@@ -67,22 +67,7 @@ const ProReviews = () => {
           console.warn('⚠️ ProReviews: No professional ID found for user:', user?.id);
         }
 
-        // Fallback to overview summary if detailed list not available
-        try {
-          console.log('📊 ProReviews: Trying getProOverview fallback...');
-          const res = await getProOverview();
-          console.log('📊 ProReviews: Overview response:', res);
-          if (res?.success) {
-            const { averageRating = 0, totalReviews = 0, recentReviews = [] } = res.data || {};
-            setSummary({ averageRating, totalReviews });
-            if (recentReviews.length) {
-              setReviews(recentReviews);
-              return;
-            }
-          }
-        } catch (err) {
-          console.error('❌ ProReviews: Error fetching overview:', err);
-        }
+        // Removed overview fallback since overview was removed
 
         // Final fallback: empty
         console.warn('⚠️ ProReviews: No reviews found, showing empty state');
