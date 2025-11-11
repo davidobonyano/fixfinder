@@ -51,7 +51,7 @@ const LocationAutocomplete = ({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&addressdetails=1`,
         {
           headers: {
-            'User-Agent': 'FixFinder App'
+            'User-Agent': 'FindYourFixer App'
           }
         }
       );

@@ -809,28 +809,28 @@ const ProfessionalDiscovery = () => {
         ) : (
           <div className={
             viewMode === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6" 
               : "space-y-4"
           }>
             {filteredAndSortedProfessionals.map((professional) => (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
-                className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow block ${
-                  viewMode === 'list' ? 'flex items-center p-4' : 'p-6'
+                className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all block ${
+                  viewMode === 'list' ? 'flex items-center p-4' : 'p-0 h-full'
                 }`}
               >
                 {viewMode === 'grid' ? (
                   // Grid View
                   <>
-                    <div className="relative mb-4">
+                    <div className="relative">
                       <img
                         src={professional.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop'}
                         alt={professional.name}
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full aspect-[4/3] object-cover rounded-t-xl"
                       />
                       {professional.isVerified && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        <div className="absolute top-2 right-2 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs font-medium">
                           ✓ Verified
                         </div>
                       )}
@@ -842,7 +842,7 @@ const ProfessionalDiscovery = () => {
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
+                    <div className="space-y-3 p-6 flex flex-col h-full">
                       <div>
                         <h3 className="font-semibold text-lg text-gray-900">{professional.name}</h3>
                         <p className="text-gray-600 capitalize">{professional.category}</p>
@@ -856,7 +856,7 @@ const ProfessionalDiscovery = () => {
                             <span className="text-xs text-gray-500 ml-1">({professional.ratingCount || 0})</span>
                           </div>
                         </div>
-                        <span className="text-lg font-semibold text-blue-600">
+                        <span className="text-lg font-semibold text-indigo-600">
                           ₦{professional.hourlyRate?.toLocaleString()}/hr
                         </span>
                       </div>
@@ -866,7 +866,7 @@ const ProfessionalDiscovery = () => {
                         <span className="truncate">{professional.location?.address}</span>
                       </div>
                       
-                      <div className="flex gap-2 pt-2">
+                      <div className="mt-auto flex gap-2 pt-2">
                         {(() => {
                           const isConnected = connections.has(professional._id);
                           const hasRequestSent = connectionRequests.has(professional._id);
@@ -891,7 +891,7 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleStartChat(professional);
                                 }}
-                                className="w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors text-sm font-medium"
+                                className="w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
                               >
                                 <FaComments className="w-4 h-4" />
                                 Chat
@@ -903,10 +903,10 @@ const ProfessionalDiscovery = () => {
                               <>
                                 <button
                                   disabled
-                                  className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-orange-500 text-white text-sm font-medium cursor-not-allowed"
+                                  className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 border border-gray-300 text-gray-600 text-sm font-medium cursor-not-allowed bg-white"
                                 >
                                   <FaComments className="w-4 h-4" />
-                                  Request Sent
+                                  Pending
                                 </button>
                                 <div className="relative">
                                   <button
@@ -930,7 +930,7 @@ const ProfessionalDiscovery = () => {
                                         e.stopPropagation();
                                         handleCancelRequest(professional);
                                       }}
-                                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                                     >
                                       Cancel Request
                                     </button>
@@ -947,7 +947,7 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleConnect(professional);
                                 }}
-                                className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors text-sm font-medium"
+                                className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
                               >
                                 <FaComments className="w-4 h-4" />
                                 Connect
@@ -968,7 +968,7 @@ const ProfessionalDiscovery = () => {
                         className="w-full h-full object-cover rounded-lg"
                       />
                       {professional.isVerified && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 text-white px-1 py-0.5 rounded-full text-xs">
+                        <div className="absolute -top-1 -right-1 bg-indigo-600 text-white px-1 py-0.5 rounded-full text-xs">
                           ✓
                         </div>
                       )}
@@ -992,7 +992,7 @@ const ProfessionalDiscovery = () => {
                         </div>
                         
                         <div className="text-right ml-4">
-                          <div className="text-lg font-semibold text-blue-600">
+                          <div className="text-lg font-semibold text-indigo-600">
                             ₦{professional.hourlyRate?.toLocaleString()}/hr
                           </div>
                           <div className="flex gap-2 mt-2">
@@ -1009,7 +1009,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleStartChat(professional);
                                     }}
-                                    className="py-1 px-3 rounded text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                    className="py-1 px-3 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                                   >
                                     Chat
                                   </button>
@@ -1020,9 +1020,9 @@ const ProfessionalDiscovery = () => {
                                   <>
                                     <button
                                       disabled
-                                      className="py-1 px-3 rounded text-sm bg-orange-500 text-white cursor-not-allowed"
+                                      className="py-1 px-3 rounded text-sm border border-gray-300 text-gray-600 cursor-not-allowed bg-white"
                                     >
-                                      Request Sent
+                                      Pending
                                     </button>
                                     <div className="relative">
                                       <button
@@ -1045,7 +1045,7 @@ const ProfessionalDiscovery = () => {
                                             e.stopPropagation();
                                             handleCancelRequest(professional);
                                           }}
-                                          className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 rounded-lg"
+                                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 rounded-lg"
                                         >
                                           Cancel Request
                                         </button>
@@ -1062,7 +1062,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleConnect(professional);
                                     }}
-                                    className="py-1 px-3 rounded text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                    className="py-1 px-3 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                                   >
                                     Connect
                                   </button>

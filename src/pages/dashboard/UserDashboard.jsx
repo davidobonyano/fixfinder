@@ -12,13 +12,14 @@ import {
   FaClock,
   FaCheckCircle,
   FaUser,
-  FaHands,
-  FaFilter,
   FaArrowRight,
   FaEye,
   FaEnvelope,
   FaUsers,
-  FaSync
+  FaSync,
+  FaMagic,
+  FaRocket,
+  FaChartLine
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
 import { getMyJobs, getProfessionals, getNotifications, saveLocation } from '../../utils/api';
@@ -109,7 +110,6 @@ const UserDashboard = () => {
         const prosResponse = await getProfessionals({ limit: 3 });
         if (prosResponse.success) {
           setNearbyPros(prosResponse.professionals.map(pro => {
-            // Prefer user's profile picture/avatar, then professional's profile picture, then placeholder
             const imageUrl = pro.user?.profilePicture
               || pro.user?.avatarUrl
               || pro.profilePicture
@@ -122,7 +122,7 @@ const UserDashboard = () => {
               name: pro.name,
               service: pro.category,
               rating: pro.rating || 0,
-              distance: 'Nearby', // This would be calculated based on location
+              distance: 'Nearby',
               verified: pro.isVerified || false,
               image: resolveImageUrl(imageUrl)
             };
@@ -143,12 +143,10 @@ const UserDashboard = () => {
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         
-        // Handle authentication errors
         if (handleAuthError(error)) {
-          return; // Don't set loading to false, let the redirect happen
+          return;
         }
         
-        // Show error message for other errors
         showError('Failed to load dashboard data. Please try again.', 3000);
       } finally {
         setLoading(false);
@@ -168,17 +166,14 @@ const UserDashboard = () => {
     try {
       setUpdatingLocation(true);
       
-      // Get current location directly from geolocation API
       const position = await getCurrentLocation();
       const lat = position.latitude;
       const lng = position.longitude;
 
-      // Save location to backend (backend will snap to LGA automatically)
       const response = await saveLocation(lat, lng);
       
       if (response.success) {
         showSuccess('Location updated successfully!', 3000);
-        // Update user in auth context if location data is returned
         if (response.data?.location && user) {
           login(user.token || localStorage.getItem('token'), {
             ...user,
@@ -197,317 +192,393 @@ const UserDashboard = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-gray-200 text-gray-900';
-      case 'Pending': return 'bg-gray-50 text-gray-700';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusBadge = (status) => {
+    const styles = {
+      'Completed': 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 border border-indigo-200',
+      'In Progress': 'bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 border border-amber-200',
+      'Pending': 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200'
+    };
+    return styles[status] || styles['Pending'];
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FaMagic className="w-5 h-5 text-indigo-600 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Hi {user?.name || 'User'} 👋
-            </h1>
-            <p className="text-gray-600">
-              Welcome back! Here's what's happening with your jobs and services.
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link
-              to="/dashboard/notifications"
-              className="p-2 text-gray-400 hover:text-gray-600 relative"
-            >
-              <FaBell className="w-6 h-6" />
-              {notifications.filter(n => n.unread).length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {notifications.filter(n => n.unread).length}
-                </span>
-              )}
-            </Link>
-            <Link
-              to="/dashboard/profile"
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <FaUser className="w-6 h-6" />
-            </Link>
+    <div className="space-y-6 -mx-4 lg:mx-0">
+      {/* Hero Welcome Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400 opacity-10 rounded-full -ml-24 -mb-24"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h1 className="text-3xl lg:text-4xl font-bold mb-2 flex items-center gap-2">
+                <span>Welcome back,</span>
+                <span className="text-amber-300">{user?.name?.split(' ')[0] || 'User'}</span>
+                <FaMagic className="w-6 h-6 text-amber-300 animate-pulse" />
+              </h1>
+              <p className="text-indigo-100 text-lg">
+                Let's get things done today
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard/notifications"
+                className="relative p-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-all"
+              >
+                <FaBell className="w-5 h-5" />
+                {notifications.filter(n => n.unread).length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-400 text-indigo-900 text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {notifications.filter(n => n.unread).length > 9 ? '9+' : notifications.filter(n => n.unread).length}
+                  </span>
+                )}
+              </Link>
+              <Link
+                to="/dashboard/profile"
+                className="p-3 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-all"
+              >
+                <FaUser className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Search */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Search</h2>
-        <div className="flex gap-3">
+      {/* Quick Search - Modern Design */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
+            <FaSearch className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Find a Professional</h2>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <ServiceSelector
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Search for a service (e.g. Plumber, Electrician, Barber)..."
+              placeholder="What service do you need?"
               showSuggestions={true}
               allowCustom={true}
             />
           </div>
           <button
             onClick={() => handleSearch(searchQuery)}
-            className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+            className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-105"
           >
             <FaSearch className="w-4 h-4" />
-            Search
+            <span>Search</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalJobs}</p>
+      {/* Stats Cards - Beautiful Gradient Design */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:scale-105">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <FaBriefcase className="w-6 h-6 text-amber-300" />
             </div>
-            <div className="p-3 bg-gray-100 rounded-full">
-              <FaBriefcase className="w-6 h-6 text-gray-600" />
-            </div>
+            <p className="text-4xl font-bold mb-1">{stats.totalJobs}</p>
+            <p className="text-indigo-100 text-sm font-medium">Total Jobs</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeJobs}</p>
+        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 transform hover:scale-105">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <FaClock className="w-6 h-6 text-amber-100" />
             </div>
-            <div className="p-3 bg-gray-100 rounded-full">
-              <FaClock className="w-6 h-6 text-gray-600" />
-            </div>
+            <p className="text-4xl font-bold mb-1">{stats.activeJobs}</p>
+            <p className="text-amber-100 text-sm font-medium">Active</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.completedJobs}</p>
+        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-2xl p-6 text-white shadow-lg shadow-indigo-400/30 hover:shadow-xl hover:shadow-indigo-400/40 transition-all duration-300 transform hover:scale-105">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-2">
+              <FaCheckCircle className="w-6 h-6 text-amber-300" />
             </div>
-            <div className="p-3 bg-gray-100 rounded-full">
-              <FaCheckCircle className="w-6 h-6 text-gray-600" />
-            </div>
+            <p className="text-4xl font-bold mb-1">{stats.completedJobs}</p>
+            <p className="text-indigo-100 text-sm font-medium">Completed</p>
           </div>
         </div>
       </div>
 
-      {/* Location Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Your Location</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {user?.location?.city && user?.location?.state ? (
-                <span>{user.location.city}, {user.location.state}</span>
-              ) : (
-                <span>Location not set</span>
-              )}
+      {/* Location Card */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl">
+              <FaMapMarkerAlt className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Your Location</h3>
+              <p className="text-gray-600">
+                {user?.location?.city && user?.location?.state ? (
+                  <span className="font-medium">{user.location.city}, {user.location.state}</span>
+                ) : (
+                  <span className="text-gray-400">Location not set</span>
+                )}
+              </p>
               {user?.location?.address && (
-                <span className="block text-xs text-gray-500 mt-1">{user.location.address}</span>
+                <p className="text-sm text-gray-500 mt-1">{user.location.address}</p>
               )}
-            </p>
+            </div>
           </div>
           <button
             onClick={handleUpdateLocation}
             disabled={updatingLocation}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform hover:scale-105 disabled:transform-none"
           >
             {updatingLocation ? (
               <>
                 <FaSync className="w-4 h-4 animate-spin" />
-                <span>Updating…</span>
+                <span>Updating...</span>
               </>
             ) : (
               <>
                 <FaMapMarkerAlt className="w-4 h-4" />
-                <span>Update Location</span>
+                <span>Update</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Quick Actions - Modern Card Design */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
+            <FaRocket className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
-            to="/dashboard"
-            className="flex items-center p-4 bg-white border-2 border-indigo-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all group"
+            to="/dashboard/professionals"
+            className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-6 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            <div className="p-3 bg-indigo-100 rounded-full mr-4 group-hover:bg-indigo-200 transition-colors">
-              <FaUsers className="w-6 h-6 text-indigo-600" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
+                <FaUsers className="w-6 h-6 text-white" />
+              </div>
+              <FaArrowRight className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
             </div>
-            <div>
-              <h3 className="font-medium text-gray-900">Discover Pros</h3>
-              <p className="text-sm text-gray-600">Find professionals near you</p>
-            </div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Discover Pros</h3>
+            <p className="text-sm text-gray-600">Find professionals near you</p>
           </Link>
 
           <Link
             to="/dashboard/post-job"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+            className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-2xl p-6 hover:border-amber-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            <div className="p-3 bg-gray-100 rounded-full mr-4 group-hover:bg-gray-200 transition-colors">
-              <FaPlus className="w-6 h-6 text-gray-600" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
+                <FaPlus className="w-6 h-6 text-white" />
+              </div>
+              <FaArrowRight className="w-5 h-5 text-amber-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
             </div>
-            <div>
-              <h3 className="font-medium text-gray-900">Post a Job</h3>
-              <p className="text-sm text-gray-600">Find professionals for your project</p>
-            </div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Post a Job</h3>
+            <p className="text-sm text-gray-600">Find professionals for your project</p>
           </Link>
 
           <Link
             to="/dashboard/messages"
-            className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors group"
+            className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-6 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
           >
-            <div className="p-3 bg-gray-100 rounded-full mr-4 group-hover:bg-gray-200 transition-colors">
-              <FaComments className="w-6 h-6 text-gray-600" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
+                <FaComments className="w-6 h-6 text-white" />
+              </div>
+              <FaArrowRight className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
             </div>
-            <div>
-              <h3 className="font-medium text-gray-900">Messages</h3>
-              <p className="text-sm text-gray-600">Chat with professionals</p>
-            </div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Messages</h3>
+            <p className="text-sm text-gray-600">Chat with professionals</p>
           </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Jobs */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Jobs</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
+                <FaBriefcase className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Recent Jobs</h2>
+            </div>
             <Link
               to="/dashboard/my-jobs"
-              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 group"
             >
               View all
-              <FaArrowRight className="w-3 h-3" />
+              <FaArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
           <div className="space-y-3">
-            {recentJobs.map((job) => (
-              <div key={job.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{job.title}</h3>
-                  <p className="text-sm text-gray-600">{job.category} • {job.budget}</p>
-                  <p className="text-xs text-gray-500">{job.date}</p>
+            {recentJobs.length > 0 ? recentJobs.map((job) => (
+              <Link
+                key={job.id}
+                to={`/dashboard/my-jobs/${job.id}`}
+                className="group block p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors truncate">{job.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2 truncate">{job.category} • {job.budget}</p>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusBadge(job.status)}`}>
+                        {job.status}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        <FaClock className="w-3 h-3 inline mr-1" />
+                        {job.date}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-2 bg-white rounded-lg group-hover:bg-indigo-50 transition-colors">
+                    <FaEye className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(job.status)}`}>
-                    {job.status}
-                  </span>
-                  <Link
-                    to={`/dashboard/my-jobs/${job.id}`}
-                    className="p-1 text-gray-400 hover:text-gray-600"
-                  >
-                    <FaEye className="w-4 h-4" />
-                  </Link>
-                </div>
+              </Link>
+            )) : (
+              <div className="text-center py-8 text-gray-400">
+                <FaBriefcase className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No jobs yet</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
         {/* Nearby Professionals */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Nearby Professionals</h2>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl">
+                <FaUsers className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Nearby Professionals</h2>
+            </div>
             <Link
               to="/dashboard/professionals"
-              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 group"
             >
               View all
-              <FaArrowRight className="w-3 h-3" />
+              <FaArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
           <div className="space-y-3">
-            {nearbyPros.map((pro) => (
-              <div key={pro.id} className="flex items-center p-3 border border-gray-100 rounded-lg">
-                <img
-                  src={pro.image || '/images/placeholder.jpeg'}
-                  alt={pro.name}
-                  className="w-10 h-10 rounded-full object-cover mr-3"
-                  onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-gray-900">{pro.name}</h3>
+            {nearbyPros.length > 0 ? nearbyPros.map((pro) => (
+              <div
+                key={pro.id}
+                className="group p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 border border-gray-200 rounded-xl hover:border-indigo-300 hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <img
+                      src={pro.image || '/images/placeholder.jpeg'}
+                      alt={pro.name}
+                      className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white shadow-md group-hover:ring-indigo-200 transition-all"
+                      onError={(e) => { e.currentTarget.src = '/images/placeholder.jpeg'; }}
+                    />
                     {pro.verified && (
-                      <FaCheckCircle className="w-4 h-4 text-green-500" />
+                      <div className="absolute -bottom-1 -right-1 bg-indigo-600 rounded-full p-1">
+                        <FaCheckCircle className="w-4 h-4 text-white" />
+                      </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{pro.service}</p>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <FaStar className="w-3 h-3 text-yellow-400" />
-                    <span>{pro.rating}</span>
-                    <FaMapMarkerAlt className="w-3 h-3" />
-                    <span>{pro.distance}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-gray-900 truncate">{pro.name}</h3>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2 truncate">{pro.service}</p>
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1 text-amber-500">
+                        <FaStar className="w-3 h-3" />
+                        <span className="font-semibold text-gray-700">{pro.rating}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-gray-500">
+                        <FaMapMarkerAlt className="w-3 h-3" />
+                        <span>{pro.distance}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-all">
+                      <FaHeart className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                      <FaEnvelope className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button className="p-1 text-gray-400 hover:text-gray-600">
-                    <FaHeart className="w-4 h-4" />
-                  </button>
-                  <button className="p-1 text-gray-400 hover:text-gray-600">
-                    <FaEnvelope className="w-4 h-4" />
-                  </button>
-                </div>
               </div>
-            ))}
+            )) : (
+              <div className="text-center py-8 text-gray-400">
+                <FaUsers className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <p>No professionals found</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Notifications */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
+              <FaBell className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Recent Notifications</h2>
+          </div>
           <Link
             to="/dashboard/notifications"
-            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+            className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 group"
           >
             View all
-            <FaArrowRight className="w-3 h-3" />
+            <FaArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         <div className="space-y-3">
-          {notifications.slice(0, 3).map((notification) => (
+          {notifications.length > 0 ? notifications.slice(0, 3).map((notification) => (
             <div
               key={notification.id}
-              className={`flex items-start p-3 rounded-lg ${
-                notification.unread ? 'bg-gray-100 border-l-4 border-gray-400' : 'bg-gray-50'
+              className={`p-4 rounded-xl border-l-4 transition-all duration-300 ${
+                notification.unread 
+                  ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/50 border-indigo-500 shadow-sm' 
+                  : 'bg-gray-50 border-gray-200'
               }`}
             >
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">{notification.message}</p>
-                <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-              </div>
-              {notification.unread && (
-                <div className="w-2 h-2 bg-gray-600 rounded-full mt-2"></div>
-              )}
+              <p className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">{notification.message}</p>
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <FaClock className="w-3 h-3" />
+                {notification.time}
+              </p>
             </div>
-          ))}
+          )) : (
+            <div className="text-center py-8 text-gray-400">
+              <FaBell className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No notifications yet</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

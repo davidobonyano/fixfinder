@@ -1,5 +1,6 @@
 // src/components/Footer.jsx
 import { NavLink } from "react-router-dom";
+import Logo from "./Logo";
 import { Facebook, Twitter, Instagram } from "lucide-react"; // optional: install with `npm i lucide-react`
 
 export default function Footer() {
@@ -8,7 +9,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-10 grid gap-8 sm:grid-cols-2 text-sm">
         
         <div>
-          <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">FixFinder</h2>
+          <Logo className="" textClassName="text-xl font-bold text-indigo-600 dark:text-indigo-400" />
           <p className="mt-2 text-gray-600 dark:text-gray-300">
             Your trusted local directory for finding skilled service providers — verified, rated, and reliable.
           </p>
@@ -33,7 +34,7 @@ export default function Footer() {
 
     
       <div className="text-center text-xs py-4 text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
-        &copy; {new Date().getFullYear()} FixFinder.
+        &copy; {new Date().getFullYear()} FindYourFixer.
       </div>
     </footer>
   );

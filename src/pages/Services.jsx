@@ -14,6 +14,9 @@ const Services = () => {
   const [city, setCity] = useState("");
   const [allServices, setAllServices] = useState([]);
   const [viewMode, setViewMode] = useState("list"); // "list" or "map"
+  const [sortBy, setSortBy] = useState("relevance");
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
 
   useEffect(() => {
     const load = async () => {
@@ -66,44 +69,48 @@ const Services = () => {
       return allServices.slice(0, 6); // Show first 6 services as fallback
     }
     
-    return filtered;
-  }, [search, category, state, city, allServices]);
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'name-asc') return (a.name || '').localeCompare(b.name || '');
+      if (sortBy === 'name-desc') return (b.name || '').localeCompare(a.name || '');
+      return 0; // relevance default (no-op)
+    });
+    return sorted;
+  }, [search, category, state, city, allServices, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredServices.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedServices = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredServices.slice(start, start + pageSize);
+  }, [filteredServices, currentPage]);
 
   return (
-    <section className="px-4 md:px-12 py-16   bg-gray-100 bg-gradient-to-br from-white via-gray-50 to-gray-100 min-h-screen">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 leading-tight">
-          Explore Verified Local Services
-        </h1>
-        <p className="text-gray-500 text-lg mt-3 max-w-xl mx-auto">
-          Find trusted professionals near you, filtered by skill and city.
-        </p>
-        
-        {/* View Mode Toggle */}
-        <div className="flex justify-center mt-6">
-          <div className="bg-white rounded-lg p-1 shadow-md border">
-            <button
-              onClick={() => setViewMode("list")}
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${
-                viewMode === "list"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-            >
-              <FaList size={16} />
-              List View
-            </button>
-            <button
-              onClick={() => setViewMode("map")}
-              className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${
-                viewMode === "map"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
-            >
-              <FaMap size={16} />
-              Map View
-            </button>
+    <section className="px-4 md:px-12 py-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 min-h-screen">
+      {/* Hero */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-white" />
+        <div className="max-w-6xl mx-auto py-12 md:py-16">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Explore Verified Local Services</h1>
+            <p className="text-gray-600 text-lg mt-3 max-w-2xl mx-auto">Find trusted professionals near you. Filter by skill, location, and more.</p>
+            {/* Quick category chips */}
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              {allCategories.slice(0,8).map((c)=> (
+                <button key={c} onClick={()=>{ setCategory(c); setPage(1); }} className={`px-3 py-1.5 rounded-full text-sm border ${category===c? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'}`}>{c}</button>
+              ))}
+            </div>
+            {/* View toggle */}
+            <div className="flex justify-center mt-6">
+              <div className="bg-white rounded-lg p-1 shadow-md border">
+                <button onClick={() => setViewMode("list")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "list"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"}`}>
+                  <FaList size={16} /> List View
+                </button>
+                <button onClick={() => setViewMode("map")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "map"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"}`}>
+                  <FaMap size={16} /> Map View
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -111,7 +118,7 @@ const Services = () => {
       {viewMode === "list" ? (
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filter Sidebar */}
-          <div className="lg:w-1/4">
+          <div className="lg:w-1/4 lg:sticky lg:top-20 self-start">
             <FilterSidebar
               search={search}
               setSearch={setSearch}
@@ -127,9 +134,19 @@ const Services = () => {
 
           {/* Services Grid */}
           <div className="lg:w-3/4">
+            {/* Toolbar */}
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600">{filteredServices.length} results</p>
+              <select value={sortBy} onChange={(e)=>{ setSortBy(e.target.value); setPage(1); }} className="border rounded-md px-3 py-2 text-sm">
+                <option value="relevance">Sort: Relevance</option>
+                <option value="name-asc">Name A–Z</option>
+                <option value="name-desc">Name Z–A</option>
+              </select>
+            </div>
+
             {filteredServices.length ? (
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredServices.map((service) => (
+                {paginatedServices.map((service) => (
                   <div
                     key={service.id || service.name}
                     className="transition-all duration-300 transform hover:scale-105"
@@ -151,6 +168,20 @@ const Services = () => {
                 <p className="text-sm text-gray-400">
                   Try adjusting your search terms or filters.
                 </p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {filteredServices.length > pageSize && (
+              <div className="mt-8 flex items-center justify-center gap-2">
+                <button onClick={()=> setPage((p)=> Math.max(1, p-1))} disabled={currentPage===1} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50">Prev</button>
+                {Array.from({length: totalPages}).slice(0,6).map((_, i)=> {
+                  const num = i+1;
+                  return (
+                    <button key={num} onClick={()=> setPage(num)} className={`px-3 py-1.5 rounded border text-sm ${currentPage===num? 'bg-blue-600 text-white border-blue-600' : 'bg-white'}`}>{num}</button>
+                  );
+                })}
+                <button onClick={()=> setPage((p)=> Math.min(totalPages, p+1))} disabled={currentPage===totalPages} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50">Next</button>
               </div>
             )}
           </div>

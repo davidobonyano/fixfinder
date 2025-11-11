@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 
 const faqs = [
   {
-    question: "How do I find a verified professional on FixFinder?",
+    question: "How do I find a verified professional on FindYourFixer?",
     answer:
       "Simply go to the home page, use the search bar, select a category (e.g., plumber, electrician), and filter by your location to see verified professionals.",
   },
   {
-    question: "Is FixFinder free to use?",
+    question: "Is FindYourFixer free to use?",
     answer:
       "Yes! Browsing and connecting with professionals is completely free for users. Service providers may choose to pay for premium listing options.",
   },
@@ -41,7 +41,7 @@ const FAQ = () => {
     <div>
       <h1 className="text-3xl font-bold mb-6 text-indigo-700">Frequently Asked Questions</h1>
       <p className="text-gray-700 mb-8">
-        Here are answers to some of the most common questions about FixFinder. If you need more help, feel free to{" "}
+        Here are answers to some of the most common questions about FindYourFixer. If you need more help, feel free to{" "}
         <Link to="/help/contact" className="text-indigo-600 underline">contact us</Link>.
       </p>
 

@@ -739,7 +739,12 @@ const Messages = () => {
   if (loading || isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+        <div className="relative">
+          <div className="h-12 w-12 rounded-full border-4 border-indigo-200 border-t-indigo-600 animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FaComments className="w-5 h-5 text-indigo-600 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -748,112 +753,121 @@ const Messages = () => {
     // Instead of instant logout or redirect, show a friendly auth error
     return (
       <div className="flex flex-col items-center justify-center h-64">
-        <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-full mb-4">
+        <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center rounded-2xl mb-4 shadow-lg">
           <span className="text-3xl">🔒</span>
         </div>
-        <h2 className="text-xl font-semibold mb-2">Authentication Error</h2>
-        <p className="text-gray-500 mb-4">You are not logged in or your session has expired. Please log in again to access your messages.</p>
-        <a href="/login" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Go to Login</a>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Needed</h2>
+        <p className="text-gray-500 mb-4 max-w-sm text-center">Your session has expired. Sign back in to continue chatting with professionals.</p>
+        <a
+          href="/login"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
+        >
+          Go to Login
+        </a>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="flex flex-col md:flex-row min-h-[calc(100dvh-120px)] bg-gradient-to-br from-indigo-50 via-white to-amber-50 rounded-3xl shadow-2xl border border-indigo-100">
       {/* Conversations Sidebar */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
-            <button className="p-2 text-gray-400 hover:text-gray-600">
+      <div
+        className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] flex-col bg-white/70 backdrop-blur-md border-r border-white/40`}
+      >
+        <div className="p-6 border-b border-white/40 space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <FaComments className="w-6 h-6 text-indigo-500" />
+                Messages
+              </h1>
+              <p className="text-sm text-gray-500">Stay in touch with your connections</p>
+            </div>
+            <button className="p-2 text-gray-400 hover:text-indigo-500 transition-colors">
               <FaEllipsisV className="w-5 h-5" />
             </button>
           </div>
-          
-          {/* Search */}
+
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300 w-4 h-4" />
             <input
               type="text"
               placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-11 pr-4 py-3 border-2 border-white/70 rounded-xl bg-white/70 shadow-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-gray-400"
             />
           </div>
         </div>
 
-        {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
           {filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <FaComments className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No conversations yet</h3>
-              <p className="text-gray-500">Start a conversation by connecting with a professional</p>
+            <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-white/70 rounded-2xl border border-white/60 shadow-inner">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mb-4">
+                <FaComments className="w-7 h-7 text-indigo-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No conversations yet</h3>
+              <p className="text-sm text-gray-500">Start by connecting with a professional to begin chatting.</p>
             </div>
           ) : (
             filteredConversations.map((conversation) => {
               const otherParticipant = getOtherParticipant(conversation);
               const isSelected = selectedConversation?._id === conversation._id;
-              // Fix unread count logic - check both user and professional counts
               const userType = user?.role === 'professional' ? 'professional' : 'user';
               const unreadCount = conversation.unreadCount?.[userType] || 0;
               const hasUnread = unreadCount > 0;
-              
+
               return (
                 <div
                   key={conversation._id}
                   onClick={() => setSelectedConversation(conversation)}
-                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    isSelected ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                  } ${hasUnread ? 'bg-blue-25' : ''}`}
+                  className={`rounded-2xl border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-indigo-300 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/40 scale-[1.01]'
+                      : 'border-white/60 bg-white/80 hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5'
+                  }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="p-4 flex items-start gap-3">
                     <div className="relative">
                       <UserAvatar user={hydratedUsers[otherParticipant?.user?._id] || otherParticipant?.user} size="lg" />
                       {hasUnread && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-xs text-white font-bold">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                          </span>
+                        <div className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-semibold text-xs ${isSelected ? 'bg-amber-300 text-indigo-900' : 'bg-amber-400 text-indigo-900'} shadow-sm`}>
+                          {unreadCount > 9 ? '9+' : unreadCount}
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-medium text-gray-900 truncate">
+                        <h3 className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                           {(hydratedUsers[otherParticipant?.user?._id] || otherParticipant?.user)?.name || 'Unknown User'}
                         </h3>
-                        <span className="text-xs text-gray-500">
+                        <span className={`text-xs ${isSelected ? 'text-indigo-100' : 'text-gray-400'}`}>
                           {presenceByUser[otherParticipant?.user._id]?.isOnline ? 'Online' : formatLastSeen(presenceByUser[otherParticipant?.user._id]?.lastSeen)}
                         </span>
                       </div>
-                      
-                      <p className="text-sm text-gray-500 truncate mt-1">
+
+                      <p className={`text-sm truncate mt-1 ${isSelected ? 'text-indigo-100/80' : 'text-gray-500'}`}>
                         {conversation.lastMessage?.content?.text || 'No messages yet'}
                       </p>
-                      
-                      {conversation.job && (
-                        (() => {
-                          const job = conversation.job;
-                          const ls = String(job.lifecycleState || '').toLowerCase();
-                          const st = String(job.status || '').toLowerCase();
-                          const isClosed = ls === 'closed' || ls === 'cancelled' || st === 'cancelled' || st === 'completed';
-                          if (isClosed) return null;
-                          return (
-                            <p className="text-xs text-blue-600 mt-1 flex items-center gap-2">
-                              <span>Job: {job.title}</span>
-                              {ls && (
-                                <span className="px-2 py-0.5 text-[10px] rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                                  {ls.replaceAll('_',' ')}
-                                </span>
-                              )}
-                            </p>
-                          );
-                        })()
-                      )}
+
+                      {conversation.job && (() => {
+                        const job = conversation.job;
+                        const ls = String(job.lifecycleState || '').toLowerCase();
+                        const st = String(job.status || '').toLowerCase();
+                        const isClosed = ls === 'closed' || ls === 'cancelled' || st === 'cancelled' || st === 'completed';
+                        if (isClosed) return null;
+                        return (
+                          <p className={`text-xs mt-2 flex items-center gap-2 ${isSelected ? 'text-indigo-100' : 'text-indigo-600'}`}>
+                            <span>Job: {job.title}</span>
+                            {ls && (
+                              <span className={`px-2 py-0.5 text-[10px] rounded-full border ${isSelected ? 'bg-white/20 text-white border-white/30' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                                {ls.replaceAll('_', ' ')}
+                              </span>
+                            )}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -864,9 +878,10 @@ const Messages = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden`}>
         {selectedConversation ? (
-          <ChatWindow
+          <div className="flex-1 flex flex-col">
+            <ChatWindow
             conversation={selectedConversation}
             messages={visibleMessages}
             onMessageSent={(message, tempId, remove) => {
@@ -917,15 +932,16 @@ const Messages = () => {
             onDeleteAllMessages={handleClearChatForMe}
             formatTime={formatTime}
             formatLastSeen={formatLastSeen}
-          />
+            />
+          </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaComments className="w-8 h-8 text-gray-400" />
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-sm px-6 py-12 bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <FaComments className="w-9 h-9 text-indigo-500" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-              <p className="text-gray-500">Choose a conversation to start messaging</p>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-3">Select a conversation</h3>
+              <p className="text-gray-500">Choose someone from your inbox to start chatting. Messages appear here in real time.</p>
             </div>
           </div>
         )}
@@ -933,27 +949,30 @@ const Messages = () => {
 
       {/* Location Modal */}
       {showLocationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Your Location</h3>
-            
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <FaMapMarkerAlt className="w-5 h-5 text-indigo-500" />
+              Share Your Location
+            </h3>
+
             {userLocation ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-800">
+              <div className="space-y-6">
+                <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl border border-indigo-100">
+                  <div className="flex items-center gap-2 text-indigo-700 font-semibold">
                     <FaMapMarkerAlt className="w-4 h-4" />
-                    <span className="font-medium">Location Found</span>
+                    Location detected
                   </div>
-                  <p className="text-sm text-blue-600 mt-1">
+                  <p className="text-sm text-indigo-600 mt-2">
                     Lat: {userLocation.lat.toFixed(6)}, Lng: {userLocation.lng.toFixed(6)}
                   </p>
                 </div>
-                
-                <div className="flex gap-3">
+
+                <div className="flex flex-col md:flex-row gap-3">
                   <button
                     onClick={handleLocationShareConfirm}
                     disabled={sending}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                   >
                     {sending ? (
                       <FaSpinner className="w-4 h-4 animate-spin" />
@@ -964,15 +983,15 @@ const Messages = () => {
                   </button>
                   <button
                     onClick={() => setShowLocationModal(false)}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    className="px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="text-center py-6">
+                <div className="h-10 w-10 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin mx-auto mb-4"></div>
                 <p className="text-gray-600">Getting your location...</p>
               </div>
             )}
@@ -982,63 +1001,63 @@ const Messages = () => {
 
       {/* User Info Modal */}
       {showUserInfo && selectedConversation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">User Information</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">User Information</h3>
               <button
                 onClick={() => setShowUserInfo(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-indigo-500 transition-colors"
               >
                 <FaTimes className="w-5 h-5" />
               </button>
             </div>
-            
+
             {(() => {
               const otherParticipant = getOtherParticipant(selectedConversation);
               const pres = presenceByUser[otherParticipant?.user._id] || {};
-              
+
               return (
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-2xl font-semibold text-gray-600">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center shadow-md">
+                      <span className="text-2xl font-semibold text-indigo-600">
                         {otherParticipant?.user.name?.charAt(0) || '?'}
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-lg font-medium">{otherParticipant?.user.name || 'Unknown User'}</h4>
+                      <h4 className="text-lg font-semibold text-gray-900">{otherParticipant?.user.name || 'Unknown User'}</h4>
                       <p className="text-sm text-gray-500">{otherParticipant?.user.email}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-block w-2 h-2 rounded-full ${pres.isOnline ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${pres.isOnline ? 'bg-emerald-500' : 'bg-gray-300'}`} />
                         <span className="text-xs text-gray-500">
-                          {pres.isOnline ? 'Online' : formatLastSeen(pres.lastSeen)}
+                          {pres.isOnline ? 'Online now' : formatLastSeen(pres.lastSeen)}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   {selectedConversation.job && (
-                    <div className="border-t pt-4">
-                      <h5 className="font-medium text-gray-900 mb-2">Related Job</h5>
-                      <p className="text-sm text-gray-600">{selectedConversation.job.title}</p>
+                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+                      <h5 className="font-semibold text-indigo-700 mb-1">Related Job</h5>
+                      <p className="text-sm text-indigo-600">{selectedConversation.job.title}</p>
                     </div>
                   )}
-                  
-                  <div className="flex gap-2 pt-4">
+
+                  <div className="flex gap-3 pt-2">
                     <button
                       onClick={() => {
                         setShowUserInfo(false);
                         handleViewProfile();
                       }}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
                     >
                       View Profile
                     </button>
                     <Link
                       to={user?.role === 'professional' ? '/dashboard/professional/connected-users' : '/dashboard/professionals'}
                       onClick={() => setShowUserInfo(false)}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-center"
+                      className="flex-1 px-4 py-3 rounded-xl border-2 border-indigo-100 text-indigo-600 hover:border-indigo-300 hover:text-indigo-700 transition-all text-center font-semibold"
                     >
                       Manage Connections
                     </Link>

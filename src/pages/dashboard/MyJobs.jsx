@@ -371,16 +371,16 @@ const MyJobs = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-gray-200 text-gray-900';
-      case 'Pending': return 'bg-gray-50 text-gray-700';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Completed': return 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 border border-indigo-200';
+      case 'In Progress': return 'bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 border border-amber-200';
+      case 'Pending': return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200';
+      case 'Cancelled': return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border border-gray-300';
+      default: return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200';
     }
   };
 
   const getUrgencyColor = (urgency) => {
-    return urgency === 'Urgent' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800';
+    return urgency === 'Urgent' ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 border border-gray-200';
   };
 
   const reloadJobs = async () => {
@@ -432,61 +432,75 @@ const MyJobs = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FaBriefcase className="w-5 h-5 text-indigo-600 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
+      {/* Header - Modern Design */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400 opacity-10 rounded-full -ml-24 -mb-24"></div>
+        
+        <div className="relative z-10 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">My Jobs</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl lg:text-4xl font-bold mb-2 flex items-center gap-3">
+              <FaBriefcase className="w-8 h-8 text-amber-300" />
+              My Jobs
+            </h1>
+            <p className="text-indigo-100 text-lg">
               {String(user?.role).toLowerCase() === 'professional' ? 'Jobs you are working on and have completed' : 'Manage and track all your posted jobs'}
             </p>
           </div>
           {String(user?.role).toLowerCase() !== 'professional' && (
             <Link
               to="/dashboard/post-job"
-              className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 flex items-center gap-2 transform hover:scale-105"
             >
-              <FaPlus className="w-4 h-4" />
+              <FaPlus className="w-5 h-5" />
               Post New Job
             </Link>
           )}
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+      {/* Filters - Modern Design */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search jobs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
               />
             </div>
           </div>
-          <div className="md:w-48">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              <option value="">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
+          <div className="md:w-56">
+            <div className="relative">
+              <FaFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5 pointer-events-none" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-all"
+              >
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -494,10 +508,12 @@ const MyJobs = () => {
       {/* Jobs List */}
       <div className="space-y-4">
         {filteredJobs.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 border border-gray-200 text-center">
-            <FaBriefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-            <p className="text-gray-600 mb-4">
+          <div className="bg-white rounded-2xl shadow-lg p-12 border border-gray-100 text-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <FaBriefcase className="w-10 h-10 text-indigo-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No jobs found</h3>
+            <p className="text-gray-600 mb-6">
               {searchTerm || statusFilter 
                 ? 'Try adjusting your search or filter criteria'
                 : (String(user?.role).toLowerCase() === 'professional' ? 'You have no jobs yet' : 'You haven\'t posted any jobs yet')}
@@ -505,73 +521,78 @@ const MyJobs = () => {
             {String(user?.role).toLowerCase() !== 'professional' && !searchTerm && !statusFilter && (
               <Link
                 to="/dashboard/post-job"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:scale-105"
               >
-                <FaPlus className="w-4 h-4" />
+                <FaPlus className="w-5 h-5" />
                 Post Your First Job
               </Link>
             )}
           </div>
         ) : (
           filteredJobs.map((job) => (
-            <div key={job._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div key={job._id} className="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
               {Array.isArray(job.media) && job.media[0]?.url && (
-                <div className="w-full bg-gray-50">
-                  <img src={job.media[0].url} alt="job" className="w-full max-h-80 object-cover" />
+                <div className="w-full bg-gradient-to-br from-indigo-50 to-gray-50 overflow-hidden">
+                  <img src={job.media[0].url} alt="job" className="w-full max-h-80 object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
               )}
               <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-6">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(deriveStatus(job))}`}>
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                      <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+                      <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getStatusColor(deriveStatus(job))}`}>
                         {deriveStatus(job)}
                       </span>
-                      <span className={`px-2 py-1 text-xs rounded-full ${getUrgencyColor(job.urgency)}`}>
-                        {job.urgency}
-                      </span>
+                      {job.urgency && (
+                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getUrgencyColor(job.urgency)}`}>
+                          {job.urgency}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-gray-600 mb-2">{job.description}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <FaMapMarkerAlt className="w-3 h-3" />
-                        {job.location.city}, {job.location.state}
+                    <p className="text-gray-600 mb-4 leading-relaxed">{job.description}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <FaMapMarkerAlt className="w-4 h-4 text-indigo-500" />
+                        {job.location?.city}, {job.location?.state}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <FaCalendarAlt className="w-3 h-3" />
+                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <FaCalendarAlt className="w-4 h-4 text-indigo-500" />
                         {formatDate(job.preferredDate)}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <FaClock className="w-3 h-3" />
+                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <FaClock className="w-4 h-4 text-indigo-500" />
                         {job.preferredTime}
                       </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(job.budget?.min || 0)} - {formatCurrency(job.budget?.max || 0)}
-                    </p>
-                    <p className="text-sm text-gray-500">{job.category}</p>
+                  <div className="text-right ml-4">
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
+                      <p className="text-2xl font-bold text-indigo-700 mb-1">
+                        {formatCurrency(job.budget?.min || 0)}
+                      </p>
+                      <p className="text-sm text-indigo-600 font-medium">- {formatCurrency(job.budget?.max || 0)}</p>
+                      <p className="text-xs text-gray-600 mt-2">{job.category}</p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Client Info for pro view */}
                 {String(user?.role).toLowerCase() === 'professional' && job.client && (
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 rounded-xl p-4 mb-4 border border-indigo-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <FaUser className="w-5 h-5 text-gray-600" />
+                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                          <FaUser className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">{job.client.name}</h4>
+                          <h4 className="font-bold text-gray-900">{job.client.name}</h4>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <span>{job.client.phone || ''}</span>
                           </div>
                         </div>
                       </div>
-                      <button className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
+                      <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
                         <FaComments className="w-4 h-4" />
                         Message
                       </button>
@@ -582,32 +603,41 @@ const MyJobs = () => {
                 {/* Applications */}
                 {job.applications && job.applications.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="font-medium text-gray-900 mb-2">
-                      Applications ({job.applications.length})
-                    </h4>
-                    <div className="mb-2">
-                      <Link to={`/dashboard/my-jobs/${job._id}/applications`} className="text-blue-600 text-sm hover:underline">View Applications</Link>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                        <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-full text-sm font-semibold">
+                          {job.applications.length}
+                        </span>
+                        Applications
+                      </h4>
+                      <Link 
+                        to={`/dashboard/my-jobs/${job._id}/applications`} 
+                        className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 group"
+                      >
+                        View All
+                        <FaArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                      </Link>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {job.applications.slice(0, 2).map((app) => (
-                        <div key={app._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                              <FaUser className="w-4 h-4 text-gray-600" />
+                        <div key={app._id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+                              <FaUser className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{app.professional?.name || 'Unknown Professional'}</p>
-                              <p className="text-sm text-gray-600">{app.proposal}</p>
+                              <p className="font-bold text-gray-900">{app.professional?.name || 'Unknown Professional'}</p>
+                              <p className="text-sm text-gray-600 mt-1">{app.proposal}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-gray-900">{formatCurrency(app.proposedPrice)}</p>
+                            <p className="text-xl font-bold text-indigo-700">{formatCurrency(app.proposedPrice)}</p>
                             <p className="text-sm text-gray-600">{app.estimatedDuration}</p>
                           </div>
                         </div>
                       ))}
                       {job.applications.length > 2 && (
-                        <p className="text-sm text-gray-600 text-center">
+                        <p className="text-sm text-gray-600 text-center py-2">
                           +{job.applications.length - 2} more applications
                         </p>
                       )}
@@ -616,23 +646,29 @@ const MyJobs = () => {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <span>Posted {formatDate(job.createdAt)}</span>
+                <div className="flex items-center justify-between pt-6 border-t-2 border-gray-100">
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <FaClock className="w-4 h-4 text-indigo-400" />
+                      Posted {formatDate(job.createdAt)}
+                    </span>
                     {job.completedAt && (
                       <>
-                        <span>•</span>
-                        <span>Completed {formatDate(job.completedAt)}</span>
+                        <span className="text-gray-300">•</span>
+                        <span className="flex items-center gap-1">
+                          <FaCheckCircle className="w-4 h-4 text-indigo-400" />
+                          Completed {formatDate(job.completedAt)}
+                        </span>
                       </>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <button
                       onClick={() => {
                         setSelectedJob(job);
                         setShowModal(true);
                       }}
-                      className="flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
                     >
                       <FaEye className="w-4 h-4" />
                       View Details
@@ -641,17 +677,17 @@ const MyJobs = () => {
                       <button
                         onClick={() => handleJobAction(job._id, 'complete')}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-3 py-1 text-sm text-green-600 hover:text-green-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                       >
                         <FaCheckCircle className="w-4 h-4" />
-                        Mark Complete
+                        Complete
                       </button>
                     )}
                     {(deriveStatus(job) === 'Pending' || deriveStatus(job) === 'In Progress') && (
                       <button
                         onClick={() => handleJobAction(job._id, 'cancel', { reason: 'Cancelled by user' })}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                       >
                         <FaTimes className="w-4 h-4" />
                         Cancel
@@ -661,7 +697,7 @@ const MyJobs = () => {
                       <button
                         onClick={async () => { setActionLoading(true); try { await deleteJobApi(job._id); await reloadJobs(); } finally { setActionLoading(false); } }}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 hover:text-red-700"
+                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
                         title="Delete this cancelled job"
                       >
                         <FaTrash className="w-4 h-4" />

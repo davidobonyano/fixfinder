@@ -6,7 +6,7 @@ import ReviewModal from '../components/ReviewModal';
 import SkeletonCard from '../components/SkeletonCard';
 import { FaPlus, FaLock, FaUser, FaUserPlus } from 'react-icons/fa';
 
-const LOCAL_KEY = 'fixfinder-reviews';
+const LOCAL_KEY = 'findyourfixer-reviews';
 
 // Mock reviews for professionals
 const getMockReviews = (category) => {

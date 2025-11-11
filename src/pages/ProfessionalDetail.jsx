@@ -231,7 +231,7 @@ const ProfessionalDetail = () => {
             
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-500">
-                Join thousands of users who trust FixFinder for their professional service needs
+                Join thousands of users who trust FindYourFixer for their professional service needs
               </p>
             </div>
           </div>

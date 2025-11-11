@@ -19,7 +19,7 @@ const HelpLayout = () => {
     <div className="min-h-screen bg-gray-50 text-gray-800 grid grid-cols-1 md:grid-cols-[260px_1fr]">
       {/* Sidebar */}
       <aside className="bg-white border-r border-gray-200 px-6 py-10 md:min-h-screen">
-        <h2 className="text-2xl font-bold text-indigo-600 mb-8">FixFinder Help</h2>
+        <h2 className="text-2xl font-bold text-indigo-600 mb-8">FindYourFixer Help</h2>
         <p className="text-sm text-gray-600 mb-6 leading-relaxed">
           Need assistance? Our Help Center is here to guide you through common questions and support options. Whether you're a user or a service provider, we're ready to help.
         </p>
@@ -83,7 +83,7 @@ const HelpLayout = () => {
         {/* Intro text for Help Home */}
         {location.pathname === "/help" && (
           <section className="bg-white border rounded-lg shadow p-6">
-            <h1 className="text-3xl font-bold mb-4 text-indigo-700">Welcome to the FixFinder Help Center</h1>
+            <h1 className="text-3xl font-bold mb-4 text-indigo-700">Welcome to the FindYourFixer Help Center</h1>
             <p className="text-gray-700 text-base leading-relaxed mb-4">
               Whether you're trying to hire a professional or manage your service profile, our Help Center is designed to make your experience smooth and stress-free.
             </p>

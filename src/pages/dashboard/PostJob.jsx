@@ -7,7 +7,8 @@ import {
   FaClock,
   FaExclamationTriangle,
   FaCheckCircle,
-  FaTimes
+  FaTimes,
+  FaMagic
 } from 'react-icons/fa';
 import { useAuth } from '../../context/useAuth';
 import { createJob, snapToLGAApi } from '../../utils/api';
@@ -38,6 +39,27 @@ const PostJob = () => {
   const [locationForm, setLocationForm] = useState({ state: '', city: '', neighbourhood: '' });
   const [errors, setErrors] = useState({});
   // Using unified ServiceSelector; no local categories list needed
+
+  const inputClasses = (hasError = false) =>
+    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none ${
+      hasError
+        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
+        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+    }`;
+
+  const textareaClasses = (hasError = false) =>
+    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none resize-none ${
+      hasError
+        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
+        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+    }`;
+
+  const selectClasses = (hasError = false) =>
+    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none appearance-none ${
+      hasError
+        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
+        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+    }`;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -292,142 +314,163 @@ const PostJob = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Post a Job</h1>
-        <p className="text-gray-600">
-          Describe your project and find the right professional for the job.
-        </p>
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -mr-32 -mt-32" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400 opacity-10 rounded-full -ml-24 -mb-24" />
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-2 uppercase text-sm tracking-[0.2em] text-amber-200">
+            <FaMagic className="w-5 h-5 animate-pulse" />
+            <span>Post a job</span>
+          </div>
+          <h1 className="text-3xl lg:text-4xl font-bold leading-tight">
+            Describe your project and we’ll match you with the perfect professional
+          </h1>
+          <p className="text-indigo-100 text-lg max-w-2xl">
+            Capture the essentials, set your timeline, and go live in minutes. Your request lands instantly with verified FixFinder experts.
+          </p>
+        </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Details</h2>
-          
-          {/* Job Title */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Job Title * ({formData.title.length}/100)
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g. Fix leaking kitchen sink"
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.title && (
-              <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-            )}
-          </div>
-
-          {/* Description */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description * ({formData.description.length}/1000)
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Provide detailed information about what needs to be done..."
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                errors.description ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-            )}
-          </div>
-
-          {/* Requirements (optional) */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Requirements (optional) ({formData.requirements.length}/500)
-            </label>
-            <textarea
-              name="requirements"
-              value={formData.requirements}
-              onChange={handleChange}
-              rows={3}
-              placeholder="List any specific requirements, materials, access, or constraints..."
-              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                errors.requirements ? 'border-red-500' : 'border-gray-300'
-              }`}
-              maxLength={500}
-            />
-            {errors.requirements && (
-              <p className="mt-1 text-sm text-red-600">{errors.requirements}</p>
-            )}
-          </div>
-
-          {/* Category */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Service Category *
-            </label>
-            <ServiceSelector
-              value={formData.category}
-              onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
-              placeholder="Search and select a service..."
-              showSuggestions={true}
-              allowCustom={false}
-            />
-            {errors.category && (
-              <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <FaMapMarkerAlt className="w-5 h-5" />
-            Location
-          </h2>
-          
-          <div className="grid grid-cols-1 gap-4">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
+              <FaMagic className="w-5 h-5" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">State & LGA *</label>
-              <LocationSelector
-                value={{ state: locationForm.state, city: locationForm.city, neighborhood: locationForm.neighbourhood }}
-                onChange={(val) => setLocationForm(prev => ({ ...prev, state: val.state || '', city: val.city || val.lga || '', neighbourhood: val.neighborhood || '' }))}
-                enforceNigeria
+              <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
+              <p className="text-sm text-gray-500">Share what you need help with — the more specific, the better.</p>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+                <span>Job Title *</span>
+                <span className="text-xs font-medium text-gray-400">{formData.title.length}/100</span>
+              </label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="e.g. Fix leaking kitchen sink"
+                className={inputClasses(!!errors.title)}
               />
+              {errors.title && (
+                <p className="mt-2 text-sm text-red-500">{errors.title}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+                <span>Description *</span>
+                <span className="text-xs font-medium text-gray-400">{formData.description.length}/1000</span>
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Provide detailed information about what needs to be done..."
+                className={textareaClasses(!!errors.description)}
+              />
+              {errors.description && (
+                <p className="mt-2 text-sm text-red-500">{errors.description}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+                <span>Requirements (optional)</span>
+                <span className="text-xs font-medium text-gray-400">{formData.requirements.length}/500</span>
+              </label>
+              <textarea
+                name="requirements"
+                value={formData.requirements}
+                onChange={handleChange}
+                rows={3}
+                placeholder="List specific requirements, materials, access details, or constraints..."
+                className={textareaClasses(!!errors.requirements)}
+                maxLength={500}
+              />
+              {errors.requirements && (
+                <p className="mt-2 text-sm text-red-500">{errors.requirements}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Service Category *</label>
+              <div className="rounded-xl border-2 border-gray-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                <ServiceSelector
+                  value={formData.category}
+                  onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                  placeholder="Search and select a service..."
+                  showSuggestions={true}
+                  allowCustom={false}
+                />
+              </div>
+              {errors.category && (
+                <p className="mt-2 text-sm text-red-500">{errors.category}</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
+              <FaMapMarkerAlt className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Location</h2>
+              <p className="text-sm text-gray-500">Help your professional understand where the job will happen.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">State & LGA *</label>
+              <div className="rounded-xl border-2 border-gray-200 p-1 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                <LocationSelector
+                  value={{ state: locationForm.state, city: locationForm.city, neighborhood: locationForm.neighbourhood }}
+                  onChange={(val) => setLocationForm(prev => ({ ...prev, state: val.state || '', city: val.city || val.lga || '', neighbourhood: val.neighborhood || '' }))}
+                  enforceNigeria
+                />
+              </div>
               {(errors['location.state'] || errors['location.city']) && (
-                <p className="mt-1 text-sm text-red-600">{errors['location.state'] || errors['location.city']}</p>
+                <p className="mt-2 text-sm text-red-500">{errors['location.state'] || errors['location.city']}</p>
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Neighbourhood / Address (optional)</label>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Neighbourhood / Address (optional)</label>
               <input
                 type="text"
                 value={locationForm.neighbourhood}
                 onChange={(e) => setLocationForm(prev => ({ ...prev, neighbourhood: e.target.value }))}
                 placeholder="e.g., Tajudeen Alli Street"
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 border-gray-300"
+                className={inputClasses(false)}
               />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Budget & Schedule */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget & Schedule</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Budget */}
+        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
+              <FaClock className="w-5 h-5" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Budget Range (₦) *
-              </label>
-              <div className="grid grid-cols-2 gap-2">
+              <h2 className="text-xl font-bold text-gray-900">Budget & Schedule</h2>
+              <p className="text-sm text-gray-500">Set expectations for time and investment.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Budget Range (₦) *</label>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <input
                     type="number"
@@ -435,12 +478,10 @@ const PostJob = () => {
                     value={formData.budget.min}
                     onChange={handleChange}
                     placeholder="Min"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                      errors['budget.min'] ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={inputClasses(!!errors['budget.min'])}
                   />
                   {errors['budget.min'] && (
-                    <p className="mt-1 text-sm text-red-600">{errors['budget.min']}</p>
+                    <p className="mt-2 text-sm text-red-500">{errors['budget.min']}</p>
                   )}
                 </div>
                 <div>
@@ -450,21 +491,18 @@ const PostJob = () => {
                     value={formData.budget.max}
                     onChange={handleChange}
                     placeholder="Max"
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                      errors['budget.max'] ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={inputClasses(!!errors['budget.max'])}
                   />
                   {errors['budget.max'] && (
-                    <p className="mt-1 text-sm text-red-600">{errors['budget.max']}</p>
+                    <p className="mt-2 text-sm text-red-500">{errors['budget.max']}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Preferred Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <FaCalendarAlt className="w-4 h-4" />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FaCalendarAlt className="w-4 h-4 text-indigo-500" />
                 Preferred Date *
               </label>
               <input
@@ -473,75 +511,80 @@ const PostJob = () => {
                 value={formData.preferredDate}
                 onChange={handleChange}
                 min={new Date().toISOString().split('T')[0]}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 ${
-                  errors.preferredDate ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={inputClasses(!!errors.preferredDate)}
               />
               {errors.preferredDate && (
-                <p className="mt-1 text-sm text-red-600">{errors.preferredDate}</p>
+                <p className="mt-2 text-sm text-red-500">{errors.preferredDate}</p>
               )}
             </div>
           </div>
 
-          {/* Preferred Time */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FaClock className="w-4 h-4" />
-              Preferred Time
-            </label>
-            <select
-              name="preferredTime"
-              value={formData.preferredTime}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-            >
-              <option value="Flexible">Flexible</option>
-              <option value="Morning (6AM-12PM)">Morning (6AM-12PM)</option>
-              <option value="Afternoon (12PM-6PM)">Afternoon (12PM-6PM)</option>
-              <option value="Evening (6PM-10PM)">Evening (6PM-10PM)</option>
-            </select>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FaClock className="w-4 h-4 text-indigo-500" />
+                Preferred Time
+              </label>
+              <div className="relative">
+                <select
+                  name="preferredTime"
+                  value={formData.preferredTime}
+                  onChange={handleChange}
+                  className={selectClasses(false)}
+                >
+                  <option value="Flexible">Flexible</option>
+                  <option value="Morning (6AM-12PM)">Morning (6AM-12PM)</option>
+                  <option value="Afternoon (12PM-6PM)">Afternoon (12PM-6PM)</option>
+                  <option value="Evening (6PM-10PM)">Evening (6PM-10PM)</option>
+                </select>
+              </div>
+            </div>
 
-          {/* Urgency */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <FaExclamationTriangle className="w-4 h-4" />
-              Urgency Level
-            </label>
-            <div className="flex gap-4">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="urgency"
-                  value="Regular"
-                  checked={formData.urgency === 'Regular'}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Regular
+            <div>
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                <FaExclamationTriangle className="w-4 h-4 text-amber-500" />
+                Urgency Level
               </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="urgency"
-                  value="Urgent"
-                  checked={formData.urgency === 'Urgent'}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                Urgent
-              </label>
+              <div className="flex flex-wrap gap-3">
+                {['Regular', 'Urgent'].map((option) => (
+                  <label
+                    key={option}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.urgency === option
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
+                        : 'border-gray-200 text-gray-600 hover:border-indigo-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="urgency"
+                      value={option}
+                      checked={formData.urgency === option}
+                      onChange={handleChange}
+                      className="hidden"
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Media Upload (single photo) */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Photo (Optional)</h2>
-          
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <FaUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">Upload one photo of your project</p>
+        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
+              <FaUpload className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Photo (Optional)</h2>
+              <p className="text-sm text-gray-500">A quick snapshot helps pros understand the task at a glance.</p>
+            </div>
+          </div>
+
+          <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center bg-gradient-to-br from-indigo-50 to-indigo-100 hover:border-indigo-400 transition-all">
+            <FaUpload className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
+            <p className="text-gray-600 mb-2">Upload one clear photo of your project</p>
             <input
               type="file"
               accept="image/*"
@@ -551,62 +594,62 @@ const PostJob = () => {
             />
             <label
               htmlFor="media-upload"
-              className="inline-block px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-md hover:shadow-lg cursor-pointer transition-all"
             >
               Choose Photo
             </label>
           </div>
 
-          {/* Media Preview */}
           {formData.media.length > 0 && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
               {formData.media.map((item, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group">
                   <img
                     src={item.preview}
                     alt={`Preview ${index + 1}`}
-                    className="w-full h-24 object-cover rounded-lg"
+                    className="w-full h-28 object-cover rounded-xl border border-indigo-100 shadow-sm"
                   />
                   <button
                     type="button"
                     onClick={() => removeMedia(index)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                    className="absolute -top-2 -right-2 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg hover:from-red-500 hover:to-red-600 transition-all"
                   >
-                    <FaTimes className="w-3 h-3" />
+                    <FaTimes className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Submit Button */}
-        <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              <FaCheckCircle className="w-4 h-4 inline mr-2" />
-              Your job will be visible to relevant professionals
+        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl text-indigo-600">
+                <FaCheckCircle className="w-4 h-4" />
+              </div>
+              <span>Your job goes live instantly for nearby, verified professionals.</span>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Posting Job...
+                  <div className="h-4 w-4 rounded-full border-2 border-white/60 border-t-white animate-spin" />
+                  Posting...
                 </>
               ) : (
                 'Post Job'
               )}
             </button>
           </div>
-        </div>
+        </section>
 
         {errors.submit && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-600">{errors.submit}</p>
+          <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 rounded-xl p-4 shadow-sm">
+            {errors.submit}
           </div>
         )}
       </form>

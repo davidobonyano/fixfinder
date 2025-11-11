@@ -315,14 +315,14 @@ export default function Profile() {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center gap-2">
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg flex items-center gap-2">
           <FaCheck className="w-5 h-5" />
           {success}
         </div>
       )}
 
       {error && (
-        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg">
           {error}
         </div>
       )}
@@ -343,18 +343,18 @@ export default function Profile() {
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${user?.emailVerification?.isVerified ? 'bg-green-100' : 'bg-yellow-100'}`}>
-              <FaCheck className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-green-600' : 'text-yellow-600'}`} />
+            <div className={`p-3 rounded-lg ${user?.emailVerification?.isVerified ? 'bg-indigo-100' : 'bg-amber-100'}`}>
+              <FaCheck className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-indigo-600' : 'text-amber-600'}`} />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Verification</p>
-              <p className={`text-2xl font-bold ${user?.emailVerification?.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+              <p className={`text-2xl font-bold ${user?.emailVerification?.isVerified ? 'text-indigo-700' : 'text-amber-700'}`}>
                 {user?.emailVerification?.isVerified ? "Verified" : "Pending"}
               </p>
             </div>
             <div className="ml-auto flex items-center gap-2">
               {user?.emailVerification?.isVerified ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
                   ✓ Email Verified
                 </span>
               ) : (
@@ -424,7 +424,7 @@ export default function Profile() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="profile-picture-upload"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {uploading ? (
                 <FaSpinner className="w-4 h-4 animate-spin" />
@@ -438,10 +438,10 @@ export default function Profile() {
               <button
                 onClick={handleRemovePicture}
                 disabled={uploading}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
-                <FaTrash className="w-4 h-4" />
-                Remove
+                <FaTrash className="w-4 h-4 text-gray-500" />
+                Remove picture
               </button>
             )}
           </div>
@@ -455,7 +455,7 @@ export default function Profile() {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg shadow-sm transition-all"
             >
               <FaEdit className="w-4 h-4" />
               Edit
@@ -465,7 +465,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {saving ? (
                   <FaSpinner className="w-4 h-4 animate-spin" />
@@ -483,7 +483,7 @@ export default function Profile() {
                     phone: user.phone || ""
                   });
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                className="flex items-center gap-2 px-4 py-2 border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 transition-all"
               >
                 <FaTimes className="w-4 h-4" />
                 Cancel
@@ -565,7 +565,7 @@ export default function Profile() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-6">
         {/* Location quick update */}
         <div className="mb-6 p-4 rounded-lg border border-gray-200 bg-gray-50">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
               <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                 <FaMapMarkerAlt className="w-4 h-4" /> Location
@@ -581,11 +581,11 @@ export default function Profile() {
                 )}
               </div>
             </div>
-            <div className="shrink-0">
+            <div className="md:shrink-0">
               <button
                 onClick={handleUpdateLocation}
                 disabled={updatingLocation}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 w-full md:w-auto justify-center"
               >
                 {updatingLocation ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaMapMarkerAlt className="w-4 h-4" />}
                 {updatingLocation ? 'Updating…' : 'Update Location (Use my GPS)'}
@@ -616,7 +616,7 @@ export default function Profile() {
                 }
               </p>
             </div>
-            <button onClick={() => navigate('/dashboard/security')} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <button onClick={() => navigate('/dashboard/security')} className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-colors">
               Change Password
             </button>
           </div>
@@ -632,7 +632,7 @@ export default function Profile() {
               <button 
                 onClick={handleEmailVerification}
                 disabled={emailVerifying}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {emailVerifying ? (
                   <>
@@ -649,20 +649,20 @@ export default function Profile() {
       </div>
 
       {/* Danger Zone */}
-      <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-        <h2 className="text-xl font-semibold text-red-600 mb-4">Danger Zone</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Account</h2>
         
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div>
-              <h3 className="font-medium text-red-900">Delete Account</h3>
-              <p className="text-sm text-red-600">
+              <h3 className="font-medium text-gray-900">Delete Account</h3>
+              <p className="text-sm text-gray-600">
                 Permanently delete your account and all associated data. This action cannot be undone.
               </p>
             </div>
             <button 
               onClick={() => setShowDeleteModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg hover:border-red-400 transition-colors"
             >
               Delete Account
             </button>

@@ -651,18 +651,18 @@ const ProfessionalsPage = () => {
       {/* Professionals Grid/List */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredProfessionals.map((professional) => (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow block"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all block h-full"
               >
                 <div className="relative">
                   <img
                     src={professional.image || '/images/placeholder.jpeg'}
                     alt={professional.name}
-                    className="w-full h-48 object-cover"
+                    className="w-full aspect-[4/3] object-cover"
                   />
                   <div className="absolute bottom-3 left-3 bg-white bg-opacity-90 rounded-full px-3 py-1 flex items-center gap-1">
                     <FaMapMarkerAlt className="w-3 h-3 text-gray-600" />
@@ -672,7 +672,7 @@ const ProfessionalsPage = () => {
                   </div>
                 </div>
                 
-                <div className="p-4">
+                <div className="p-4 flex flex-col h-full">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{professional.name}</h3>
                     <div className="flex items-center gap-1">
@@ -685,19 +685,19 @@ const ProfessionalsPage = () => {
                   
                   <p className="text-gray-600 mb-2">{professional.category}</p>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <FaClock className="w-3 h-3" />
                       <span>Available now</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="font-medium text-green-600">
+                      <span className="font-medium text-indigo-600">
                         ₦{professional.hourlyRate || '2,000'}/hr
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="mt-auto pt-3 flex gap-2">
                     {(() => {
                       const isConnected = connections.has(professional._id);
                       const hasRequestSent = connectionRequests.has(professional._id);
@@ -718,7 +718,7 @@ const ProfessionalsPage = () => {
                                 e.stopPropagation();
                                 handleStartChat(professional);
                               }}
-                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                             >
                               <FaComments className="w-4 h-4" />
                               Message
@@ -729,7 +729,7 @@ const ProfessionalsPage = () => {
                                 e.stopPropagation();
                                 handleUnfriendClick(professional);
                               }}
-                              className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                              className="px-3 py-2 rounded-lg flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                             >
                               Unfriend
                             </button>
@@ -740,10 +740,10 @@ const ProfessionalsPage = () => {
                         return (
                           <button
                             disabled
-                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-gray-400 text-white cursor-not-allowed"
+                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 border border-gray-300 text-gray-600 cursor-not-allowed bg-white"
                           >
                             <FaComments className="w-4 h-4" />
-                            Request Sent
+                            Pending
                           </button>
                         );
                       } else {
@@ -755,7 +755,7 @@ const ProfessionalsPage = () => {
                               e.stopPropagation();
                               handleConnect(professional);
                             }}
-                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                           >
                             <FaComments className="w-4 h-4" />
                             Connect
@@ -774,7 +774,7 @@ const ProfessionalsPage = () => {
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow block"
+                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:-translate-y-0.5 transition-all block"
               >
                 <div className="flex items-start gap-4">
                   <img
@@ -809,7 +809,7 @@ const ProfessionalsPage = () => {
                         <span>Available now</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="font-medium text-green-600">
+                        <span className="font-medium text-indigo-600">
                           ₦{professional.hourlyRate || '2,000'}/hr
                         </span>
                       </div>
@@ -826,7 +826,7 @@ const ProfessionalsPage = () => {
                             <>
                               <Link
                                 to={`/dashboard/messages?professional=${professional._id}`}
-                                className="px-6 py-2 rounded-lg flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                className="px-6 py-2 rounded-lg flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                               >
                                 <FaComments className="w-4 h-4" />
                                 Message
@@ -837,7 +837,7 @@ const ProfessionalsPage = () => {
                                   e.stopPropagation();
                                   handleUnfriendClick(professional);
                                 }}
-                                className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                className="px-4 py-2 rounded-lg flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                               >
                                 Unfriend
                               </button>
@@ -852,7 +852,7 @@ const ProfessionalsPage = () => {
                                 e.stopPropagation();
                                 handleCancelRequest(professional);
                               }}
-                              className="px-6 py-2 rounded-lg flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700 transition-colors"
+                              className="px-6 py-2 rounded-lg flex items-center gap-2 border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                             >
                               <FaTimes className="w-4 h-4" />
                               Cancel Request
@@ -861,13 +861,13 @@ const ProfessionalsPage = () => {
                         } else {
                           // Not connected - show Connect button
                           return (
-                            <button
+                          <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleConnect(professional);
                               }}
-                              className="px-6 py-2 rounded-lg flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                            className="px-6 py-2 rounded-lg flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
                             >
                               <FaComments className="w-4 h-4" />
                               Connect
