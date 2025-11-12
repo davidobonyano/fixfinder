@@ -1,71 +1,248 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
-import { getProfessional, uploadProfessionalMedia } from '../utils/api';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  getProfessional,
+  uploadProfessionalMedia,
+  getProfessionalProfile,
+  sendConnectionRequest,
+  getConnectionRequests,
+  getConnections,
+  removeConnection,
+  cancelConnectionRequest,
+  createOrGetConversation
+} from '../utils/api';
 import { useAuth } from '../context/useAuth';
-import { FaStar, FaMapMarkerAlt, FaClock, FaCheckCircle, FaPhone, FaEnvelope, FaTools } from 'react-icons/fa';
+import { useToast } from '../context/ToastContext';
+import {
+  FaStar,
+  FaMapMarkerAlt,
+  FaClock,
+  FaCheckCircle,
+  FaPhone,
+  FaEnvelope,
+  FaTools,
+  FaPlay,
+  FaBriefcase,
+  FaAward,
+  FaShieldAlt,
+  FaComments,
+  FaCalendar,
+  FaSave,
+  FaTimes
+} from 'react-icons/fa';
 
 const ProfessionalDetail = () => {
   const { id } = useParams();
   const locationState = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { success, error: showError } = useToast();
+
   const [professional, setProfessional] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [fetchError, setFetchError] = useState('');
+  const [heroMedia, setHeroMedia] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(false);
+  const [connectionRequestPending, setConnectionRequestPending] = useState(false);
+  const [connectionId, setConnectionId] = useState(null);
+
+  const API_BASE = useMemo(
+    () => import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com',
+    []
+  );
+
+  const resolveMediaUrl = (value, fallback = '/images/placeholder.jpeg') => {
+    if (!value) return fallback;
+    const trimmed = typeof value === 'string' ? value.trim() : value;
+    if (!trimmed) return fallback;
+    if (
+      trimmed.startsWith('http') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:') ||
+      trimmed.startsWith('//')
+    ) {
+      return trimmed;
+    }
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${API_BASE}${normalized}`;
+  };
+
+  const normalizeProfessional = (raw = {}) => {
+    if (!raw || typeof raw !== 'object') return {};
+
+    const photos = Array.isArray(raw.photos) ? raw.photos.filter(Boolean) : [];
+    const videos = Array.isArray(raw.videos) ? raw.videos.filter(Boolean) : [];
+    const servicesFromSource =
+      raw.services ||
+      raw.categories ||
+      raw.specialties ||
+      raw.skills ||
+      (raw.category ? [raw.category] : []);
+
+    const certifications = Array.isArray(raw.certifications)
+      ? raw.certifications.filter(Boolean)
+      : [];
+    const languages = Array.isArray(raw.languages) ? raw.languages.filter(Boolean) : [];
+    const reviews = Array.isArray(raw.reviews) ? raw.reviews : [];
+
+    const hourlyRate =
+      raw.pricePerHour ?? raw.hourlyRate ?? raw.rate ?? raw.baseRate ?? raw.pricing?.hourly;
+    const ratingValue = Number(raw.ratingAvg ?? raw.rating ?? raw.averageRating ?? 0);
+    const ratingCount = Number(raw.ratingCount ?? raw.reviewsCount ?? raw.reviewCount ?? 0);
+
+    const location =
+      raw.location && typeof raw.location === 'object'
+        ? raw.location
+        : {
+            address: raw.address || raw.city || raw.state,
+            city: raw.city,
+            state: raw.state,
+            coordinates: raw.coordinates || raw.location?.coordinates
+          };
+
+    const userObj =
+      typeof raw.user === 'object'
+        ? raw.user
+        : raw.user
+        ? { _id: raw.user }
+        : raw.owner
+        ? { _id: raw.owner }
+        : null;
+
+    const resolvedPhotos = photos.map((p) => resolveMediaUrl(p));
+    const resolvedVideos = videos.map((v) => resolveMediaUrl(v));
+
+    return {
+      ...raw,
+      _id: raw._id || raw.id,
+      name: raw.name || raw.fullName || `${raw.firstName || ''} ${raw.lastName || ''}`.trim(),
+      category: raw.category || raw.primaryService || raw.profession || raw.title,
+      bio: raw.bio || raw.about || raw.description || '',
+      photos: resolvedPhotos,
+      videos: resolvedVideos,
+      services: Array.isArray(servicesFromSource)
+        ? servicesFromSource.map((service) => (typeof service === 'string' ? service : service?.name)).filter(Boolean)
+        : [],
+      certifications,
+      languages,
+      reviews,
+      availability: raw.availability || raw.status || raw.availabilityStatus || null,
+      responseTime: raw.responseTime || raw.averageResponseTime || null,
+      completedJobs: raw.completedJobs ?? raw.jobsCompleted ?? raw.completedTasks ?? 0,
+      yearsOfExperience: raw.yearsOfExperience ?? raw.experienceYears ?? raw.experience,
+      hourlyRate: typeof hourlyRate === 'number' ? hourlyRate : Number(hourlyRate) || null,
+      rating: ratingValue,
+      ratingCount,
+      isVerified: Boolean(raw.isVerified || raw.verified),
+      location,
+      phone:
+        raw.phone ||
+        raw.contactPhone ||
+        raw.user?.phone ||
+        raw.contact?.phone ||
+        raw.owner?.phone ||
+        null,
+      email:
+        raw.email ||
+        raw.contactEmail ||
+        raw.user?.email ||
+        raw.owner?.email ||
+        raw.account?.email ||
+        null,
+      user: userObj,
+      coverImage: resolveMediaUrl(
+        raw.coverImage || raw.coverPhoto || raw.bannerImage || resolvedPhotos[0] || raw.image
+      ),
+      image: resolveMediaUrl(
+        raw.profilePicture ||
+          raw.avatar ||
+          raw.avatarUrl ||
+          raw.image ||
+          raw.user?.profilePicture ||
+          raw.user?.avatarUrl ||
+          resolvedPhotos[0]
+      )
+    };
+  };
+
+  const mergeProfessionalData = (base, enriched) => {
+    if (!base) return enriched;
+    if (!enriched) return base;
+
+    const merged = {
+      ...base,
+      ...enriched,
+      photos: Array.from(new Set([...(base.photos || []), ...(enriched.photos || [])])),
+      videos: Array.from(new Set([...(base.videos || []), ...(enriched.videos || [])])),
+      services: Array.from(new Set([...(base.services || []), ...(enriched.services || [])])),
+      certifications: Array.from(
+        new Set([...(base.certifications || []), ...(enriched.certifications || [])])
+      ),
+      languages: Array.from(new Set([...(base.languages || []), ...(enriched.languages || [])])),
+      reviews: enriched.reviews?.length ? enriched.reviews : base.reviews || []
+    };
+
+    if (!merged.coverImage) {
+      merged.coverImage = enriched.coverImage || base.coverImage;
+    }
+    if (!merged.image) {
+      merged.image = enriched.image || base.image;
+    }
+
+    return merged;
+  };
 
   useEffect(() => {
     const fetchProfessional = async () => {
       try {
         setLoading(true);
-        
-        // First, try to get from dummy data if it's a dummy professional ID
-        const dummyProfessionals = [
-          {
-            _id: '1', name: 'John Electrician', category: 'Electrician', rating: 4.8, hourlyRate: 2500,
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-            location: { address: 'Victoria Island, Lagos' }, isVerified: true, user: { _id: 'user1' },
-            bio: 'Experienced electrician with 10+ years of experience in residential and commercial electrical work.',
-            yearsOfExperience: 10, city: 'Lagos'
-          },
-          {
-            _id: '2', name: 'Sarah Plumber', category: 'Plumber', rating: 4.9, hourlyRate: 2000,
-            image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-            location: { address: 'Ikoyi, Lagos' }, isVerified: true, user: { _id: 'user2' },
-            bio: 'Professional plumber specializing in pipe repairs, installations, and maintenance.',
-            yearsOfExperience: 8, city: 'Lagos'
-          },
-          {
-            _id: '3', name: 'Mike Carpenter', category: 'Carpenter', rating: 4.7, hourlyRate: 3000,
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-            location: { address: 'Surulere, Lagos' }, isVerified: false, user: { _id: 'user3' },
-            bio: 'Skilled carpenter with expertise in furniture making and home renovations.',
-            yearsOfExperience: 12, city: 'Lagos'
-          }
-        ];
-        
-        const dummyPro = dummyProfessionals.find(p => p._id === id);
-        if (dummyPro) {
-          setProfessional(dummyPro);
-          return;
-        }
-        
-        // Prefer data passed via route state (from list) for demo fallback
+        setFetchError('');
+
+        let normalizedProfessional = null;
+
+        // Prefer data passed via route state (from list) for immediate paint
         const statePro = locationState?.state?.professional;
-        if (statePro) {
-          setProfessional(statePro);
-          return;
+        if (statePro && (statePro._id === id || statePro.id === id)) {
+          normalizedProfessional = normalizeProfessional(statePro);
         }
 
-        const response = await getProfessional(id, { byUser: false });
-        const pro = response?.professional || response;
-        if (!pro) throw new Error('Professional not found');
-        setProfessional(pro);
+        if (!normalizedProfessional) {
+          const response = await getProfessional(id, { byUser: false });
+          const pro = response?.professional || response;
+          if (!pro) throw new Error('Professional not found');
+          normalizedProfessional = normalizeProfessional(pro);
+        }
+
+        if (user && id) {
+          try {
+            const profileResponse = await getProfessionalProfile(id);
+            const profileData = profileResponse?.data || profileResponse?.professional;
+            if (profileResponse?.success && profileData) {
+              const normalizedProfile = normalizeProfessional(profileData);
+              normalizedProfessional = mergeProfessionalData(
+                normalizedProfessional,
+                normalizedProfile
+              );
+            }
+          } catch (profileError) {
+            console.warn('Unable to load full professional profile:', profileError);
+          }
+        }
+
+        setProfessional(normalizedProfessional);
       } catch (err) {
-        setError(err.message || 'Failed to fetch professional details');
+        const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+        setProfessional(null);
+        setFetchError(
+          offline
+            ? 'You appear to be offline. Reconnect to view this professional.'
+            : err.message || 'Failed to fetch professional details'
+        );
       } finally {
         setLoading(false);
       }
@@ -75,6 +252,18 @@ const ProfessionalDetail = () => {
       fetchProfessional();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!professional) return;
+    const primary =
+      professional.coverImage ||
+      professional.coverPhoto ||
+      professional.bannerImage ||
+      (Array.isArray(professional.photos) && professional.photos.length > 0 && professional.photos[0]) ||
+      professional.image ||
+      '/images/placeholder.jpeg';
+    setHeroMedia(resolveMediaUrl(primary));
+  }, [professional]);
 
   // Get user's current location
   useEffect(() => {
@@ -91,7 +280,22 @@ const ProfessionalDetail = () => {
   // Compute distance when we have both locations
   useEffect(() => {
     if (!userLocation || !professional) return;
-    const coords = professional.coordinates;
+    let coords = null;
+    if (Array.isArray(professional.coordinates)) {
+      coords = professional.coordinates;
+    } else if (Array.isArray(professional.location?.coordinates)) {
+      coords = professional.location.coordinates;
+    } else if (
+      professional.location?.coordinates &&
+      typeof professional.location.coordinates === 'object'
+    ) {
+      const { lat, lng, latitude, longitude } = professional.location.coordinates;
+      const latVal = lat ?? latitude;
+      const lngVal = lng ?? longitude;
+      if (latVal !== undefined && lngVal !== undefined) {
+        coords = [Number(latVal), Number(lngVal)];
+      }
+    }
     if (!coords || coords.length !== 2) return;
 
     const toRad = (v) => (v * Math.PI) / 180;
@@ -109,17 +313,202 @@ const ProfessionalDetail = () => {
     setDistanceKm(Math.round(d * 10) / 10);
   }, [userLocation, professional]);
 
+  const authUserId = user?._id || user?.id || null;
+  const professionalId = professional?._id || professional?.id || id;
+
+  useEffect(() => {
+    if (!user || !professionalId) {
+      setConnectionRequestPending(false);
+      setConnectionId(null);
+      return;
+    }
+
+    let cancelled = false;
+    const refreshConnectionStatus = async () => {
+      try {
+        setCheckingConnection(true);
+
+        try {
+          const requestsResponse = await getConnectionRequests();
+          if (!cancelled) {
+            if (requestsResponse?.success) {
+              const pendingRequest = (requestsResponse.data || []).find((req) => {
+                const proId =
+                  typeof req.professional === 'string'
+                    ? req.professional
+                    : req.professional?._id;
+                const status = req.status || req.state;
+                return (
+                  proId === professionalId && (status === 'pending' || status === 'sent')
+                );
+              });
+              setConnectionRequestPending(Boolean(pendingRequest));
+            } else {
+              setConnectionRequestPending(false);
+            }
+          }
+        } catch (requestError) {
+          console.warn('Unable to check connection requests:', requestError);
+          if (!cancelled) setConnectionRequestPending(false);
+        }
+
+        try {
+          const connectionsResponse = await getConnections();
+          if (!cancelled) {
+            if (connectionsResponse?.success) {
+              const activeConnection = (connectionsResponse.data || []).find((connection) => {
+                const requesterId =
+                  connection?.requester?._id ||
+                  connection?.requesterId ||
+                  connection?.requester;
+                const professionalInConnection =
+                  connection?.professional?._id ||
+                  connection?.professionalId ||
+                  connection?.professional;
+                const otherPartyId =
+                  requesterId === authUserId ? professionalInConnection : requesterId;
+                return otherPartyId === professionalId;
+              });
+              setConnectionId(activeConnection?._id || null);
+            } else {
+              setConnectionId(null);
+            }
+          }
+        } catch (connectionsError) {
+          console.warn('Unable to check connections:', connectionsError);
+          if (!cancelled) setConnectionId(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingConnection(false);
+        }
+      }
+    };
+
+    refreshConnectionStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authUserId, professionalId]);
+
+  const isConnected = Boolean(connectionId);
+
+  const handleConnect = async () => {
+    if (!professionalId) return;
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (connectionRequestPending || isConnected) return;
+
+    try {
+      setCheckingConnection(true);
+      const response = await sendConnectionRequest(professionalId);
+      if (response?.success) {
+        setConnectionRequestPending(true);
+        success(`Connection request sent to ${professional?.name || 'this professional'}.`);
+      } else if (response?.message?.toLowerCase().includes('already')) {
+        setConnectionRequestPending(true);
+        success('Connection request already sent.');
+      } else {
+        showError('Failed to send connection request. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error sending connection request:', err);
+      if (err?.message?.toLowerCase().includes('already')) {
+        setConnectionRequestPending(true);
+        success('Connection request already sent.');
+      } else {
+        showError('Failed to send connection request. Please try again.');
+      }
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    if (!professionalId || !user) return;
+    try {
+      setCheckingConnection(true);
+      const response = await cancelConnectionRequest(professionalId);
+      if (response?.success) {
+        setConnectionRequestPending(false);
+        success(`Connection request to ${professional?.name || 'this professional'} cancelled.`);
+      } else {
+        showError('Unable to cancel the request. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error cancelling connection request:', err);
+      showError('Unable to cancel the request. Please try again.');
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  const handleUnfriend = async () => {
+    if (!connectionId || !user) return;
+    try {
+      setCheckingConnection(true);
+      const response = await removeConnection(connectionId);
+      if (response?.success) {
+        setConnectionId(null);
+        setConnectionRequestPending(false);
+        success(`Removed ${professional?.name || 'this professional'} from your connections.`);
+      } else {
+        showError('Failed to remove connection. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error removing connection:', err);
+      showError('Failed to remove connection. Please try again.');
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    const otherUserId =
+      typeof professional?.user === 'string'
+        ? professional.user
+        : professional?.user?._id || professional?.user?.id;
+    if (!otherUserId) {
+      showError('Unable to start chat. Missing professional user id.');
+      return;
+    }
+
+    try {
+      const response = await createOrGetConversation({ otherUserId });
+      if (response?.success && response?.data?._id) {
+        const basePath = user?.role === 'professional' ? '/dashboard/professional' : '/dashboard';
+        navigate(`${basePath}/messages/${response.data._id}`, { state: { conversation: response.data } });
+      } else {
+        showError('Failed to open chat. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error starting chat:', err);
+      showError('Failed to open chat. Please try again.');
+    }
+  };
+
+  const handleSave = () => {
+    setSaved((prev) => !prev);
+  };
+
   const renderStars = (rating) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
 
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={i} className="text-yellow-400" />);
+      stars.push(<FaStar key={i} className="text-amber-400" />);
     }
     
     if (hasHalfStar) {
-      stars.push(<FaStar key="half" className="text-yellow-400 opacity-50" />);
+      stars.push(<FaStar key="half" className="text-amber-400 opacity-50" />);
     }
     
     const remainingStars = 5 - Math.ceil(rating);
@@ -134,18 +523,18 @@ const ProfessionalDetail = () => {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading professional details...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded">
+          {fetchError}
         </div>
       </div>
     );
@@ -158,7 +547,7 @@ const ProfessionalDetail = () => {
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Professional Not Found</h1>
           <Link
             to="/professionals"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Back to Professionals
           </Link>
@@ -172,9 +561,9 @@ const ProfessionalDetail = () => {
     return (
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FaCheckCircle className="w-10 h-10 text-blue-600" />
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FaCheckCircle className="w-10 h-10 text-indigo-600" />
             </div>
             
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -192,7 +581,7 @@ const ProfessionalDetail = () => {
                   <h2 className="text-xl font-semibold text-gray-900">{professional.name}</h2>
                   <p className="text-gray-600 capitalize">{professional.category}</p>
                   <div className="flex items-center mt-1">
-                    <FaStar className="w-4 h-4 text-yellow-400 mr-1" />
+                    <FaStar className="w-4 h-4 text-amber-400 mr-1" />
                     <span className="text-sm text-gray-600">{professional.rating || 4.5}</span>
                     <span className="text-sm text-gray-500 ml-2">({Math.floor(Math.random() * 50) + 10} reviews)</span>
                   </div>
@@ -200,7 +589,7 @@ const ProfessionalDetail = () => {
               </div>
               
               <div className="text-center">
-                <p className="text-lg font-semibold text-blue-600">
+                <p className="text-lg font-semibold text-indigo-600">
                   ₦{professional.hourlyRate?.toLocaleString() || '2,000'}/hour
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
@@ -217,13 +606,13 @@ const ProfessionalDetail = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/auth/register"
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
               >
                 Sign Up Free
               </Link>
               <Link
                 to="/auth/login"
-                className="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                className="bg-white text-gray-700 px-8 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors font-medium"
               >
                 Log In
               </Link>
@@ -240,167 +629,382 @@ const ProfessionalDetail = () => {
     );
   }
 
+  const portfolioPhotos = Array.isArray(professional.photos) ? professional.photos.filter(Boolean) : [];
+  const portfolioVideos = Array.isArray(professional.videos) ? professional.videos.filter(Boolean) : [];
+  const hasPortfolio = portfolioPhotos.length > 0 || portfolioVideos.length > 0;
+  const locationLabel = professional.location?.address || professional.city || 'Location unavailable';
+  const hourlyRate = professional.pricePerHour ?? professional.hourlyRate;
+  const rateValue = hourlyRate !== undefined && hourlyRate !== null ? Number(hourlyRate) : null;
+  const professionalUserId =
+    typeof professional.user === 'object' ? professional.user?._id : professional.user;
+  const isOwner =
+    !!user &&
+    !!professional &&
+    (authUserId === professionalUserId || authUserId === professional._id);
+  const firstName = professional.name?.split(' ')[0] || 'their';
+  const ratingValue = Number(professional.rating ?? professional.ratingAvg ?? 0);
+  const reviewCount =
+    professional.ratingCount ?? professional.reviewCount ?? professional.reviews?.length ?? 0;
+  const availabilityLabel = professional.availability || 'Check availability';
+  const distanceLabel =
+    typeof distanceKm === 'number' ? `${distanceKm}km away` : 'Distance unknown';
+  const experienceLabel = professional.yearsOfExperience
+    ? `${professional.yearsOfExperience}+ years`
+    : professional.experience || 'Not specified';
+  const completedJobs = professional.completedJobs ?? 0;
+  const responseTimeLabel = professional.responseTime || 'Not specified';
+  const serviceList = Array.isArray(professional.services) ? professional.services.filter(Boolean) : [];
+  const certificationList = Array.isArray(professional.certifications)
+    ? professional.certifications.filter(Boolean)
+    : [];
+  const languageList = Array.isArray(professional.languages) ? professional.languages.filter(Boolean) : [];
+  const reviewList = Array.isArray(professional.reviews) ? professional.reviews.slice(0, 3) : [];
+  const primaryActionLabel = connectionRequestPending
+    ? 'Request pending'
+    : isConnected
+    ? 'Connected'
+    : 'Check availability';
+  const primaryActionDisabled = checkingConnection || connectionRequestPending || isConnected || isOwner;
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Back Button */}
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="mb-6">
         <Link
           to={-1}
-          className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
+          className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
         >
-          ← Back to Professionals
+          <span aria-hidden="true">←</span>
+          Back to Professionals
         </Link>
       </div>
 
-      {/* Top Hero with Profile Image and Badge */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-        <div className="relative">
-          <img
-            src={professional.photos?.[0] || '/images/placeholder.jpeg'}
-            alt={professional.name}
-            className="w-full h-64 md:h-80 object-cover"
-            onError={(e) => (e.currentTarget.src = '/images/placeholder.jpeg')}
-          />
-          {professional.isVerified && (
-            <span className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm flex items-center gap-2">
-              <FaCheckCircle /> Verified
-            </span>
-          )}
-        </div>
-        <div className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{professional.name}</h1>
-            <div className="flex items-center flex-wrap gap-3 text-gray-600">
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
-                {professional.category}
-              </span>
-              <span className="flex items-center">
-                <FaMapMarkerAlt className="mr-1" />{professional.city}
-                {typeof distanceKm === 'number' && (
-                  <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                    {distanceKm}km away
-                  </span>
-                )}
-              </span>
-              {professional.yearsOfExperience ? (
-                <span className="flex items-center"><FaClock className="mr-1" />{professional.yearsOfExperience} yrs exp</span>
-              ) : null}
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-10">
+        <div className="relative h-44 md:h-56 bg-gradient-to-br from-indigo-700 via-indigo-600 to-indigo-800">
+          {heroMedia && (
+            <div className="absolute inset-0">
+              <img
+                src={heroMedia}
+                alt={`${professional.name} showcase`}
+                className="w-full h-full object-cover opacity-70"
+              />
             </div>
-          </div>
-          <div className="text-right">
-            {professional.pricePerHour ? (
-              <p className="text-2xl font-bold text-blue-600">₦{professional.pricePerHour.toLocaleString()}/hour</p>
-            ) : null}
-            <div className="flex items-center justify-end mt-1">
-              {renderStars(professional.ratingAvg || 0)}
-              <span className="ml-2 text-sm text-gray-600">({professional.ratingCount || 0} reviews)</span>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/80 via-indigo-700/40 to-transparent" />
+        </div>
+
+        <div className="px-6 pb-6 sm:px-10 sm:pb-10">
+          <div className="-mt-16 sm:-mt-20 flex flex-col md:flex-row md:items-end gap-6">
+            <div className="relative">
+              <img
+                src={professional.image || heroMedia || '/images/placeholder.jpeg'}
+                alt={professional.name}
+                className="h-28 w-28 sm:h-36 sm:w-36 rounded-2xl border-4 border-white shadow-xl object-cover"
+                onError={(e) => (e.currentTarget.src = '/images/placeholder.jpeg')}
+              />
+              {professional.isVerified && (
+                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+                  <FaCheckCircle className="w-3 h-3" />
+                  Verified
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                <div>
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                    {professional.name}
+                  </h1>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                    {professional.category && (
+                      <span className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium capitalize">
+                        <FaTools className="w-3 h-3" />
+                        {professional.category}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full font-medium">
+                      <FaMapMarkerAlt className="w-3 h-3" />
+                      {locationLabel}
+                      <span className="ml-2 text-xs font-semibold">
+                        • {distanceLabel}
+                      </span>
+                    </span>
+                    {professional.yearsOfExperience ? (
+                      <span className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full font-medium">
+                        <FaClock className="w-3 h-3" />
+                        {professional.yearsOfExperience}+ yrs experience
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-start lg:items-end gap-4">
+                  {typeof rateValue === 'number' && !Number.isNaN(rateValue) && (
+                    <div className="text-2xl font-bold text-indigo-600">
+                      ₦{rateValue.toLocaleString()}/hour
+                    </div>
+                  )}
+                  <div className="flex flex-col items-start lg:items-end gap-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        {renderStars(ratingValue || 0)}
+                      </div>
+                      <span className="font-medium text-gray-700">
+                        {ratingValue ? ratingValue.toFixed(1) : 'N/A'}
+                      </span>
+                      <span className="text-gray-400">
+                        • {reviewCount} reviews
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <FaBriefcase className="w-3 h-3 text-gray-400" />
+                        {completedJobs} completed jobs
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FaClock className="w-3 h-3 text-gray-400" />
+                        {responseTimeLabel}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FaCalendar className="w-3 h-3 text-gray-400" />
+                        {availabilityLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {!isOwner && (
+                      <button
+                        type="button"
+                        onClick={handleConnect}
+                        disabled={primaryActionDisabled}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
+                          primaryActionDisabled
+                            ? 'bg-indigo-100 text-indigo-400 cursor-not-allowed'
+                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
+                      >
+                        <FaCalendar className="w-4 h-4" />
+                        {primaryActionLabel}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
+                        saved ? 'bg-amber-500 text-indigo-900 hover:bg-amber-400' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                      }`}
+                    >
+                      <FaSave className="w-4 h-4" />
+                      {saved ? 'Saved' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleStartChat}
+                      disabled={!isConnected}
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
+                        isConnected
+                          ? 'bg-white text-indigo-600 border border-indigo-100 hover:bg-indigo-50'
+                          : 'bg-white text-gray-400 border border-gray-200 cursor-not-allowed'
+                      }`}
+                    >
+                      <FaComments className="w-4 h-4" />
+                      Message
+                    </button>
+                    {!isOwner && (
+                      <button
+                        type="button"
+                        onClick={isConnected ? handleUnfriend : handleCancelRequest}
+                        disabled={!isConnected && !connectionRequestPending}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
+                          isConnected || connectionRequestPending
+                            ? 'bg-white text-red-600 border border-red-100 hover:bg-red-50'
+                            : 'bg-white text-gray-400 border border-gray-200 cursor-not-allowed'
+                        }`}
+                      >
+                        <FaTimes className="w-4 h-4" />
+                        {isConnected ? 'Unfriend' : 'Cancel request'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2">
-          {/* Bio */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-8">
+        <div className="space-y-8">
           {professional.bio && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">About</h2>
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
               <p className="text-gray-600 leading-relaxed">{professional.bio}</p>
-            </div>
+            </section>
           )}
 
-          {/* Experience & Details */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Professional Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium text-gray-700 mb-2">Years of Experience</h3>
-                <p className="text-gray-600">{professional.yearsOfExperience || 0} years</p>
+          <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Professional Details</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="bg-slate-50 rounded-xl p-5">
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Experience</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">
+                  {experienceLabel}
+                </p>
               </div>
-              
-              {professional.languages && professional.languages.length > 0 && (
-                <div>
-                  <h3 className="font-medium text-gray-700 mb-2">Languages</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {professional.languages.map((language, index) => (
-                      <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                        {language}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {professional.certifications && professional.certifications.length > 0 && (
-                <div className="md:col-span-2">
-                  <h3 className="font-medium text-gray-700 mb-2">Certifications</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {professional.certifications.map((cert, index) => (
-                      <span key={index} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                        {cert}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="bg-slate-50 rounded-xl p-5">
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Completed Jobs</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">
+                  {completedJobs || 'Not specified'}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-5">
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Response Time</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">
+                  {responseTimeLabel}
+                </p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-5">
+                <p className="text-sm text-gray-500 uppercase tracking-wide">Availability</p>
+                <p className="mt-2 text-lg font-semibold text-gray-900">
+                  {availabilityLabel}
+                </p>
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* Photos (excluding main profile image) */}
-          {professional.photos && professional.photos.length > 1 && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Photos</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {professional.photos.slice(1).map((photo, index) => (
-                  <div
-                    key={index}
-                    className={`cursor-pointer rounded-lg overflow-hidden ${
-                      selectedImageIndex === index ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                    onClick={() => setSelectedImageIndex(index)}
+          {serviceList.length > 0 && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Services</h2>
+              <p className="text-sm text-gray-500 mb-4">
+                What {firstName} can help you with
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {serviceList.map((service, index) => (
+                  <span
+                    key={`${service}-${index}`}
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium capitalize"
+                  >
+                    {service}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {hasPortfolio && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Portfolio</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    A glimpse into {firstName}'s recent work
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {portfolioPhotos.map((photo, index) => (
+                  <button
+                    key={`photo-${index}`}
+                    type="button"
+                    onClick={() => setHeroMedia(photo)}
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <img
                       src={photo}
-                      alt={`${professional.name} work ${index + 2}`}
-                      className="w-full h-32 object-cover hover:scale-105 transition-transform"
+                      alt={`${professional.name} portfolio ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     />
-                  </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* Videos */}
-          {professional.videos && professional.videos.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Videos</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {professional.videos.map((video, index) => (
-                  <div key={index} className="relative">
+                {portfolioVideos.map((video, index) => (
+                  <div
+                    key={`video-${index}`}
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900"
+                  >
                     <video
                       src={video}
+                      preload="metadata"
                       controls
-                      className="w-full rounded-lg"
-                      poster={professional.photos && professional.photos[0]}
-                    >
-                      Your browser does not support the video tag.
-                    </video>
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    />
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/90 text-indigo-600 shadow-lg group-hover:scale-105 transition-transform">
+                        <FaPlay className="w-4 h-4 ml-0.5" />
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
-          {/* Media Upload (Owner only) */}
-          {user && professional && (user._id === professional.user || user._id === professional._id) && (
-            <div className="bg-white rounded-lg shadow-md p-6 mt-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Add Photos/Videos</h2>
+          {reviewList.length > 0 && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
+              <div className="space-y-4">
+                {reviewList.map((review, index) => {
+                  const reviewerName =
+                    typeof review.user === 'object'
+                      ? review.user?.name || review.reviewerName || 'Anonymous'
+                      : review.user || review.reviewerName || 'Anonymous';
+                  const reviewDate = review.createdAt
+                    ? new Date(review.createdAt).toLocaleDateString()
+                    : review.date || '';
+                  return (
+                    <div
+                      key={review._id || review.id || index}
+                      className="border-b border-gray-100 pb-4 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900">{reviewerName}</span>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <FaStar
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < (review.rating || 0) ? 'text-amber-400' : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {reviewDate ? (
+                          <span className="text-sm text-gray-500">{reviewDate}</span>
+                        ) : null}
+                      </div>
+                      {review.comment || review.review ? (
+                        <p className="text-gray-600 mb-2">
+                          {review.comment || review.review}
+                        </p>
+                      ) : null}
+                      {(review.jobId?.title || review.job) && (
+                        <span className="text-sm text-indigo-600">
+                          {typeof review.jobId === 'object'
+                            ? review.jobId?.title
+                            : review.job}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {isOwner && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Add Photos/Videos</h2>
               {uploadError && (
-                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">{uploadError}</div>
+                <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg">
+                  {uploadError}
+                </div>
               )}
-              <div className="flex items-center gap-4">
-                <label className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 border">
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="inline-flex items-center gap-3 px-4 py-2.5 bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 border border-slate-200 text-sm font-medium text-gray-700 transition-colors">
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -414,8 +1018,10 @@ const ProfessionalDetail = () => {
                         setUploadError('');
                         const formData = new FormData();
                         files.forEach((f) => formData.append('files', f));
-                        const res = await uploadProfessionalMedia(professional._id || professional.id, formData);
-                        // Optimistically update local state if URLs returned
+                        const res = await uploadProfessionalMedia(
+                          professional._id || professional.id,
+                          formData
+                        );
                         if (res?.professional) {
                           setProfessional(res.professional);
                         }
@@ -427,85 +1033,167 @@ const ProfessionalDetail = () => {
                       }
                     }}
                   />
-                  <span className="text-sm text-gray-700">Select Files</span>
+                  <span>Select files</span>
                 </label>
                 <button
                   disabled
-                  className="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white opacity-60 cursor-not-allowed"
+                  className="px-4 py-2.5 rounded-lg text-sm bg-indigo-100 text-indigo-500 cursor-not-allowed"
                   title="Drag & drop not implemented in this demo"
                 >
-                  Drag & Drop Coming Soon
+                  Drag & drop coming soon
                 </button>
-                {uploading && (
-                  <span className="text-sm text-gray-600">Uploading...</span>
-                )}
+                {uploading && <span className="text-sm text-gray-500">Uploading…</span>}
               </div>
-              <p className="text-xs text-gray-500 mt-2">Max 10 files. Supported: images and videos.</p>
-            </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Max 10 files. Supported: images and videos.
+              </p>
+            </section>
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Contact & Book</h2>
-            
-            <div className="space-y-4">
-              <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                Book Service
-              </button>
-              
-              <button className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium">
-                Send Message
-              </button>
+        <aside className="space-y-6">
+          <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8 sticky top-24 space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Contact Info</h2>
+              <div className="space-y-3 text-sm text-gray-700">
+                {(professional.phone || professional.user?.phone) && (
+                  <div className="flex items-center gap-3">
+                    <FaPhone className="w-4 h-4 text-gray-500" />
+                    <span>{professional.phone || professional.user?.phone}</span>
+                  </div>
+                )}
+                {professional.email && (
+                  <div className="flex items-center gap-3">
+                    <FaEnvelope className="w-4 h-4 text-gray-500" />
+                    <span>{professional.email}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <FaMapMarkerAlt className="w-4 h-4 text-gray-500" />
+                  <span>{locationLabel}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FaClock className="w-4 h-4 text-gray-500" />
+                  <span>{availabilityLabel}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FaMapMarkerAlt className="w-4 h-4 text-gray-500" />
+                  <span>{distanceLabel}</span>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="font-medium text-gray-700 mb-3">Quick Stats</h3>
-              <div className="space-y-2 text-sm">
+            <div className="pt-6 border-t border-slate-200">
+              <h3 className="font-medium text-gray-800 mb-3">Quick Stats</h3>
+              <div className="space-y-3 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Rating:</span>
-                  <span className="font-medium">{professional.ratingAvg?.toFixed(1) || 'N/A'}/5</span>
+                  <span>Rating</span>
+                  <span className="font-semibold text-gray-900">
+                    {ratingValue ? ratingValue.toFixed(1) : 'N/A'}/5
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Reviews:</span>
-                  <span className="font-medium">{professional.ratingCount || 0}</span>
+                  <span>Reviews</span>
+                  <span className="font-semibold text-gray-900">
+                    {reviewCount}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Experience:</span>
-                  <span className="font-medium">{professional.yearsOfExperience || 0} years</span>
+                  <span>Experience</span>
+                  <span className="font-semibold text-gray-900">
+                    {experienceLabel}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className={`font-medium ${professional.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                    {professional.isActive ? 'Active' : 'Inactive'}
+                  <span>Status</span>
+                  <span className="font-semibold">
+                    {professional.isActive ? (
+                      <span className="text-indigo-600">Actively accepting clients</span>
+                    ) : (
+                      <span className="text-gray-500">Currently unavailable</span>
+                    )}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Only show edit actions if user is the professional themselves */}
-            {user && professional && user._id === professional.user && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h3 className="font-medium text-gray-700 mb-3">Actions</h3>
-                <div className="space-y-2">
-                  <Link
-                    to={`/professionals/${professional._id}/edit`}
-                    className="block w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center text-sm font-medium"
-                  >
-                    Edit Profile
-                  </Link>
-                  <Link
-                    to={`/professionals/${professional._id}/reviews`}
-                    className="block w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center text-sm font-medium"
-                  >
-                    View Reviews
-                  </Link>
+            <div className="pt-6 border-t border-slate-200">
+              <h3 className="font-medium text-gray-800 mb-3">Experience & Credentials</h3>
+              <div className="space-y-3 text-sm text-gray-600">
+                <div className="flex items-center gap-3">
+                  <FaAward className="w-4 h-4 text-indigo-500" />
+                  <span>{experienceLabel}</span>
                 </div>
+                <div className="flex items-center gap-3">
+                  <FaBriefcase className="w-4 h-4 text-amber-500" />
+                  <span>{completedJobs} jobs completed</span>
+                </div>
+                {professional.isVerified && (
+                  <div className="flex items-center gap-3">
+                    <FaShieldAlt className="w-4 h-4 text-emerald-500" />
+                    <span>Verified professional</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {!isOwner && connectionRequestPending && (
+              <div className="pt-6 border-t border-slate-200">
+                <p className="text-sm text-gray-500">
+                  Your connection request is pending approval. You’ll be notified once {firstName} responds.
+                </p>
               </div>
             )}
-          </div>
-        </div>
+
+            {isOwner && (
+              <div className="pt-6 border-t border-slate-200 space-y-2">
+                <h3 className="font-medium text-gray-800">Owner Shortcuts</h3>
+                <Link
+                  to={`/professionals/${professional._id}/edit`}
+                  className="block w-full px-4 py-2.5 text-sm font-semibold text-indigo-600 border border-indigo-100 rounded-lg hover:bg-indigo-50 transition-colors text-center"
+                >
+                  Edit profile
+                </Link>
+                <Link
+                  to={`/professionals/${professional._id}/reviews`}
+                  className="block w-full px-4 py-2.5 text-sm font-semibold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-center"
+                >
+                  View reviews
+                </Link>
+              </div>
+            )}
+          </section>
+
+          {certificationList.length > 0 && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Certifications</h3>
+              <div className="space-y-2">
+                {certificationList.map((cert, index) => (
+                  <div key={`${cert}-${index}`} className="flex items-center gap-2 text-sm text-gray-700">
+                    <FaCheckCircle className="w-4 h-4 text-emerald-500" />
+                    <span>{cert}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {languageList.length > 0 && (
+            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Languages</h3>
+              <div className="flex flex-wrap gap-2">
+                {languageList.map((language, index) => (
+                  <span
+                    key={`${language}-${index}`}
+                    className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium capitalize"
+                  >
+                    {language}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+        </aside>
       </div>
     </div>
   );

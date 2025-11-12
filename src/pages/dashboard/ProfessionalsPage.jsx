@@ -30,6 +30,7 @@ const ProfessionalsPage = () => {
   const [connectionRequests, setConnectionRequests] = useState(new Set());
   const [connections, setConnections] = useState(new Map()); // Map of professionalId -> connectionId
   const [connectedProDetails, setConnectedProDetails] = useState(new Map()); // Map of professionalId -> professional payload
+  const [errorMessage, setErrorMessage] = useState('');
   const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const [professionalToUnfriend, setProfessionalToUnfriend] = useState(null);
 
@@ -184,183 +185,68 @@ const ProfessionalsPage = () => {
   const getUserLocation = () => {};
 
   const loadProfessionals = async () => {
+    setLoading(true);
+    setErrorMessage('');
     try {
-      setLoading(true);
-      
-      // Try to get real professionals first
-      try {
-        const response = await getProfessionals({ limit: 50 });
-        if (response.success && response.professionals && response.professionals.length > 0) {
-          const pros = response.professionals.map(pro => {
-            // Prefer avatar from profile, not portfolio; portfolio photos used as cover elsewhere
-            let image = pro.user?.profilePicture
-              || pro.user?.avatarUrl
-              || pro.profilePicture
-              || pro.avatarUrl
-              || pro.image
-              || '/images/placeholder.jpeg';
-            
-            return {
-              ...pro,
-              image // Add the processed image
-            };
-          });
-          
-          if (userLocation) {
-            const prosWithDistance = await Promise.all(pros.map(async (pro) => {
-              let loc = pro.location;
-              // Prefer connection details if present
-              const connDetail = connectedProDetails.get(pro._id);
-              if (!loc && connDetail?.location) loc = connDetail.location;
-              if (!loc?.coordinates?.lat || !loc?.coordinates?.lng) {
-                try {
-                  const detail = await getProfessional(pro._id, { byUser: false });
-                  const payload = detail?.data || detail;
-                  if (payload?.location) loc = payload.location;
-                } catch {}
-              }
-              const distance = (loc?.coordinates?.lat && loc?.coordinates?.lng)
-                ? haversineDistance(
-                    userLocation.lat,
-                    userLocation.lng,
-                    Number(loc.coordinates.lat),
-                    Number(loc.coordinates.lng)
-                  )
-                : undefined;
+      const response = await getProfessionals({ limit: 50 });
+      if (response?.success && Array.isArray(response.professionals) && response.professionals.length > 0) {
+        const pros = response.professionals.map(pro => {
+          const image = pro.user?.profilePicture
+            || pro.user?.avatarUrl
+            || pro.profilePicture
+            || pro.avatarUrl
+            || pro.image
+            || '/images/placeholder.jpeg';
+
+          return {
+            ...pro,
+            image
+          };
+        });
+
+        if (userLocation) {
+          const prosWithDistance = await Promise.all(pros.map(async (pro) => {
+            let loc = pro.location;
+            const connDetail = connectedProDetails.get(pro._id);
+            if (!loc && connDetail?.location) loc = connDetail.location;
+            if (!loc?.coordinates?.lat || !loc?.coordinates?.lng) {
               try {
-                console.log('📍 Connected Pro card:', pro.name, loc?.coordinates, '→', distance);
-              } catch (e) {}
-              return { ...pro, location: loc || pro.location, distance };
-            }));
-            setProfessionals(prosWithDistance.sort((a,b) => (a.distance ?? 999) - (b.distance ?? 999)));
-          } else {
-            setProfessionals(pros);
-          }
-          return;
+                const detail = await getProfessional(pro._id, { byUser: false });
+                const payload = detail?.data || detail;
+                if (payload?.location) loc = payload.location;
+              } catch {}
+            }
+            const distance = (loc?.coordinates?.lat && loc?.coordinates?.lng)
+              ? haversineDistance(
+                  userLocation.lat,
+                  userLocation.lng,
+                  Number(loc.coordinates.lat),
+                  Number(loc.coordinates.lng)
+                )
+              : undefined;
+            try {
+              console.log('📍 Connected Pro card:', pro.name, loc?.coordinates, '→', distance);
+            } catch (e) {}
+            return { ...pro, location: loc || pro.location, distance };
+          }));
+          setProfessionals(prosWithDistance.sort((a,b) => (a.distance ?? 999) - (b.distance ?? 999)));
+        } else {
+          setProfessionals(pros);
         }
-      } catch (apiError) {
-        console.log('API failed, using fake data:', apiError);
+        return;
       }
 
-      // Fallback to fake professionals data
-      const fakeProfessionals = [
-        {
-          _id: '1',
-          name: 'John Electrician',
-          category: 'Electrician',
-          rating: 4.8,
-          hourlyRate: 2500,
-          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Victoria Island, Lagos',
-            coordinates: { lat: 6.4281, lng: 3.4219 }
-          },
-          isVerified: true
-        },
-        {
-          _id: '2',
-          name: 'Sarah Plumber',
-          category: 'Plumber',
-          rating: 4.9,
-          hourlyRate: 2000,
-          image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Ikoyi, Lagos',
-            coordinates: { lat: 6.4474, lng: 3.4203 }
-          },
-          isVerified: true
-        },
-        {
-          _id: '3',
-          name: 'Mike Carpenter',
-          category: 'Carpenter',
-          rating: 4.7,
-          hourlyRate: 3000,
-          image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Surulere, Lagos',
-            coordinates: { lat: 6.4995, lng: 3.3550 }
-          },
-          isVerified: false
-        },
-        {
-          _id: '4',
-          name: 'Grace Hair Stylist',
-          category: 'Hair Stylist',
-          rating: 4.9,
-          hourlyRate: 1500,
-          image: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Lekki, Lagos',
-            coordinates: { lat: 6.4654, lng: 3.5653 }
-          },
-          isVerified: true
-        },
-        {
-          _id: '5',
-          name: 'David Mechanic',
-          category: 'Mechanic',
-          rating: 4.6,
-          hourlyRate: 4000,
-          image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Apapa, Lagos',
-            coordinates: { lat: 6.4488, lng: 3.3596 }
-          },
-          isVerified: true
-        },
-        {
-          _id: '6',
-          name: 'Lisa Makeup Artist',
-          category: 'Makeup Artist',
-          rating: 4.8,
-          hourlyRate: 5000,
-          image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Garki, Abuja',
-            coordinates: { lat: 9.0765, lng: 7.3986 }
-          },
-          isVerified: true
-        },
-        {
-          _id: '7',
-          name: 'James Painter',
-          category: 'Painter',
-          rating: 4.5,
-          hourlyRate: 1800,
-          image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Yaba, Lagos',
-            coordinates: { lat: 6.5031, lng: 3.3803 }
-          },
-          isVerified: false
-        },
-        {
-          _id: '8',
-          name: 'Maria Tailor',
-          category: 'Tailor',
-          rating: 4.7,
-          hourlyRate: 1200,
-          image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Port Harcourt',
-            coordinates: { lat: 4.8156, lng: 7.0498 }
-          },
-          isVerified: true
-        }
-      ];
-
-      if (userLocation) {
-        const prosWithDistance = fakeProfessionals.map(pro => ({
-          ...pro,
-          distance: calculateDistance(userLocation, pro.location)
-        })).sort((a, b) => a.distance - b.distance);
-        setProfessionals(prosWithDistance);
-      } else {
-        setProfessionals(fakeProfessionals);
-      }
+      setProfessionals([]);
+      setErrorMessage('No professionals are available yet. When new providers join, they’ll appear here.');
     } catch (error) {
       console.error('Error loading professionals:', error);
+      setProfessionals([]);
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      setErrorMessage(
+        offline
+          ? 'You are currently offline. Reconnect to the internet and try again.'
+          : 'We couldn’t reach the server to load your professionals. Please try again in a moment.'
+      );
     } finally {
       setLoading(false);
     }
@@ -588,7 +474,9 @@ const ProfessionalsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Connected Professionals</h1>
-              <p className="text-gray-600">{filteredProfessionals.length} connected professionals</p>
+              <p className="text-gray-600">
+                {errorMessage ? 'Unable to load professionals right now.' : `${filteredProfessionals.length} connected professionals`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center bg-gray-100 rounded-lg p-1">
@@ -650,7 +538,22 @@ const ProfessionalsPage = () => {
 
       {/* Professionals Grid/List */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {viewMode === 'grid' ? (
+        {errorMessage ? (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">We couldn’t load your professionals</h2>
+              <p className="text-sm mt-1 text-amber-700">{errorMessage}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={loadProfessionals}
+                className="px-4 py-2 rounded-lg bg-amber-500 text-indigo-900 font-medium hover:bg-amber-400 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredProfessionals.map((professional) => (
               <Link
@@ -755,7 +658,7 @@ const ProfessionalsPage = () => {
                               e.stopPropagation();
                               handleConnect(professional);
                             }}
-                            className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                              className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                           >
                             <FaComments className="w-4 h-4" />
                             Connect
@@ -861,13 +764,13 @@ const ProfessionalsPage = () => {
                         } else {
                           // Not connected - show Connect button
                           return (
-                          <button
+                            <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 handleConnect(professional);
                               }}
-                            className="px-6 py-2 rounded-lg flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                              className="px-6 py-2 rounded-lg flex items-center gap-2 bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                             >
                               <FaComments className="w-4 h-4" />
                               Connect

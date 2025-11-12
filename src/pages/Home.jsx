@@ -222,7 +222,7 @@ const Home = () => {
         />
 
         {/* 🔍 Search Bar */}
-        <div className="-mt-20 z-20 relative px-4 md:px-0">
+        <div className="relative z-20 px-4 md:px-0 mt-6 md:-mt-20">
           <div className="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
             <ServiceSelector
               value={searchTerm}

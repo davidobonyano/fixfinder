@@ -49,7 +49,6 @@ import ProfessionalDiscovery from "./pages/ProfessionalDiscovery";
 import ProfessionalsPage from "./pages/dashboard/ProfessionalsPage";
 import ConnectedUsers from "./pages/dashboard/ConnectedUsers";
 import UserProfile from "./pages/UserProfile";
-import ProfessionalProfile from "./pages/ProfessionalProfile";
 import ProProfile from "./pages/dashboard/ProProfile";
 import Notifications from "./pages/dashboard/Notifications";
 
@@ -99,7 +98,7 @@ const router = createBrowserRouter(
           {/* Professional Routes */}
           <Route path="professionals/:id" element={<ProfessionalDetail />} />
           <Route path="professionals/:id/edit" element={<ProfessionalForm />} />
-          <Route path="professional/:id" element={<ProfessionalProfile />} />
+          <Route path="professional/:id" element={<ProfessionalDetail />} />
           <Route path="user/:id" element={<UserProfile />} />
 
           <Route path="help" element={<HelpLayout />}>
@@ -124,7 +123,7 @@ const router = createBrowserRouter(
         <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
         <Route path="security" element={<ChangePassword />} />
-        <Route path="professional/:id" element={<ProfessionalProfile />} />
+        <Route path="professional/:id" element={<ProfessionalDetail />} />
         <Route path="user/:id" element={<UserProfile />} />
         {/* Add more user dashboard routes here */}
       </Route>

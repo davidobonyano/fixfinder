@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -106,7 +106,7 @@ function Globe({ textureUrl, onReady, exposeControls, initialScale = [0.6, 0.6, 
           const targetY = -theta;
           gsap.to(meshRef.current.rotation, { y: targetY, duration: 0.8, ease: 'power2.out' });
         },
-        animateClickSequence: async ({ cornerPosition = [2.2, 1.4, 0], cornerScale = [0.3, 0.3, 0.3], targetLatLng } = {}) => {
+        animateClickSequence: async ({ cornerPosition = [2.2, 1.4, 0], cornerScale = [0.3, 0.3, 0.3], targetLatLng, preScale } = {}) => {
           if (!groupRef.current) return;
           gsap.killTweensOf([groupRef.current.position, groupRef.current.scale]);
           const tl = gsap.timeline();
@@ -116,8 +116,14 @@ function Globe({ textureUrl, onReady, exposeControls, initialScale = [0.6, 0.6, 
             const targetY = -theta;
             tl.to(meshRef.current.rotation, { y: targetY, duration: 0.8, ease: 'power2.out' }, 0);
           }
-          tl.to(groupRef.current.position, { x: cornerPosition[0], y: cornerPosition[1], z: cornerPosition[2], duration: 1.0, ease: 'power3.inOut' }, 0);
-          tl.to(groupRef.current.scale, { x: cornerScale[0], y: cornerScale[1], z: cornerScale[2], duration: 1.0, ease: 'power3.inOut' }, 0);
+          if (preScale && Array.isArray(preScale)) {
+            tl.to(groupRef.current.scale, { x: preScale[0], y: preScale[1], z: preScale[2], duration: 0.45, ease: 'power2.out' }, 0);
+            tl.to(groupRef.current.position, { x: cornerPosition[0], y: cornerPosition[1], z: cornerPosition[2], duration: 1.0, ease: 'power3.inOut' }, 0.25);
+            tl.to(groupRef.current.scale, { x: cornerScale[0], y: cornerScale[1], z: cornerScale[2], duration: 0.95, ease: 'power3.inOut' }, 0.25);
+          } else {
+            tl.to(groupRef.current.position, { x: cornerPosition[0], y: cornerPosition[1], z: cornerPosition[2], duration: 1.0, ease: 'power3.inOut' }, 0);
+            tl.to(groupRef.current.scale, { x: cornerScale[0], y: cornerScale[1], z: cornerScale[2], duration: 1.0, ease: 'power3.inOut' }, 0);
+          }
           tl.add(() => { spinSpeedRef.current = 0; }, ">");
           await tl;
         },
@@ -284,6 +290,9 @@ export default function GlobeHero({ coords, headline = 'Find trusted pros near y
   const hasShrunkRef = useRef(false);
   const [hasShrunk, setHasShrunk] = useState(false);
   const chefTimerRef = useRef(null);
+  const chefRevealStartedRef = useRef(false);
+  const canvasWrapperRef = useRef(null);
+  const chefWrapperRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -321,33 +330,58 @@ export default function GlobeHero({ coords, headline = 'Find trusted pros near y
     if (!timelineRef.current) setStoryStarted(true);
   }, [coords]);
 
+  const globeInitialScale = useMemo(() => (isDesktop ? [3.0, 3.0, 3.0] : [0.7, 0.7, 0.7]), [isDesktop]);
+  const globeInitialPosition = useMemo(() => (isDesktop ? [2.8, -0.5, 0] : [0, -0.05, 0]), [isDesktop]);
+  const cornerPosition = useMemo(() => (isDesktop ? [0.6, 1.64, 0] : [0.85, 1.2, 0]), [isDesktop]);
+  const cornerScale = useMemo(() => (isDesktop ? [0.4, 0.4, 0.4] : [0.55, 0.55, 0.55]), [isDesktop]);
+  const preScale = useMemo(() => (isDesktop ? null : [0.85, 0.85, 0.85]), [isDesktop]);
+
+  const startChefReveal = useCallback(() => {
+    if (chefRevealStartedRef.current) return;
+    chefRevealStartedRef.current = true;
+    setShowChef(true);
+    const tl = gsap.timeline();
+    if (canvasWrapperRef.current) {
+      tl.to(canvasWrapperRef.current, { autoAlpha: 0, duration: 0.8, ease: 'power2.inOut' }, 0);
+      tl.set(canvasWrapperRef.current, { pointerEvents: 'none' }, 0.8);
+    }
+    if (chefWrapperRef.current) {
+      tl.set(chefWrapperRef.current, { pointerEvents: 'none' }, 0);
+      tl.fromTo(
+        chefWrapperRef.current,
+        { autoAlpha: 0, y: 16 },
+        { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power2.out' },
+        0.2
+      );
+      tl.set(chefWrapperRef.current, { pointerEvents: 'auto' }, 1.0);
+    }
+  }, []);
+
   // When coords arrive, shrink the big globe to corner (desktop or mobile params)
   useEffect(() => {
     if (!coords || hasShrunkRef.current) return;
-    const cornerPosition = isDesktop ? [0.6, 1.64, 0] : [1.1, 1.1, 0];
-    const cornerScale = [0.4, 0.4, 0.4];
     // center mini-earth around Nigeria when shrunk
     const NIGERIA = { lat: 9.082, lng: 8.6753 };
     const ngVec = latLngToVector3(NIGERIA.lat, NIGERIA.lng, 1);
     setPinVec(ngVec.clone().multiplyScalar(1.02));
     if (globeControlsRef.current?.animateClickSequence) {
-      globeControlsRef.current.animateClickSequence({ cornerPosition, cornerScale, targetLatLng: NIGERIA });
+      globeControlsRef.current.animateClickSequence({ cornerPosition, cornerScale, targetLatLng: NIGERIA, preScale });
       hasShrunkRef.current = true;
       setHasShrunk(true);
     } else {
-      pendingAnimRef.current = { cornerPosition, cornerScale, targetLatLng: NIGERIA };
+      pendingAnimRef.current = { cornerPosition, cornerScale, targetLatLng: NIGERIA, preScale };
       hasShrunkRef.current = true;
       setHasShrunk(true);
     }
-  }, [coords, isDesktop]);
+  }, [coords, cornerPosition, cornerScale, preScale]);
 
   // After the globe has shrunk, wait 5s then show the dancing chef (and remove canvas)
   useEffect(() => {
     if (!hasShrunk) return;
     if (chefTimerRef.current) clearTimeout(chefTimerRef.current);
-    chefTimerRef.current = setTimeout(() => setShowChef(true), 5000);
+    chefTimerRef.current = setTimeout(() => startChefReveal(), 5000);
     return () => { if (chefTimerRef.current) clearTimeout(chefTimerRef.current); };
-  }, [hasShrunk]);
+  }, [hasShrunk, startChefReveal]);
 
   // Simple cloud/atmosphere look using light + stars; texture via public CDN
   const textureUrl = 'https://unpkg.com/three-globe/example/img/earth-dark.jpg';
@@ -386,46 +420,52 @@ export default function GlobeHero({ coords, headline = 'Find trusted pros near y
 
   return (
     <div className="relative h-[640px] md:h-[820px] overflow-hidden bg-[#0b1220]">
-      {!showChef && (
-      <Canvas camera={{ position: [0, 0, 4.5], fov: 45 }} shadows ref={canvasRef}>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 2, 5]} intensity={1.2} castShadow />
-        {(() => {
-          const globeInitialScale = isDesktop ? [3.0, 3.0, 3.0] : [0.6, 0.6, 0.6];
-          const globeInitialPosition = isDesktop ? [2.8, -0.5, 0] : [0, 0, 0];
-          return (
-            <>
-        <Globe
-          textureUrl={textureUrl}
-          onReady={() => { /* hook if needed */ }}
-          exposeControls={(api) => {
-            globeControlsRef.current = api;
-            if (pendingAnimRef.current && api?.animateClickSequence) {
-              const { cornerPosition, cornerScale, targetLatLng } = pendingAnimRef.current;
-              pendingAnimRef.current = null;
-              api.animateClickSequence({ cornerPosition, cornerScale, targetLatLng });
-            }
-          }}
-          initialScale={globeInitialScale}
-          initialPosition={globeInitialPosition}
-        />
-              <group name="planets" position={globeInitialPosition}>
-                <PlanetsBackdrop />
-              </group>
-            </>
-          );
-        })()}
-        {focusVec && <CameraRig focus={focusVec} />}
-        {hasShrunk && pinVec && (
-          <LocationIcon position={pinVec} />
-        )}
-        {/* Arcs removed per design */}
-        <Stars radius={120} depth={60} count={2000} factor={4} fade />
-        <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
-      </Canvas>
-      )}
+      <div ref={canvasWrapperRef} className="absolute inset-0">
+        <Canvas camera={{ position: [0, 0, 4.5], fov: 45 }} shadows ref={canvasRef}>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 2, 5]} intensity={1.2} castShadow />
+          <>
+            <Globe
+              textureUrl={textureUrl}
+              onReady={() => { /* hook if needed */ }}
+              exposeControls={(api) => {
+                globeControlsRef.current = api;
+                if (pendingAnimRef.current && api?.animateClickSequence) {
+                  const { cornerPosition, cornerScale, targetLatLng, preScale: queuedPreScale } = pendingAnimRef.current;
+                  pendingAnimRef.current = null;
+                  api.animateClickSequence({ cornerPosition, cornerScale, targetLatLng, preScale: queuedPreScale });
+                }
+              }}
+              initialScale={globeInitialScale}
+              initialPosition={globeInitialPosition}
+            />
+            <group name="planets" position={globeInitialPosition}>
+              <PlanetsBackdrop />
+            </group>
+          </>
+          {focusVec && <CameraRig focus={focusVec} />}
+          {hasShrunk && pinVec && (
+            <LocationIcon position={pinVec} />
+          )}
+          {/* Arcs removed per design */}
+          <Stars radius={120} depth={60} count={2000} factor={4} fade />
+          <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
+        </Canvas>
+      </div>
 
-      {/* Vignette removed per request */}
+      <div
+        ref={chefWrapperRef}
+        className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 md:p-12 opacity-0"
+      >
+        {showChef && (
+          <LottieAnimation
+            animationData={dancingChef}
+            loop
+            autoplay
+            className="w-[320px] h-[320px] md:w-[420px] md:h-[420px]"
+          />
+        )}
+      </div>
 
       {/* Content grid: left text, right story icon */}
       <div className="pointer-events-auto absolute inset-0 grid grid-cols-1 md:grid-cols-2 items-center">
@@ -435,16 +475,7 @@ export default function GlobeHero({ coords, headline = 'Find trusted pros near y
             {subline && <p className="text-lg md:text-xl text-gray-300">{subline}</p>}
           </div>
         </div>
-        <div className="order-1 md:order-2 flex items-center justify-center p-6 md:p-12">
-          {showChef && (
-            <LottieAnimation
-              animationData={dancingChef}
-              loop
-              autoplay
-              className="w-[320px] h-[320px] md:w-[420px] md:h-[420px]"
-            />
-          )}
-        </div>
+        <div className="order-1 md:order-2 flex items-center justify-center p-6 md:p-12" />
       </div>
     </div>
   );

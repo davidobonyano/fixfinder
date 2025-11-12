@@ -26,6 +26,7 @@ const ProfessionalDiscovery = () => {
   const [savedProfessionals, setSavedProfessionals] = useState(new Set());
   const [connectionRequests, setConnectionRequests] = useState(new Map()); // Map of professionalId -> requestId
   const [connections, setConnections] = useState(new Map()); // Map of professionalId -> connectionId
+  const [errorMessage, setErrorMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     service: '',
@@ -291,26 +292,24 @@ const ProfessionalDiscovery = () => {
   };
 
   const loadProfessionals = async () => {
+    setLoading(true);
+    setErrorMessage('');
     try {
-      setLoading(true);
-      try {
-        console.log('📌 Discovery using userLocation:', userLocation);
-      } catch (e) {}
+      console.log('📌 Discovery using userLocation:', userLocation);
       
       // Try to get real professionals first
-      try {
-        console.log('🔍 Fetching professionals from API...');
-        const response = await getProfessionals({ limit: 50 });
-        console.log('📡 API Response:', response);
-        console.log('📊 Response structure:', {
-          success: response.success,
-          professionalsCount: response.professionals?.length,
-          hasProfessionals: !!response.professionals,
-          firstProfessional: response.professionals?.[0]
-        });
-        console.log('🔍 All professionals from API:', response.professionals?.map(p => ({ name: p.name, category: p.category, city: p.city, isActive: p.isActive })));
-        
-        if (response.success && response.professionals && response.professionals.length > 0) {
+      console.log('🔍 Fetching professionals from API...');
+      const response = await getProfessionals({ limit: 50 });
+      console.log('📡 API Response:', response);
+      console.log('📊 Response structure:', {
+        success: response.success,
+        professionalsCount: response.professionals?.length,
+        hasProfessionals: !!response.professionals,
+        firstProfessional: response.professionals?.[0]
+      });
+      console.log('🔍 All professionals from API:', response.professionals?.map(p => ({ name: p.name, category: p.category, city: p.city, isActive: p.isActive })));
+      
+      if (response.success && response.professionals && response.professionals.length > 0) {
           console.log('✅ Found', response.professionals.length, 'real professionals');
           let pros = response.professionals;
           
@@ -390,123 +389,18 @@ const ProfessionalDiscovery = () => {
           setProfessionals(prosWithDistance);
           return;
         } else {
-          console.log('❌ No real professionals found, using fake data');
+          setProfessionals([]);
+          setErrorMessage('No professionals match your filters yet. Try adjusting your search or check back soon.');
         }
-      } catch (apiError) {
-        console.log('❌ API failed, using fake data:', apiError);
-      }
-
-      // Fallback to fake professionals data
-      console.log('🎭 Using fake professionals data');
-      const fakeProfessionals = [
-        {
-          _id: '1',
-          name: 'John Electrician',
-          category: 'Electrician',
-          rating: 4.8,
-          hourlyRate: 2500,
-          image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Victoria Island, Lagos',
-            coordinates: { lat: 6.4281, lng: 3.4219 }
-          },
-          isVerified: true,
-          user: { _id: 'user1' }
-        },
-        {
-          _id: '2',
-          name: 'Sarah Plumber',
-          category: 'Plumber',
-          rating: 4.9,
-          hourlyRate: 2000,
-          image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Ikoyi, Lagos',
-            coordinates: { lat: 6.4474, lng: 3.4203 }
-          },
-          isVerified: true,
-          user: { _id: 'user2' }
-        },
-        {
-          _id: '3',
-          name: 'Mike Carpenter',
-          category: 'Carpenter',
-          rating: 4.7,
-          hourlyRate: 3000,
-          image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Surulere, Lagos',
-            coordinates: { lat: 6.4995, lng: 3.3550 }
-          },
-          isVerified: false,
-          user: { _id: 'user3' }
-        },
-        {
-          _id: '4',
-          name: 'Grace Hair Stylist',
-          category: 'Hair Stylist',
-          rating: 4.9,
-          hourlyRate: 1500,
-          image: 'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Lekki, Lagos',
-            coordinates: { lat: 6.4654, lng: 3.5653 }
-          },
-          isVerified: true,
-          user: { _id: 'user4' }
-        },
-        {
-          _id: '5',
-          name: 'David Mechanic',
-          category: 'Mechanic',
-          rating: 4.6,
-          hourlyRate: 4000,
-          image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Apapa, Lagos',
-            coordinates: { lat: 6.4488, lng: 3.3596 }
-          },
-          isVerified: true,
-          user: { _id: 'user5' }
-        },
-        {
-          _id: '6',
-          name: 'Lisa Makeup Artist',
-          category: 'Makeup Artist',
-          rating: 4.8,
-          hourlyRate: 5000,
-          image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop&crop=face',
-          location: {
-            address: 'Garki, Abuja',
-            coordinates: { lat: 9.0765, lng: 7.3986 }
-          },
-          isVerified: true,
-          user: { _id: 'user6' }
-        }
-      ];
-
-      // Always calculate distance, even if userLocation is not available
-      const prosWithDistance = fakeProfessionals.map(pro => ({
-        ...pro,
-        distance: (userLocation && pro.location?.coordinates)
-          ? haversineDistance(
-              userLocation.lat,
-              userLocation.lng,
-              Number(pro.location.coordinates.lat),
-              Number(pro.location.coordinates.lng)
-            )
-          : 999
-      }));
-      
-      // Sort by distance if userLocation is available
-      if (userLocation) {
-        prosWithDistance.sort((a, b) => a.distance - b.distance);
-      }
-      
-      setProfessionals(prosWithDistance);
-      console.log('📊 Final professionals loaded:', prosWithDistance.length);
     } catch (error) {
       console.error('❌ Error loading professionals:', error);
+      setProfessionals([]);
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      setErrorMessage(
+        offline
+          ? 'You appear to be offline. Reconnect to keep discovering professionals.'
+          : 'We couldn’t reach the server. Please refresh in a moment.'
+      );
     } finally {
       setLoading(false);
     }
@@ -696,7 +590,9 @@ const ProfessionalDiscovery = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Discover Professionals</h1>
-              <p className="text-gray-600">{filteredAndSortedProfessionals.length} professionals found</p>
+              <p className="text-gray-600">
+                {errorMessage ? 'Unable to load professionals right now.' : `${filteredAndSortedProfessionals.length} professionals found`}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -789,7 +685,22 @@ const ProfessionalDiscovery = () => {
 
       {/* Professionals Grid/List/Map */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {viewMode === 'map' ? (
+        {errorMessage ? (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">We couldn’t load professionals</h2>
+              <p className="text-sm mt-1 text-amber-700">{errorMessage}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={loadProfessionals}
+                className="px-4 py-2 rounded-lg bg-amber-500 text-indigo-900 font-medium hover:bg-amber-400 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : viewMode === 'map' ? (
           // Map View
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <LiveLocationMap 
@@ -947,7 +858,7 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleConnect(professional);
                                 }}
-                                className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
+                                className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 transition-colors text-sm font-medium"
                               >
                                 <FaComments className="w-4 h-4" />
                                 Connect
@@ -1062,7 +973,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleConnect(professional);
                                     }}
-                                    className="py-1 px-3 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                    className="py-1 px-3 rounded text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                                   >
                                     Connect
                                   </button>
