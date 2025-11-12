@@ -380,13 +380,26 @@ const Notifications = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredNotifications.map((notification) => (
-              <div
-                key={notification._id}
-                className={`bg-white rounded-lg shadow-sm border-l-4 p-4 ${
-                  notification.isRead ? 'opacity-75' : ''
-                } ${getNotificationColor(notification.type)}`}
-              >
+            {filteredNotifications.map((notification) => {
+              const requestStatusRaw =
+                notification?.data?.status ||
+                notification?.data?.state ||
+                notification?.data?.requestStatus ||
+                notification?.data?.metadata?.status ||
+                '';
+              const requestStatus = String(requestStatusRaw).toLowerCase();
+              const requestHandled =
+                notification.type === 'connection_request' &&
+                ['processed', 'accepted', 'approved', 'rejected', 'declined', 'cancelled', 'canceled']
+                  .includes(requestStatus);
+
+              return (
+                <div
+                  key={notification._id}
+                  className={`bg-white rounded-lg shadow-sm border-l-4 p-4 ${
+                    notification.isRead ? 'opacity-75' : ''
+                  } ${getNotificationColor(notification.type)}`}
+                >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
@@ -438,8 +451,12 @@ const Notifications = () => {
                           View Profile
                         </Link>
                         )}
-                        {notification.isRead ? (
-                          <span className="inline-block px-2 py-1 text-xs rounded border bg-gray-50 text-gray-700 border-gray-200">Processed</span>
+                        {requestHandled ? (
+                          <span className="inline-block rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 capitalize">
+                            {requestStatus && requestStatus.length <= 14
+                              ? requestStatus
+                              : 'Processed'}
+                          </span>
                         ) : (
                           <>
                             <button
@@ -516,7 +533,8 @@ const Notifications = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

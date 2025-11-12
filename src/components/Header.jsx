@@ -5,6 +5,7 @@ import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../context/useAuth";
 import { Menu as IconMenu, Search as IconSearch, Bell as IconBell, X as IconX, ChevronDown as IconChevronDown } from "lucide-react";
 import Logo from "./Logo";
+import ServiceSelector from "./ServiceSelector";
 
 export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -13,8 +14,8 @@ export default function Header() {
   const servicesButtonRef = useRef(null);
   const servicesMenuRef = useRef(null);
   const [showPalette, setShowPalette] = useState(false);
-  // Mobile drawer removed
-  const paletteInputRef = useRef(null);
+  const [serviceSearchValue, setServiceSearchValue] = useState("");
+  const [paletteSearchValue, setPaletteSearchValue] = useState("");
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -64,14 +65,24 @@ export default function Header() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  useEffect(() => {
-    if (showPalette) setTimeout(() => paletteInputRef.current?.focus(), 0);
-  }, [showPalette]);
-
   const linkClasses = ({ isActive }) =>
     isActive
       ? `${isSolid ? "text-indigo-600" : "text-indigo-300"} font-semibold whitespace-nowrap`
       : `${isSolid ? "text-gray-700 hover:text-gray-900" : "text-white/90 hover:text-white"} whitespace-nowrap`;
+
+  const slugifyService = (name) =>
+    name
+      .toString()
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
+
+  const handleServiceNavigate = (serviceName) => {
+    if (!serviceName) return;
+    const slug = slugifyService(serviceName);
+    navigate(`/services/${slug}`);
+  };
 
   return (
     <header className={`${isHome && !isScrolled ? "absolute" : "sticky"} top-0 z-40 w-full transition-all ${isSolid ? "bg-white shadow-md" : "bg-transparent"}`}>
@@ -164,7 +175,7 @@ export default function Header() {
               {showServices && (
                 <div ref={servicesMenuRef} className="absolute left-1/2 -translate-x-1/2 mt-3 w-[560px] rounded-2xl border border-white/10 bg-white/90 text-gray-900 backdrop-blur-md p-6 grid grid-cols-2 gap-4 shadow-xl">
                   {['Electrician','Plumber','Tailor','AC Technician','Generator Repair','Hair Stylist'].map((item)=> (
-                    <NavLink key={item} to={`/services/${item.toLowerCase().replace(/\s+/g,'')}`} onClick={() => setShowServices(false)} className="block p-3 rounded-lg hover:bg-black/5">
+                    <NavLink key={item} to={`/services/${slugifyService(item)}`} onClick={() => setShowServices(false)} className="block p-3 rounded-lg hover:bg-black/5">
                       <div className="text-sm font-semibold">{item}</div>
                       <div className="text-xs text-gray-600">Top-rated pros near you</div>
                     </NavLink>
@@ -176,9 +187,22 @@ export default function Header() {
             <NavLink to="/join" className={`${isSolid ? "text-gray-700 hover:text-gray-900" : "text-white/90 hover:text-white"} transition`}>Join as Pro</NavLink>
           </div>
           <div className="ml-2 flex items-center gap-2">
-            <button onClick={() => setShowPalette(true)} className={`hidden xl:flex items-center gap-2 px-4 h-9 rounded-full w-56 justify-start ${isSolid ? "bg-gray-100 hover:bg-gray-200 text-gray-800" : "bg-white/15 hover:bg-white/20 text-white"}`}>
-              <IconSearch className="w-4 h-4"/> <span className="text-sm">Search</span>
-            </button>
+          <div className="hidden xl:block w-64">
+            <ServiceSelector
+              value={serviceSearchValue}
+              onChange={setServiceSearchValue}
+              onSelect={(serviceName) => {
+                handleServiceNavigate(serviceName);
+                setServiceSearchValue("");
+              }}
+              onClear={() => setServiceSearchValue("")}
+              placeholder="Search for services..."
+              className="w-full"
+            />
+          </div>
+          <button onClick={() => setShowPalette(true)} className={`xl:hidden flex items-center gap-2 px-4 h-9 rounded-full justify-start ${isSolid ? "bg-gray-100 hover:bg-gray-200 text-gray-800" : "bg-white/15 hover:bg-white/20 text-white"}`}>
+            <IconSearch className="w-4 h-4"/> <span className="text-sm">Search</span>
+          </button>
             <button className={`p-2 rounded-full ${isSolid ? "hover:bg-gray-100" : "hover:bg-white/15"}`}><IconBell className={`w-5 h-5 ${isSolid ? "text-gray-800" : "text-white"}`}/></button>
             {isAuthenticated ? (
               <div className="relative">
@@ -211,10 +235,23 @@ export default function Header() {
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-24">
           <div className="absolute inset-0 bg-black/50" onClick={() => setShowPalette(false)} />
           <div className="relative w-full max-w-2xl mx-auto rounded-2xl bg-white p-4 shadow-2xl">
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3">
-              <IconSearch className="w-4 h-4 text-gray-500"/>
-              <input ref={paletteInputRef} className="w-full h-10 outline-none" placeholder="Search services, pages, or actions..." />
-              <button onClick={() => setShowPalette(false)} className="p-1"><IconX className="w-4 h-4 text-gray-500"/></button>
+            <div className="flex items-start gap-2">
+              <div className="flex-1">
+                <ServiceSelector
+                  value={paletteSearchValue}
+                  onChange={setPaletteSearchValue}
+                  onSelect={(serviceName) => {
+                    handleServiceNavigate(serviceName);
+                    setPaletteSearchValue("");
+                    setShowPalette(false);
+                  }}
+                  onClear={() => setPaletteSearchValue("")}
+                  placeholder="Search services, pages, or actions..."
+                  className="w-full"
+                  inputProps={{ autoFocus: true }}
+                />
+              </div>
+              <button onClick={() => setShowPalette(false)} className="p-2 text-gray-500 hover:text-gray-700"><IconX className="w-4 h-4"/></button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {[{label:'Services',to:'/services'},{label:'Join as Pro',to:'/join'}].map(i=> (

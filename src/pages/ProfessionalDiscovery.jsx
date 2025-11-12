@@ -583,7 +583,7 @@ const ProfessionalDiscovery = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-100/60 backdrop-blur-sm overflow-x-hidden">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -655,24 +655,23 @@ const ProfessionalDiscovery = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <ServiceSelector
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search for a service (e.g. Plumber, Electrician, Barber)..."
-                showSuggestions={true}
-                allowCustom={true}
-              />
-            </div>
-            <div className="flex items-center gap-2">
+      <div className="bg-white/80 backdrop-blur border-b border-white/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <ServiceSelector
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search for a service (e.g. Plumber, Electrician, Barber)..."
+              showSuggestions={true}
+              allowCustom={true}
+              className="w-full"
+            />
+            <div className="flex items-center gap-2 text-sm">
               <FaSortAmountDown className="w-4 h-4 text-gray-400" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/60"
               >
                 <option value="distance">Sort by Distance</option>
                 <option value="price">Sort by Price</option>
@@ -684,7 +683,7 @@ const ProfessionalDiscovery = () => {
       </div>
 
       {/* Professionals Grid/List/Map */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {errorMessage ? (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -718,66 +717,72 @@ const ProfessionalDiscovery = () => {
             <p className="text-gray-500">Try adjusting your search or filter criteria</p>
           </div>
         ) : (
-          <div className={
-            viewMode === 'grid' 
-              ? "grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6" 
-              : "space-y-4"
-          }>
+          <div
+            className={
+              viewMode === 'grid'
+                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
+                : "space-y-4"
+            }>
             {filteredAndSortedProfessionals.map((professional) => (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
-                className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all block ${
-                  viewMode === 'list' ? 'flex items-center p-4' : 'p-0 h-full'
+                className={`group relative block overflow-hidden rounded-3xl border border-white/40 bg-white/80 shadow-[0_25px_45px_-25px_rgba(15,23,42,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_55px_-25px_rgba(15,23,42,0.35)] ${
+                  viewMode === 'list' ? 'flex flex-col gap-4 p-5 sm:flex-row sm:items-center' : 'p-0'
                 }`}
               >
                 {viewMode === 'grid' ? (
                   // Grid View
                   <>
-                    <div className="relative">
+                    <div className="relative overflow-hidden">
                       <img
                         src={professional.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop'}
                         alt={professional.name}
-                        className="w-full aspect-[4/3] object-cover rounded-t-xl"
+                        className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {professional.isVerified && (
-                        <div className="absolute top-2 right-2 bg-indigo-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                        <div className="absolute top-3 right-3 rounded-full bg-indigo-600/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow">
                           ✓ Verified
                         </div>
                       )}
-                      <div className="absolute bottom-2 left-2 bg-white bg-opacity-90 rounded-full px-2 py-1 flex items-center gap-1">
-                        <FaMapMarkerAlt className="w-3 h-3 text-gray-600" />
-                        <span className="text-xs font-medium text-gray-800">
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
+                        <FaMapMarkerAlt className="h-3 w-3 text-emerald-500" />
+                        <span>
                           {formatDistance(professional.distance)}
                         </span>
                       </div>
                     </div>
                     
-                    <div className="space-y-3 p-6 flex flex-col h-full">
-                      <div>
-                        <h3 className="font-semibold text-lg text-gray-900">{professional.name}</h3>
-                        <p className="text-gray-600 capitalize">{professional.category}</p>
+                    <div className="flex h-full flex-col gap-4 p-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="text-lg font-semibold text-slate-900">{professional.name}</h3>
+                          <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700">
+                            <FaStar className="h-3 w-3" />
+                            {professional.rating || 0}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                          {professional.category}
+                        </p>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center">
-                            <FaStar className="w-4 h-4 text-yellow-400 mr-1" />
-                            <span className="text-sm text-gray-600">{professional.rating || 0}</span>
-                            <span className="text-xs text-gray-500 ml-1">({professional.ratingCount || 0})</span>
-                          </div>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <FaClock className="h-3 w-3 text-slate-400" />
+                          <span>Responds in under an hour</span>
                         </div>
-                        <span className="text-lg font-semibold text-indigo-600">
+                        <span className="font-semibold text-indigo-600">
                           ₦{professional.hourlyRate?.toLocaleString()}/hr
                         </span>
                       </div>
                       
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaMapMarkerAlt className="w-3 h-3 text-gray-600 mr-1" />
-                        <span className="truncate">{professional.location?.address}</span>
+                      <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500 ring-1 ring-slate-200/80">
+                        <FaMapMarkerAlt className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="line-clamp-1">{professional.location?.address || 'Location on request'}</span>
                       </div>
                       
-                      <div className="mt-auto flex gap-2 pt-2">
+                      <div className="mt-auto flex gap-2 pt-3">
                         {(() => {
                           const isConnected = connections.has(professional._id);
                           const hasRequestSent = connectionRequests.has(professional._id);
@@ -802,9 +807,8 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleStartChat(professional);
                                 }}
-                                className="w-full py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium"
+                                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
                               >
-                                <FaComments className="w-4 h-4" />
                                 Chat
                               </button>
                             );
@@ -814,9 +818,8 @@ const ProfessionalDiscovery = () => {
                               <>
                                 <button
                                   disabled
-                                  className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 border border-gray-300 text-gray-600 text-sm font-medium cursor-not-allowed bg-white"
+                                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500"
                                 >
-                                  <FaComments className="w-4 h-4" />
                                   Pending
                                 </button>
                                 <div className="relative">
@@ -827,14 +830,14 @@ const ProfessionalDiscovery = () => {
                                       // Toggle menu (we'll implement this)
                                       console.log('Three dots clicked for:', professional.name);
                                     }}
-                                    className="p-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+                                    className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50 transition-colors"
                                   >
                                     <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                                       <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                     </svg>
                                   </button>
                                   {/* Dropdown menu */}
-                                  <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
@@ -858,9 +861,8 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleConnect(professional);
                                 }}
-                                className="flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 bg-amber-500 text-white hover:bg-amber-600 transition-colors text-sm font-medium"
+                                className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400"
                               >
-                                <FaComments className="w-4 h-4" />
                                 Connect
                               </button>
                             );
@@ -872,41 +874,31 @@ const ProfessionalDiscovery = () => {
                 ) : (
                   // List View
                   <>
-                    <div className="relative w-20 h-20 flex-shrink-0 mr-4">
+                    <div className="relative h-24 w-full flex-shrink-0 overflow-hidden rounded-2xl sm:h-24 sm:w-24">
                       <img
                         src={professional.image || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'}
                         alt={professional.name}
-                        className="w-full h-full object-cover rounded-lg"
+                        className="h-full w-full object-cover"
                       />
                       {professional.isVerified && (
-                        <div className="absolute -top-1 -right-1 bg-indigo-600 text-white px-1 py-0.5 rounded-full text-xs">
+                        <div className="absolute -top-1 -right-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                           ✓
                         </div>
                       )}
                     </div>
                     
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-lg text-gray-900 truncate">{professional.name}</h3>
-                          <p className="text-gray-600 capitalize">{professional.category}</p>
-                          
-                          <div className="flex items-center mt-1">
-                            <div className="flex items-center mr-4">
-                              <FaStar className="w-4 h-4 text-yellow-400 mr-1" />
-                              <span className="text-sm text-gray-600">{professional.rating || 0}</span>
-                              <span className="text-xs text-gray-500 ml-1">({professional.ratingCount || 0})</span>
-                            </div>
-                            <FaMapMarkerAlt className="w-3 h-3" />
-                            <span className="text-sm text-gray-500 ml-1 truncate">{professional.location?.address}</span>
-                          </div>
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <h3 className="truncate text-lg font-semibold text-slate-900">{professional.name}</h3>
+                          <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{professional.category}</p>
                         </div>
                         
-                        <div className="text-right ml-4">
+                        <div className="text-right">
                           <div className="text-lg font-semibold text-indigo-600">
                             ₦{professional.hourlyRate?.toLocaleString()}/hr
                           </div>
-                          <div className="flex gap-2 mt-2">
+                          <div className="mt-2 flex gap-2">
                             {(() => {
                               const isConnected = connections.has(professional._id);
                               const hasRequestSent = connectionRequests.has(professional._id);
@@ -920,7 +912,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleStartChat(professional);
                                     }}
-                                    className="py-1 px-3 rounded text-sm bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 transition"
                                   >
                                     Chat
                                   </button>
@@ -931,7 +923,7 @@ const ProfessionalDiscovery = () => {
                                   <>
                                     <button
                                       disabled
-                                      className="py-1 px-3 rounded text-sm border border-gray-300 text-gray-600 cursor-not-allowed bg-white"
+                                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-600"
                                     >
                                       Pending
                                     </button>
@@ -942,21 +934,21 @@ const ProfessionalDiscovery = () => {
                                           e.stopPropagation();
                                           console.log('Three dots clicked for:', professional.name);
                                         }}
-                                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+                                        className="rounded border border-gray-300 p-1.5 hover:bg-gray-50 transition"
                                       >
-                                        <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                         </svg>
                                       </button>
                                       {/* Dropdown menu */}
-                                      <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                      <div className="absolute right-0 top-full mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg">
                                         <button
                                           onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             handleCancelRequest(professional);
                                           }}
-                                          className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 rounded-lg"
+                                          className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50"
                                         >
                                           Cancel Request
                                         </button>
@@ -973,7 +965,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleConnect(professional);
                                     }}
-                                    className="py-1 px-3 rounded text-sm bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                                    className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
                                   >
                                     Connect
                                   </button>
@@ -981,6 +973,17 @@ const ProfessionalDiscovery = () => {
                               }
                             })()}
                           </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                        <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                          <FaStar className="h-3 w-3" />
+                          {professional.rating || 0} · {professional.ratingCount || 0}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <FaMapMarkerAlt className="h-3 w-3 text-emerald-500" />
+                          <span className="truncate text-sm">{professional.location?.address}</span>
                         </div>
                       </div>
                     </div>
@@ -994,9 +997,9 @@ const ProfessionalDiscovery = () => {
 
       {/* Filter Modal */}
       {showFilterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
-          <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm md:items-center">
+          <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-white shadow-2xl md:rounded-3xl">
+            <div className="space-y-6 p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Filter Professionals</h2>
                 <button
@@ -1007,7 +1010,7 @@ const ProfessionalDiscovery = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-6 pb-2">
                 {/* Service Search */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
@@ -1084,13 +1087,13 @@ const ProfessionalDiscovery = () => {
                 </div>
 
                 {/* Apply Filters */}
-                <div className="pt-4 border-t">
+                <div className="border-t pt-4">
                   <button
                     onClick={() => {
                       // Apply filters logic here
                       setShowFilterModal(false);
                     }}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500"
                   >
                     Apply Filters
                   </button>
@@ -1103,9 +1106,9 @@ const ProfessionalDiscovery = () => {
 
       {/* Search Modal */}
       {showSearchModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="space-y-6 p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Search Professionals</h2>
                 <button
@@ -1162,10 +1165,10 @@ const ProfessionalDiscovery = () => {
                 </div>
 
                 {/* Apply Search */}
-                <div className="pt-4 border-t">
+                <div className="border-t pt-4">
                   <button
                     onClick={() => setShowSearchModal(false)}
-                    className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium"
+                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500"
                   >
                     Search Professionals
                   </button>

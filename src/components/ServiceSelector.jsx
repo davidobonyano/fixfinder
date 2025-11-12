@@ -4,11 +4,14 @@ import { searchServices, normalizeService, ALL_SERVICES } from '../data/services
 
 const ServiceSelector = ({ 
   value = '', 
-  onChange, 
+  onChange,
+  onSelect,
+  onClear,
   placeholder = "Search for a service...",
   showSuggestions = true,
   allowCustom = true,
-  className = ""
+  className = "",
+  inputProps = {}
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(value);
@@ -55,7 +58,8 @@ const ServiceSelector = ({
     
     if (query.length === 0) {
       setSelectedService(null);
-      onChange('');
+      onChange?.('');
+      onClear?.();
     }
   };
 
@@ -63,7 +67,8 @@ const ServiceSelector = ({
     setSelectedService(serviceData);
     setSearchQuery(serviceData.service);
     setIsOpen(false);
-    onChange(serviceData.service);
+    onChange?.(serviceData.service);
+    onSelect?.(serviceData.service, serviceData);
   };
 
   const handleCustomService = () => {
@@ -72,7 +77,8 @@ const ServiceSelector = ({
       setSelectedService({ service: normalizedService, category: 'Custom' });
       setSearchQuery(normalizedService);
       setIsOpen(false);
-      onChange(normalizedService);
+      onChange?.(normalizedService);
+      onSelect?.(normalizedService, { service: normalizedService, category: 'Custom' });
     }
   };
 
@@ -80,7 +86,8 @@ const ServiceSelector = ({
     setSelectedService(null);
     setSearchQuery('');
     setIsOpen(false);
-    onChange('');
+    onChange?.('');
+    onClear?.();
     inputRef.current?.focus();
   };
 
@@ -98,6 +105,7 @@ const ServiceSelector = ({
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          {...inputProps}
         />
         {searchQuery && (
           <button

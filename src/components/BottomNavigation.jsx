@@ -15,17 +15,12 @@ import {
 import { useAuth } from '../context/useAuth';
 import { useSocket } from '../context/SocketContext';
 import { useState, useEffect } from 'react';
-import ServiceSelector from './ServiceSelector';
-import { useNavigate } from 'react-router-dom';
 
 const BottomNavigation = ({ userType = 'user' }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { socket, isConnected } = useSocket();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch unread notification count
   useEffect(() => {
@@ -181,56 +176,10 @@ const BottomNavigation = ({ userType = 'user' }) => {
             </NavLink>
           );
         })}
-        {/* Compact Search trigger at far right */}
-        <button
-          onClick={() => setShowSearch(true)}
-          aria-label="Search"
-          className="flex flex-col items-center justify-center h-full px-2 text-gray-500 hover:text-gray-700"
-        >
-          <FaSearch className="w-6 h-6" />
-          <span className="text-xs mt-1 font-medium">Search</span>
-        </button>
       </div>
       
       {/* Safe area for devices with home indicator */}
       <div className="h-safe-area-inset-bottom bg-white" style={{ height: 'env(safe-area-inset-bottom, 0.5rem)' }} />
-
-      {/* Bottom sheet search with global ServiceSelector */}
-      {showSearch && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setShowSearch(false)} />
-          <div className="absolute left-0 right-0 bottom-0 bg-white rounded-t-2xl border-t border-gray-200 p-4 shadow-2xl">
-            <div className="w-full">
-              <ServiceSelector
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search for a service..."
-                showSuggestions={true}
-                allowCustom={true}
-              />
-            </div>
-            <div className="mt-3 flex items-center justify-end gap-2">
-              <button
-                onClick={() => setShowSearch(false)}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (searchQuery?.trim()) {
-                    setShowSearch(false);
-                    navigate(`/dashboard/professionals?search=${encodeURIComponent(searchQuery.trim())}`);
-                  }
-                }}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-              >
-                Search
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </nav>
   );
 };

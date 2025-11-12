@@ -9,7 +9,8 @@ import {
   getConnections,
   removeConnection,
   cancelConnectionRequest,
-  createOrGetConversation
+  createOrGetConversation,
+  getProfessionalReviews
 } from '../utils/api';
 import { useAuth } from '../context/useAuth';
 import { useToast } from '../context/ToastContext';
@@ -27,8 +28,8 @@ import {
   FaShieldAlt,
   FaComments,
   FaCalendar,
-  FaSave,
-  FaTimes
+  FaTimes,
+  FaSpinner
 } from 'react-icons/fa';
 
 const ProfessionalDetail = () => {
@@ -46,10 +47,12 @@ const ProfessionalDetail = () => {
   const [uploadError, setUploadError] = useState('');
   const [userLocation, setUserLocation] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
-  const [saved, setSaved] = useState(false);
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(false);
   const [connectionRequestPending, setConnectionRequestPending] = useState(false);
   const [connectionId, setConnectionId] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   const API_BASE = useMemo(
     () => import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com',
@@ -317,6 +320,93 @@ const ProfessionalDetail = () => {
   const professionalId = professional?._id || professional?.id || id;
 
   useEffect(() => {
+    if (!professional || !professionalId) return;
+    let cancelled = false;
+
+    const loadReviews = async () => {
+      try {
+        setReviewsLoading(true);
+        const response = await getProfessionalReviews(professionalId, { limit: 3, sort: 'recent' });
+
+        let items = [];
+        if (Array.isArray(response)) {
+          items = response;
+        } else if (Array.isArray(response?.data?.reviews)) {
+          items = response.data.reviews;
+        } else if (Array.isArray(response?.data)) {
+          items = response.data;
+        } else if (Array.isArray(response?.reviews)) {
+          items = response.reviews;
+        }
+
+        const normalized = items
+          .filter(Boolean)
+          .map((rev, idx) => {
+            const rating = Number(rev.rating ?? rev.score ?? rev.stars ?? 0);
+            const comment = rev.comment || rev.review || rev.feedback || rev.text || '';
+            const reviewerName =
+              rev.reviewerName ||
+              rev.user?.name ||
+              rev.userName ||
+              rev.customerName ||
+              rev.clientName ||
+              rev.name ||
+              'Anonymous';
+            const createdAt = rev.createdAt || rev.date || rev.reviewedAt || null;
+            const userPayload =
+              rev.user && typeof rev.user === 'object'
+                ? rev.user
+                : rev.user
+                ? { name: typeof rev.user === 'string' ? rev.user : reviewerName }
+                : { name: reviewerName };
+
+            return {
+              ...rev,
+              _id: rev._id || rev.id || `${professionalId}-review-${idx}`,
+              rating,
+              comment,
+              createdAt,
+              reviewerName,
+              user: userPayload
+            };
+          });
+
+        if (!cancelled) {
+          setReviews(normalized.slice(0, 3));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.warn('Unable to load professional reviews:', err);
+          setReviews([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setReviewsLoading(false);
+        }
+      }
+    };
+
+    loadReviews();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [professional, professionalId]);
+
+  const baseReviews = reviews.length
+    ? reviews
+    : Array.isArray(professional?.reviews)
+    ? professional.reviews
+    : [];
+  const reviewCount =
+    baseReviews.length ||
+    professional?.ratingCount ||
+    professional?.reviewCount ||
+    professional?.reviews?.length ||
+    0;
+  const reviewList = baseReviews.slice(0, 3);
+
+  useEffect(() => {
     if (!user || !professionalId) {
       setConnectionRequestPending(false);
       setConnectionId(null);
@@ -446,7 +536,7 @@ const ProfessionalDetail = () => {
     }
   };
 
-  const handleUnfriend = async () => {
+  const performUnfriend = async () => {
     if (!connectionId || !user) return;
     try {
       setCheckingConnection(true);
@@ -455,6 +545,7 @@ const ProfessionalDetail = () => {
         setConnectionId(null);
         setConnectionRequestPending(false);
         success(`Removed ${professional?.name || 'this professional'} from your connections.`);
+        setShowUnfriendModal(false);
       } else {
         showError('Failed to remove connection. Please try again.');
       }
@@ -494,8 +585,13 @@ const ProfessionalDetail = () => {
     }
   };
 
-  const handleSave = () => {
-    setSaved((prev) => !prev);
+  const handleConfirmUnfriend = async () => {
+    await performUnfriend();
+  };
+
+  const handleDismissUnfriendModal = () => {
+    if (checkingConnection) return;
+    setShowUnfriendModal(false);
   };
 
   const renderStars = (rating) => {
@@ -643,8 +739,6 @@ const ProfessionalDetail = () => {
     (authUserId === professionalUserId || authUserId === professional._id);
   const firstName = professional.name?.split(' ')[0] || 'their';
   const ratingValue = Number(professional.rating ?? professional.ratingAvg ?? 0);
-  const reviewCount =
-    professional.ratingCount ?? professional.reviewCount ?? professional.reviews?.length ?? 0;
   const availabilityLabel = professional.availability || 'Check availability';
   const distanceLabel =
     typeof distanceKm === 'number' ? `${distanceKm}km away` : 'Distance unknown';
@@ -658,12 +752,11 @@ const ProfessionalDetail = () => {
     ? professional.certifications.filter(Boolean)
     : [];
   const languageList = Array.isArray(professional.languages) ? professional.languages.filter(Boolean) : [];
-  const reviewList = Array.isArray(professional.reviews) ? professional.reviews.slice(0, 3) : [];
   const primaryActionLabel = connectionRequestPending
     ? 'Request pending'
     : isConnected
     ? 'Connected'
-    : 'Check availability';
+    : 'Connect';
   const primaryActionDisabled = checkingConnection || connectionRequestPending || isConnected || isOwner;
 
   return (
@@ -679,17 +772,16 @@ const ProfessionalDetail = () => {
       </div>
 
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-10">
-        <div className="relative h-44 md:h-56 bg-gradient-to-br from-indigo-700 via-indigo-600 to-indigo-800">
-          {heroMedia && (
-            <div className="absolute inset-0">
-              <img
-                src={heroMedia}
-                alt={`${professional.name} showcase`}
-                className="w-full h-full object-cover opacity-70"
-              />
-            </div>
+        <div className="relative h-44 md:h-56 bg-slate-200">
+          {heroMedia ? (
+            <img
+              src={heroMedia}
+              alt={`${professional.name} showcase`}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-slate-300" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/80 via-indigo-700/40 to-transparent" />
         </div>
 
         <div className="px-6 pb-6 sm:px-10 sm:pb-10">
@@ -789,16 +881,6 @@ const ProfessionalDetail = () => {
                     )}
                     <button
                       type="button"
-                      onClick={handleSave}
-                      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
-                        saved ? 'bg-amber-500 text-indigo-900 hover:bg-amber-400' : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                      }`}
-                    >
-                      <FaSave className="w-4 h-4" />
-                      {saved ? 'Saved' : 'Save'}
-                    </button>
-                    <button
-                      type="button"
                       onClick={handleStartChat}
                       disabled={!isConnected}
                       className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
@@ -813,8 +895,14 @@ const ProfessionalDetail = () => {
                     {!isOwner && (
                       <button
                         type="button"
-                        onClick={isConnected ? handleUnfriend : handleCancelRequest}
-                        disabled={!isConnected && !connectionRequestPending}
+                        onClick={() => {
+                          if (isConnected) {
+                            setShowUnfriendModal(true);
+                          } else {
+                            handleCancelRequest();
+                          }
+                        }}
+                        disabled={checkingConnection || (!isConnected && !connectionRequestPending)}
                         className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
                           isConnected || connectionRequestPending
                             ? 'bg-white text-red-600 border border-red-100 hover:bg-red-50'
@@ -921,18 +1009,18 @@ const ProfessionalDetail = () => {
                 {portfolioVideos.map((video, index) => (
                   <div
                     key={`video-${index}`}
-                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900"
+                    className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-900"
                   >
                     <video
                       src={video}
                       preload="metadata"
                       controls
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      className="pointer-events-auto h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     />
-                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/90 text-indigo-600 shadow-lg group-hover:scale-105 transition-transform">
-                        <FaPlay className="w-4 h-4 ml-0.5" />
+                    <div className="pointer-events-none absolute inset-0 bg-black/30 transition-colors group-hover:bg-black/10" />
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-indigo-600 shadow-lg transition-transform group-hover:scale-105">
+                        <FaPlay className="ml-0.5 h-4 w-4" />
                       </span>
                     </div>
                   </div>
@@ -941,9 +1029,17 @@ const ProfessionalDetail = () => {
             </section>
           )}
 
-          {reviewList.length > 0 && (
-            <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
+          <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Reviews</h2>
+              <span className="text-sm text-gray-500">{reviewCount} total reviews</span>
+            </div>
+            {reviewsLoading ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <FaSpinner className="animate-spin text-indigo-500" />
+                Fetching recent feedback...
+              </div>
+            ) : reviewList.length > 0 ? (
               <div className="space-y-4">
                 {reviewList.map((review, index) => {
                   const reviewerName =
@@ -958,42 +1054,45 @@ const ProfessionalDetail = () => {
                       key={review._id || review.id || index}
                       className="border-b border-gray-100 pb-4 last:border-b-0"
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">{reviewerName}</span>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <FaStar
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < (review.rating || 0) ? 'text-amber-400' : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-gray-900">{reviewerName}</p>
+                          {reviewDate && <p className="text-xs text-gray-400">{reviewDate}</p>}
                         </div>
-                        {reviewDate ? (
-                          <span className="text-sm text-gray-500">{reviewDate}</span>
-                        ) : null}
+                        <div className="flex items-center gap-1 text-amber-500">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={`w-4 h-4 ${
+                                i < Number(review.rating || 0) ? '' : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-sm font-medium text-gray-600 ml-2">
+                            {Number(review.rating || 0).toFixed(1)}
+                          </span>
+                        </div>
                       </div>
-                      {review.comment || review.review ? (
-                        <p className="text-gray-600 mb-2">
-                          {review.comment || review.review}
+                      <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+                        {review.comment || review.feedback || review.testimonial || 'No detailed feedback provided.'}
+                      </p>
+                      {(review.jobId?.title || review.jobTitle || review.job) && (
+                        <p className="mt-2 text-xs text-indigo-600">
+                          {(typeof review.jobId === 'object' && review.jobId?.title) ||
+                            review.jobTitle ||
+                            review.job}
                         </p>
-                      ) : null}
-                      {(review.jobId?.title || review.job) && (
-                        <span className="text-sm text-indigo-600">
-                          {typeof review.jobId === 'object'
-                            ? review.jobId?.title
-                            : review.job}
-                        </span>
                       )}
                     </div>
                   );
                 })}
               </div>
-            </section>
-          )}
+            ) : (
+              <p className="text-sm text-gray-500">
+                This professional hasn’t collected any public reviews yet. Be the first to share feedback after your booking.
+              </p>
+            )}
+          </section>
 
           {isOwner && (
             <section className="bg-white rounded-2xl shadow-md p-6 sm:p-8">
@@ -1195,6 +1294,38 @@ const ProfessionalDetail = () => {
           )}
         </aside>
       </div>
+
+      {showUnfriendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Remove {professional?.name || 'this professional'} from your connections?
+            </h3>
+            <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+              This will end your connection and clear your shared chat history. You can always reconnect later if you choose.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleConfirmUnfriend}
+                disabled={checkingConnection}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-400 sm:w-auto"
+              >
+                {checkingConnection ? <FaSpinner className="h-4 w-4 animate-spin" /> : null}
+                Confirm remove
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissUnfriendModal}
+                disabled={checkingConnection}
+                className="inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400 sm:w-auto"
+              >
+                Keep connection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

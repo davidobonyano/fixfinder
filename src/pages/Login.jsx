@@ -166,29 +166,7 @@ export default function Login() {
               </p>
             </div>
 
-            <div className="mb-6 grid gap-3">
-              <button
-                type="button"
-                className="flex items-center justify-center gap-3 rounded-full border border-white/10 bg-white text-slate-900 px-4 py-3 text-sm font-semibold transition hover:-translate-y-[1px] hover:shadow-lg hover:shadow-black/10 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-              >
-                <FaGoogle className="h-4 w-4" />
-                Continue with Google
-              </button>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-3 rounded-full border border-white/10 bg-black/60 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-[1px] hover:bg-black/70 focus:outline-none focus:ring-2 focus:ring-slate-500"
-              >
-                <FaApple className="h-4 w-4" />
-                Continue with Apple
-              </button>
-            </div>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-white/10" />
-              <span className="relative mx-auto block w-max rounded-full bg-slate-950 px-4 py-1 text-[11px] font-medium uppercase tracking-[0.2em] text-slate-400">
-                or sign in with email
-              </span>
-            </div>
+            <div className="mb-6" />
 
             <form
               className="space-y-6"
