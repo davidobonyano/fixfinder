@@ -705,7 +705,7 @@ export default function ProProfile() {
           <p>{error}</p>
           <button 
             onClick={loadProfile}
-            className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="mt-4 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:border-indigo-300 hover:text-indigo-600 transition-colors"
           >
             Try Again
           </button>
@@ -738,11 +738,9 @@ export default function ProProfile() {
       {/* Profile Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FaBriefcase className="w-6 h-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
+          <div className="flex items-center gap-3">
+            <FaBriefcase className="w-6 h-6 text-indigo-500" />
+            <div>
               <p className="text-sm font-medium text-gray-600">Account Type</p>
               <p className="text-2xl font-bold text-gray-900 capitalize">{user?.role || "Professional"}</p>
             </div>
@@ -750,19 +748,17 @@ export default function ProProfile() {
         </div>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${user?.emailVerification?.isVerified ? 'bg-green-100' : 'bg-yellow-100'}`}>
-              <FaCheck className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-green-600' : 'text-yellow-600'}`} />
-            </div>
-            <div className="ml-4">
+          <div className="flex items-center gap-3">
+            <FaShieldAlt className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-emerald-500' : 'text-amber-500'}`} />
+            <div>
               <p className="text-sm font-medium text-gray-600">Verification</p>
-              <p className={`text-2xl font-bold ${user?.emailVerification?.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+              <p className="text-2xl font-bold text-gray-900">
                 {user?.emailVerification?.isVerified ? "Verified" : "Pending"}
               </p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto">
               {user?.emailVerification?.isVerified ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="text-sm font-medium text-emerald-600">
                   ✓ Email Verified
                 </span>
               ) : (
@@ -781,11 +777,9 @@ export default function ProProfile() {
         </div>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <FaCalendarAlt className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
+          <div className="flex items-center gap-3">
+            <FaCalendarAlt className="w-6 h-6 text-indigo-500" />
+            <div>
               <p className="text-sm font-medium text-gray-600">Member Since</p>
               <p className="text-2xl font-bold text-gray-900">
                 {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "N/A"}
@@ -832,7 +826,7 @@ export default function ProProfile() {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="profile-picture-upload"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {uploading ? (
                 <FaSpinner className="w-4 h-4 animate-spin" />
@@ -846,7 +840,7 @@ export default function ProProfile() {
               <button
                 onClick={handleRemovePicture}
                 disabled={uploading}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <FaTrash className="w-4 h-4" />
                 Remove
@@ -876,14 +870,24 @@ export default function ProProfile() {
                 )}
               </div>
             </div>
-            <div className="shrink-0">
+          <div className="w-full sm:w-auto sm:self-start mt-4 sm:mt-0">
               <button
                 onClick={handleUpdateLocation}
                 disabled={updatingLocation}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center sm:justify-center gap-2 px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 disabled:opacity-50 transition-colors text-sm font-semibold"
               >
-                {updatingLocation ? <FaSpinner className="w-4 h-4 animate-spin" /> : <FaMapMarkerAlt className="w-4 h-4" />}
-                {updatingLocation ? 'Updating…' : 'Update Location (Use my GPS)'}
+              {updatingLocation ? (
+                <>
+                  <FaSpinner className="w-4 h-4 animate-spin" />
+                  <span>Updating…</span>
+                </>
+              ) : (
+                <>
+                  <FaMapMarkerAlt className="w-4 h-4" />
+                  <span className="sm:hidden">Update</span>
+                  <span className="hidden sm:inline">Update Location (Use my GPS)</span>
+                </>
+              )}
               </button>
             </div>
           </div>
@@ -894,7 +898,7 @@ export default function ProProfile() {
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-indigo-300 hover:text-indigo-600 transition-colors"
             >
               <FaEdit className="w-4 h-4" />
               Edit
@@ -904,7 +908,7 @@ export default function ProProfile() {
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? (
                   <FaSpinner className="w-4 h-4 animate-spin" />
@@ -928,7 +932,7 @@ export default function ProProfile() {
                     languages: user.languages || []
                   });
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 hover:text-gray-900 transition-colors"
               >
                 <FaTimes className="w-4 h-4" />
                 Cancel
@@ -1088,7 +1092,7 @@ export default function ProProfile() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {user?.services?.map((service, index) => (
-                  <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                  <span key={index} className="px-3 py-1 text-sm text-gray-700 border border-gray-200 rounded-full">
                     {service}
                   </span>
                 )) || <p className="text-gray-500">No services added</p>}
@@ -1214,7 +1218,7 @@ export default function ProProfile() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 {user?.languages?.map((lang, index) => (
-                  <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                  <span key={index} className="px-3 py-1 text-sm text-gray-700 border border-gray-200 rounded-full">
                     {lang}
                   </span>
                 )) || <p className="text-gray-500">No languages added</p>}
@@ -1236,10 +1240,10 @@ export default function ProProfile() {
           <div className="flex gap-2">
             <label
               htmlFor="media-upload"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border ${
                 uploadingMedia || portfolio.length >= 4
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700'
               }`}
             >
               {uploadingMedia ? (
@@ -1330,7 +1334,7 @@ export default function ProProfile() {
             </div>
             <label
               htmlFor="media-upload"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 cursor-pointer transition-colors"
             >
               <FaPlus className="w-4 h-4" />
               Add Your First Media
@@ -1380,7 +1384,7 @@ export default function ProProfile() {
                   <button
                     onClick={() => handleDeleteMedia(item._id)}
                     disabled={uploadingMedia}
-                    className="opacity-0 group-hover:opacity-100 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all duration-300 disabled:opacity-50 delay-200"
+                    className="opacity-0 group-hover:opacity-100 p-2 border border-red-200 text-red-600 rounded-full bg-white hover:border-red-400 hover:text-red-700 transition-all duration-300 disabled:opacity-50 delay-200"
                     title="Delete media"
                   >
                     <FaTrash className="w-4 h-4" />
@@ -1413,7 +1417,7 @@ export default function ProProfile() {
                 }
               </p>
             </div>
-            <button onClick={() => setShowPasswordModal(true)} className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <button onClick={() => setShowPasswordModal(true)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:border-indigo-300 hover:text-indigo-600 transition-colors">
               Change Password
             </button>
           </div>
@@ -1429,7 +1433,7 @@ export default function ProProfile() {
               <button 
                 onClick={handleEmailVerification}
                 disabled={emailVerifying}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {emailVerifying ? (
                   <>
@@ -1453,7 +1457,7 @@ export default function ProProfile() {
             {!professionalData?.isVerified && (
               <button 
                 onClick={() => setSuccess("Professional verification request sent! Our team will review your profile and get back to you within 24-48 hours.")}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 transition-colors"
               >
                 Request Verification
               </button>
@@ -1475,7 +1479,7 @@ export default function ProProfile() {
             </div>
             <button 
               onClick={() => setShowDeleteAccountModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 transition-colors"
             >
               Delete Account
             </button>
@@ -1488,7 +1492,7 @@ export default function ProProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 rounded-full">
+              <div className="p-2 text-red-600">
                 <FaTrash className="w-5 h-5 text-red-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900">Delete Media</h3>
@@ -1509,7 +1513,7 @@ export default function ProProfile() {
               <button
                 onClick={confirmDeleteMedia}
                 disabled={uploadingMedia}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 disabled:opacity-50 flex items-center gap-2"
               >
                 {uploadingMedia ? (
                   <>
@@ -1530,9 +1534,7 @@ export default function ProProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-100 rounded-full">
-                <FaLock className="w-5 h-5 text-blue-600" />
-              </div>
+              <FaLock className="w-5 h-5 text-indigo-500" />
               <h3 className="text-lg font-semibold text-gray-900">Change Password</h3>
             </div>
             
@@ -1589,7 +1591,7 @@ export default function ProProfile() {
               <button
                 onClick={handlePasswordChange}
                 disabled={saving}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 disabled:opacity-50 flex items-center gap-2"
               >
                 {saving ? (
                   <>
@@ -1610,9 +1612,7 @@ export default function ProProfile() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 rounded-full">
-                <FaTrash className="w-5 h-5 text-red-600" />
-              </div>
+              <FaTrash className="w-5 h-5 text-red-600" />
               <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
             </div>
             
@@ -1665,7 +1665,7 @@ export default function ProProfile() {
               <button
                 onClick={handleDeleteAccount}
                 disabled={saving || deleteAccountData.confirmText !== "DELETE" || !deleteAccountData.password}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {saving ? (
                   <>

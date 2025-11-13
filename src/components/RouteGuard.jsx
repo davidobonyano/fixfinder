@@ -12,6 +12,11 @@ const RouteGuard = ({ children }) => {
 
     // Allow authenticated users to access certain public pages (e.g., professional/user detail)
     const path = location.pathname || '';
+    
+    // Check for exact match for homepage first
+    if (path === '/') return; // Allow homepage
+    
+    // Check other allowed paths
     const allowlist = [
       '/professionals',      // professional detail and nested
       '/professional/',      // user-view professional profile
@@ -35,6 +40,11 @@ const RouteGuard = ({ children }) => {
   if (isAuthenticated) {
     // For allowed paths, we return children above; for others we redirect and render nothing here
     const path = location.pathname || '';
+    
+    // Check for exact match for homepage first
+    if (path === '/') return children; // Allow homepage
+    
+    // Check other allowed paths
     const allowlist = ['/professionals', '/professional/', '/user/', '/services', '/verify', '/verify-email'];
     const isAllowed = allowlist.some(prefix => path.startsWith(prefix));
     if (!isAllowed) return null;

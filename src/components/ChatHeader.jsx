@@ -61,6 +61,13 @@ const ChatHeader = ({
     console.log('hydratedUser:', hydratedUser);
     console.log('otherParticipant:', otherParticipant);
     
+    // If current viewer is a professional, always show the other user's profile modal
+    if (String(userRole).toLowerCase() === 'professional') {
+      console.log('Viewer is professional → opening user profile modal instead of navigating');
+      onViewProfile?.();
+      return;
+    }
+    
     // Check if user is professional by role or userType
     const isPro = hydratedUser?.role === 'professional' || otherParticipant?.userType === 'professional';
     console.log('Is professional?', isPro, 'role:', hydratedUser?.role, 'userType:', otherParticipant?.userType);

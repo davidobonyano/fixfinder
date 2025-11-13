@@ -5,7 +5,6 @@ import {
   FaPaperPlane, 
   FaFile, 
   FaPhone, 
-  FaEllipsisV,
   FaArrowLeft,
   FaCheck,
   FaCheckDouble,
@@ -769,23 +768,18 @@ const Messages = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[calc(100dvh-120px)] bg-gradient-to-br from-indigo-50 via-white to-amber-50 rounded-3xl shadow-2xl border border-indigo-100">
+    <div className="flex flex-col md:flex-row h-[calc(100dvh-144px)] md:min-h-[calc(100dvh-120px)] bg-gradient-to-br from-indigo-50 via-white to-amber-50 rounded-none md:rounded-3xl shadow-none md:shadow-2xl border-0 md:border border-indigo-100 -mx-4 md:mx-0 -mt-4 md:mt-0 -mb-20 md:mb-0">
       {/* Conversations Sidebar */}
       <div
         className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] flex-col bg-white/70 backdrop-blur-md border-r border-white/40`}
       >
         <div className="p-6 border-b border-white/40 space-y-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <FaComments className="w-6 h-6 text-indigo-500" />
-                Messages
-              </h1>
-              <p className="text-sm text-gray-500">Stay in touch with your connections</p>
-            </div>
-            <button className="p-2 text-gray-400 hover:text-indigo-500 transition-colors">
-              <FaEllipsisV className="w-5 h-5" />
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+              <FaComments className="w-6 h-6 text-indigo-500" />
+              Messages
+            </h1>
+            <p className="text-sm text-gray-500">Stay in touch with your connections</p>
           </div>
 
           <div className="relative">
@@ -878,9 +872,9 @@ const Messages = () => {
       </div>
 
       {/* Chat Area */}
-      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden`}>
+      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden min-h-0`}>
         {selectedConversation ? (
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <ChatWindow
             conversation={selectedConversation}
             messages={visibleMessages}

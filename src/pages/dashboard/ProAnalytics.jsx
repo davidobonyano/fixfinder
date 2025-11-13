@@ -157,7 +157,7 @@ const ProAnalytics = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
+          <FaSpinner className="animate-spin text-4xl text-gray-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading analytics...</p>
         </div>
       </div>
@@ -186,9 +186,7 @@ const ProAnalytics = () => {
               <p className="text-sm font-medium text-gray-600">Total Jobs</p>
               <p className="text-3xl font-bold text-gray-900">{data.totalJobs}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FaBriefcase className="w-6 h-6 text-blue-600" />
-            </div>
+            <FaBriefcase className="w-6 h-6 text-indigo-500" />
           </div>
         </div>
 
@@ -200,9 +198,7 @@ const ProAnalytics = () => {
               <p className="text-sm font-medium text-gray-600">Connections</p>
               <p className="text-3xl font-bold text-gray-900">{data.connectionsCount}</p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <FaUsers className="w-6 h-6 text-purple-600" />
-            </div>
+            <FaUsers className="w-6 h-6 text-indigo-500" />
           </div>
         </div>
 
@@ -213,9 +209,7 @@ const ProAnalytics = () => {
               <p className="text-3xl font-bold text-gray-900">{data.averageRating?.toFixed(1) || '0.0'}</p>
               <p className="text-xs text-gray-500">{data.reviewCount} reviews</p>
             </div>
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <FaStar className="w-6 h-6 text-yellow-600" />
-            </div>
+            <FaStar className="w-6 h-6 text-indigo-500" />
           </div>
         </div>
       </div>
@@ -244,9 +238,9 @@ const ProAnalytics = () => {
               <Area 
                 type="monotone" 
                 dataKey="value" 
-                stroke="#3B82F6" 
-                fill="#3B82F6" 
-                fillOpacity={0.1}
+                stroke="#6366F1" 
+                fill="#6366F1" 
+                fillOpacity={0.08}
                 strokeWidth={2}
               />
             </AreaChart>

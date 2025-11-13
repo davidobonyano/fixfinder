@@ -200,15 +200,15 @@ const Notifications = () => {
     switch (type) {
       case 'connection_request':
       case 'connection_accepted':
-        return <FaUser className="w-5 h-5 text-blue-500" />;
+        return <FaUser className="w-5 h-5 text-indigo-500" />;
       case 'job_application':
       case 'job_update':
       case 'job_completed':
-        return <FaBriefcase className="w-5 h-5 text-green-500" />;
+        return <FaBriefcase className="w-5 h-5 text-emerald-500" />;
       case 'message':
         return <FaComments className="w-5 h-5 text-purple-500" />;
       case 'review':
-        return <FaHeart className="w-5 h-5 text-red-500" />;
+        return <FaHeart className="w-5 h-5 text-rose-500" />;
       case 'system':
         return <FaInfoCircle className="w-5 h-5 text-gray-500" />;
       default:
@@ -219,17 +219,17 @@ const Notifications = () => {
   const getNotificationColor = (type) => {
     switch (type) {
       case 'connection_request':
-        return 'border-l-blue-500 bg-blue-50';
+        return 'border-l-indigo-500 bg-indigo-50';
       case 'connection_accepted':
-        return 'border-l-green-500 bg-green-50';
+        return 'border-l-emerald-500 bg-emerald-50';
       case 'job_application':
-        return 'border-l-yellow-500 bg-yellow-50';
+        return 'border-l-amber-500 bg-amber-50';
       case 'job_update':
         return 'border-l-orange-500 bg-orange-50';
       case 'message':
         return 'border-l-purple-500 bg-purple-50';
       case 'review':
-        return 'border-l-red-500 bg-red-50';
+        return 'border-l-rose-500 bg-rose-50';
       case 'system':
         return 'border-l-gray-500 bg-gray-50';
       default:
@@ -293,7 +293,7 @@ const Notifications = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
                 >
                   Mark all as read
                 </button>
@@ -301,7 +301,7 @@ const Notifications = () => {
               {notifications.length > 0 && (
                 <button
                   onClick={async () => { try { await clearAllNotifications(); await loadNotifications(); } catch (e) {} }}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium"
                 >
                   Clear all
                 </button>
@@ -323,16 +323,16 @@ const Notifications = () => {
                   placeholder="Search notifications..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === 'all' 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-indigo-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -340,9 +340,9 @@ const Notifications = () => {
               </button>
               <button
                 onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-lg text-sm ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === 'unread' 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-indigo-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -350,9 +350,9 @@ const Notifications = () => {
               </button>
               <button
                 onClick={() => setFilter('read')}
-                className={`px-4 py-2 rounded-lg text-sm ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   filter === 'read' 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'bg-indigo-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -423,7 +423,7 @@ const Notifications = () => {
                         {!notification.isRead && (
                           <button
                             onClick={() => handleMarkAsRead(notification._id)}
-                            className="p-1 text-gray-400 hover:text-blue-600"
+                            className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
                             title="Mark as read"
                           >
                             <FaEye className="w-4 h-4" />
@@ -432,7 +432,7 @@ const Notifications = () => {
                         
                         <button
                           onClick={() => handleDelete(notification._id)}
-                          className="p-1 text-gray-400 hover:text-red-600"
+                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                           title="Delete notification"
                         >
                           <FaTrash className="w-4 h-4" />
@@ -446,13 +446,13 @@ const Notifications = () => {
                         {notification.data?.professionalId && (
                         <Link
                           to={`${basePath}/professional/${notification.data.professionalId}`}
-                          className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                          className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors"
                         >
                           View Profile
                         </Link>
                         )}
                         {requestHandled ? (
-                          <span className="inline-block rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-700 capitalize">
+                          <span className="inline-block rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 capitalize">
                             {requestStatus && requestStatus.length <= 14
                               ? requestStatus
                               : 'Processed'}
@@ -462,7 +462,7 @@ const Notifications = () => {
                             <button
                               onClick={() => handleAcceptConnection(notification)}
                               disabled={processingRequest === notification._id}
-                              className="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                             >
                               {processingRequest === notification._id ? (
                                 <FaSpinner className="animate-spin w-3 h-3" />
@@ -474,7 +474,7 @@ const Notifications = () => {
                             <button
                               onClick={() => handleRejectConnection(notification)}
                               disabled={processingRequest === notification._id}
-                              className="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"
+                              className="px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
                             >
                               {processingRequest === notification._id ? (
                                 <FaSpinner className="animate-spin w-3 h-3" />
@@ -490,7 +490,7 @@ const Notifications = () => {
 
                     {(notification.type === 'connection_accepted' || notification.type === 'connection_rejected') && (
                       <div className="mt-3">
-                        <span className={`inline-block px-2 py-1 text-xs rounded border ${notification.type === 'connection_accepted' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                        <span className={`inline-block px-3 py-1.5 text-xs font-medium rounded-lg border ${notification.type === 'connection_accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
                           {notification.type === 'connection_accepted' ? 'Accepted' : 'Rejected'}
                         </span>
                       </div>
@@ -513,7 +513,7 @@ const Notifications = () => {
                               navigate(`/dashboard/my-jobs`);
                             }
                           }}
-                          className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700"
+                          className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors"
                         >
                           {`View applications for ${(notification.data?.jobTitle || notification.message || '').split(':').slice(1).join(':').trim() || 'this job'}`}
                         </button>
@@ -524,7 +524,7 @@ const Notifications = () => {
                       <div className="mt-3">
                         <Link
                           to={`${basePath}/messages/${notification.data.conversationId}`}
-                          className="px-3 py-1 bg-purple-600 text-white text-xs rounded-lg hover:bg-purple-700"
+                          className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors"
                         >
                           View Message
                         </Link>

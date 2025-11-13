@@ -25,7 +25,13 @@ export default function Header() {
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const closeDropdown = () => setDropdownOpen(false);
 
-  const handleLogout = () => {};
+  const dashboardPath = user?.role === 'professional' ? '/dashboard/professional' : '/dashboard';
+
+  const handleLogout = () => {
+    logout();
+    closeDropdown();
+    navigate('/');
+  };
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 8);
@@ -119,14 +125,23 @@ export default function Header() {
               )}
             </button>
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50">
+              <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-50 py-1">
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => { logout(); navigate("/"); closeDropdown(); }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
-                  >
-                    Logout
-                  </button>
+                  <>
+                    <NavLink
+                      to={dashboardPath}
+                      onClick={closeDropdown}
+                      className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      Dashboard
+                    </NavLink>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
+                    >
+                      Sign out
+                    </button>
+                  </>
                 ) : (
                   <>
                     <NavLink
@@ -157,6 +172,9 @@ export default function Header() {
           <NavLink to="/" className={linkClasses}>Home</NavLink>
           <NavLink to="/services" className={linkClasses}>Services</NavLink>
           <NavLink to="/join" className={linkClasses}>Join as Pro</NavLink>
+          {isAuthenticated && (
+            <NavLink to={dashboardPath} className={linkClasses}>Dashboard</NavLink>
+          )}
          
         </div>
       </nav>
@@ -205,20 +223,27 @@ export default function Header() {
           </button>
             <button className={`p-2 rounded-full ${isSolid ? "hover:bg-gray-100" : "hover:bg-white/15"}`}><IconBell className={`w-5 h-5 ${isSolid ? "text-gray-800" : "text-white"}`}/></button>
             {isAuthenticated ? (
-              <div className="relative">
-                <button onClick={toggleDropdown} className="text-xl focus:outline-none flex items-center gap-2">
-                  {user?.profilePicture || user?.avatarUrl ? (
-                    <img src={user.profilePicture || user.avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover"/>
-                  ) : (
-                    <FontAwesomeIcon icon={faUserCircle} size="lg" />
-                  )}
-                  <span className={`${isSolid ? "text-gray-800" : "text-white/90"} text-sm`}>{user?.name || "Account"}</span>
+              <div className="flex items-center gap-2">
+                <NavLink
+                  to={dashboardPath}
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
+                    isSolid
+                      ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      : "bg-white/15 text-white hover:bg-white/25"
+                  }`}
+                >
+                  Dashboard
+                </NavLink>
+                <button
+                  onClick={handleLogout}
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
+                    isSolid
+                      ? "bg-red-50 text-red-600 hover:bg-red-100"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  Sign out
                 </button>
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white/95 text-gray-800 rounded shadow-lg z-50 p-2">
-                    <button onClick={() => { logout(); navigate("/"); closeDropdown(); }} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">Logout</button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="flex items-center gap-2">

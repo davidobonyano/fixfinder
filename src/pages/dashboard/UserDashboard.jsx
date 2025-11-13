@@ -259,9 +259,7 @@ const UserDashboard = () => {
       {/* Quick Search - Modern Design */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
-            <FaSearch className="w-5 h-5 text-white" />
-          </div>
+          <FaSearch className="w-5 h-5 text-indigo-500" />
           <h2 className="text-xl font-bold text-gray-900">Find a Professional</h2>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -284,39 +282,30 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* Stats Cards - Beautiful Gradient Design */}
+      {/* Stats Cards - Clean Design */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all duration-300 transform hover:scale-105">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <FaBriefcase className="w-6 h-6 text-amber-300" />
-            </div>
-            <p className="text-4xl font-bold mb-1">{stats.totalJobs}</p>
-            <p className="text-indigo-100 text-sm font-medium">Total Jobs</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <FaBriefcase className="w-5 h-5 text-indigo-500" />
           </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">{stats.totalJobs}</p>
+          <p className="text-sm text-gray-500 font-medium">Total Jobs</p>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 transform hover:scale-105">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <FaClock className="w-6 h-6 text-amber-100" />
-            </div>
-            <p className="text-4xl font-bold mb-1">{stats.activeJobs}</p>
-            <p className="text-amber-100 text-sm font-medium">Active</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <FaClock className="w-5 h-5 text-indigo-500" />
           </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">{stats.activeJobs}</p>
+          <p className="text-sm text-gray-500 font-medium">Active</p>
         </div>
 
-        <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-400 to-indigo-500 rounded-2xl p-6 text-white shadow-lg shadow-indigo-400/30 hover:shadow-xl hover:shadow-indigo-400/40 transition-all duration-300 transform hover:scale-105">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <FaCheckCircle className="w-6 h-6 text-amber-300" />
-            </div>
-            <p className="text-4xl font-bold mb-1">{stats.completedJobs}</p>
-            <p className="text-indigo-100 text-sm font-medium">Completed</p>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <FaCheckCircle className="w-5 h-5 text-indigo-500" />
           </div>
+          <p className="text-3xl font-bold text-gray-900 mb-1">{stats.completedJobs}</p>
+          <p className="text-sm text-gray-500 font-medium">Completed</p>
         </div>
       </div>
 
@@ -324,9 +313,7 @@ const UserDashboard = () => {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4 flex-1">
-            <div className="p-3 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl">
-              <FaMapMarkerAlt className="w-6 h-6 text-indigo-600" />
-            </div>
+            <FaMapMarkerAlt className="w-6 h-6 text-indigo-500 mt-1" />
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-1">Your Location</h3>
               <p className="text-gray-600">
@@ -344,7 +331,7 @@ const UserDashboard = () => {
           <button
             onClick={handleUpdateLocation}
             disabled={updatingLocation}
-            className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl font-semibold shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform hover:scale-105 disabled:transform-none"
+            className="px-6 py-3 border border-indigo-200 text-indigo-600 rounded-xl font-semibold hover:border-indigo-400 hover:text-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {updatingLocation ? (
               <>
@@ -364,21 +351,17 @@ const UserDashboard = () => {
       {/* Quick Actions - Modern Card Design */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl">
-            <FaRocket className="w-5 h-5 text-white" />
-          </div>
+          <FaRocket className="w-5 h-5 text-indigo-500" />
           <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
             to="/dashboard/professionals"
-            className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-6 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="group bg-white border border-gray-200 rounded-2xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
-                <FaUsers className="w-6 h-6 text-white" />
-              </div>
-              <FaArrowRight className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+              <FaUsers className="w-6 h-6 text-indigo-500" />
+              <FaArrowRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
             </div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">Discover Pros</h3>
             <p className="text-sm text-gray-600">Find professionals near you</p>
@@ -386,13 +369,11 @@ const UserDashboard = () => {
 
           <Link
             to="/dashboard/post-job"
-            className="group relative overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200 rounded-2xl p-6 hover:border-amber-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="group bg-white border border-gray-200 rounded-2xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl group-hover:scale-110 transition-transform">
-                <FaPlus className="w-6 h-6 text-white" />
-              </div>
-              <FaArrowRight className="w-5 h-5 text-amber-400 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
+              <FaPlus className="w-6 h-6 text-indigo-500" />
+              <FaArrowRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
             </div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">Post a Job</h3>
             <p className="text-sm text-gray-600">Find professionals for your project</p>
@@ -400,13 +381,11 @@ const UserDashboard = () => {
 
           <Link
             to="/dashboard/messages"
-            className="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-6 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            className="group bg-white border border-gray-200 rounded-2xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl group-hover:scale-110 transition-transform">
-                <FaComments className="w-6 h-6 text-white" />
-              </div>
-              <FaArrowRight className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
+              <FaComments className="w-6 h-6 text-indigo-500" />
+              <FaArrowRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
             </div>
             <h3 className="font-bold text-gray-900 text-lg mb-1">Messages</h3>
             <p className="text-sm text-gray-600">Chat with professionals</p>

@@ -371,16 +371,16 @@ const MyJobs = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Completed': return 'bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 border border-indigo-200';
-      case 'In Progress': return 'bg-gradient-to-r from-amber-50 to-amber-100 text-amber-700 border border-amber-200';
-      case 'Pending': return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200';
-      case 'Cancelled': return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border border-gray-300';
-      default: return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border border-gray-200';
+      case 'Completed': return 'text-emerald-600';
+      case 'In Progress': return 'text-indigo-600';
+      case 'Pending': return 'text-gray-600';
+      case 'Cancelled': return 'text-red-500';
+      default: return 'text-gray-600';
     }
   };
 
   const getUrgencyColor = (urgency) => {
-    return urgency === 'Urgent' ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300' : 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 border border-gray-200';
+    return urgency === 'Urgent' ? 'text-red-500' : 'text-gray-500';
   };
 
   const reloadJobs = async () => {
@@ -541,49 +541,49 @@ const MyJobs = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
                       <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
-                      <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getStatusColor(deriveStatus(job))}`}>
+                      <span className={`text-sm font-semibold ${getStatusColor(deriveStatus(job))}`}>
                         {deriveStatus(job)}
                       </span>
                       {job.urgency && (
-                        <span className={`px-3 py-1.5 text-xs font-semibold rounded-full ${getUrgencyColor(job.urgency)}`}>
+                        <span className={`text-sm font-semibold ${getUrgencyColor(job.urgency)}`}>
                           {job.urgency}
                         </span>
                       )}
                     </div>
                     <p className="text-gray-600 mb-4 leading-relaxed">{job.description}</p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm">
-                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
-                        <FaMapMarkerAlt className="w-4 h-4 text-indigo-500" />
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                      <span className="flex items-center gap-2">
+                        <FaMapMarkerAlt className="w-4 h-4 text-indigo-400" />
                         {job.location?.city}, {job.location?.state}
                       </span>
-                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
-                        <FaCalendarAlt className="w-4 h-4 text-indigo-500" />
+                      <span className="flex items-center gap-2">
+                        <FaCalendarAlt className="w-4 h-4 text-indigo-400" />
                         {formatDate(job.preferredDate)}
                       </span>
-                      <span className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg">
-                        <FaClock className="w-4 h-4 text-indigo-500" />
+                      <span className="flex items-center gap-2">
+                        <FaClock className="w-4 h-4 text-indigo-400" />
                         {job.preferredTime}
                       </span>
                     </div>
                   </div>
-                  <div className="text-right ml-4">
-                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-4 border border-indigo-200">
-                      <p className="text-2xl font-bold text-indigo-700 mb-1">
-                        {formatCurrency(job.budget?.min || 0)}
-                      </p>
-                      <p className="text-sm text-indigo-600 font-medium">- {formatCurrency(job.budget?.max || 0)}</p>
-                      <p className="text-xs text-gray-600 mt-2">{job.category}</p>
-                    </div>
+                  <div className="text-right ml-4 space-y-1">
+                    <p className="text-2xl font-bold text-gray-900">
+                      {formatCurrency(job.budget?.min || 0)}
+                    </p>
+                    <p className="text-sm text-gray-600 font-medium">
+                      - {formatCurrency(job.budget?.max || 0)}
+                    </p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">{job.category}</p>
                   </div>
                 </div>
 
                 {/* Client Info for pro view */}
                 {String(user?.role).toLowerCase() === 'professional' && job.client && (
-                  <div className="bg-gradient-to-r from-indigo-50 to-indigo-100/50 rounded-xl p-4 mb-4 border border-indigo-200">
+                  <div className="rounded-xl p-4 mb-4 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
-                          <FaUser className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                          <FaUser className="w-6 h-6 text-gray-500" />
                         </div>
                         <div>
                           <h4 className="font-bold text-gray-900">{job.client.name}</h4>
@@ -592,7 +592,7 @@ const MyJobs = () => {
                           </div>
                         </div>
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all">
+                      <button className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-700 transition-colors">
                         <FaComments className="w-4 h-4" />
                         Message
                       </button>
@@ -605,7 +605,7 @@ const MyJobs = () => {
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                        <span className="px-3 py-1 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-full text-sm font-semibold">
+                        <span className="text-sm font-semibold text-gray-500">
                           {job.applications.length}
                         </span>
                         Applications
@@ -620,10 +620,10 @@ const MyJobs = () => {
                     </div>
                     <div className="space-y-3">
                       {job.applications.slice(0, 2).map((app) => (
-                        <div key={app._id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all">
+                        <div key={app._id} className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
-                              <FaUser className="w-6 h-6 text-white" />
+                            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
+                              <FaUser className="w-6 h-6 text-gray-500" />
                             </div>
                             <div>
                               <p className="font-bold text-gray-900">{app.professional?.name || 'Unknown Professional'}</p>
@@ -631,7 +631,7 @@ const MyJobs = () => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold text-indigo-700">{formatCurrency(app.proposedPrice)}</p>
+                            <p className="text-xl font-bold text-gray-900">{formatCurrency(app.proposedPrice)}</p>
                             <p className="text-sm text-gray-600">{app.estimatedDuration}</p>
                           </div>
                         </div>
@@ -646,17 +646,17 @@ const MyJobs = () => {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-6 border-t-2 border-gray-100">
+                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
                   <div className="flex items-center gap-3 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
-                      <FaClock className="w-4 h-4 text-indigo-400" />
+                      <FaClock className="w-4 h-4 text-gray-400" />
                       Posted {formatDate(job.createdAt)}
                     </span>
                     {job.completedAt && (
                       <>
                         <span className="text-gray-300">•</span>
                         <span className="flex items-center gap-1">
-                          <FaCheckCircle className="w-4 h-4 text-indigo-400" />
+                          <FaCheckCircle className="w-4 h-4 text-gray-400" />
                           Completed {formatDate(job.completedAt)}
                         </span>
                       </>
@@ -668,7 +668,7 @@ const MyJobs = () => {
                         setSelectedJob(job);
                         setShowModal(true);
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                      className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-700 transition-colors"
                     >
                       <FaEye className="w-4 h-4" />
                       View Details
@@ -677,7 +677,7 @@ const MyJobs = () => {
                       <button
                         onClick={() => handleJobAction(job._id, 'complete')}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 border border-emerald-200 text-emerald-600 rounded-lg font-semibold hover:border-emerald-400 hover:text-emerald-700 transition-colors disabled:opacity-50"
                       >
                         <FaCheckCircle className="w-4 h-4" />
                         Complete
@@ -687,7 +687,7 @@ const MyJobs = () => {
                       <button
                         onClick={() => handleJobAction(job._id, 'cancel', { reason: 'Cancelled by user' })}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg font-semibold hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
                       >
                         <FaTimes className="w-4 h-4" />
                         Cancel
@@ -697,7 +697,7 @@ const MyJobs = () => {
                       <button
                         onClick={async () => { setActionLoading(true); try { await deleteJobApi(job._id); await reloadJobs(); } finally { setActionLoading(false); } }}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg font-semibold hover:border-gray-400 hover:text-gray-700 transition-colors disabled:opacity-50"
                         title="Delete this cancelled job"
                       >
                         <FaTrash className="w-4 h-4" />

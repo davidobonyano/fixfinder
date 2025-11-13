@@ -43,26 +43,28 @@ const NotificationToast = ({ notification, onRemove }) => {
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 max-w-sm w-full transform transition-all duration-300 ${
-        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[600px] max-w-[calc(100vw-2rem)] transform transition-all duration-300 ${
+        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
     >
-      <div className={`p-4 rounded-lg border shadow-lg ${getBgColor()}`}>
-        <div className="flex items-start gap-3">
-          {getIcon()}
+      <div className={`p-5 rounded-xl border shadow-xl ${getBgColor()}`}>
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 mt-0.5">
+            {getIcon()}
+          </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-medium text-gray-900 text-sm">
+            <h4 className="font-semibold text-gray-900 text-sm mb-1.5">
               {notification.title}
             </h4>
             {notification.message && (
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 leading-relaxed">
                 {notification.message}
               </p>
             )}
             {notification.action && (
               <button
                 onClick={notification.action.onClick}
-                className="text-sm text-blue-600 hover:text-blue-800 mt-1"
+                className="text-sm text-indigo-600 hover:text-indigo-800 mt-2 font-medium"
               >
                 {notification.action.label}
               </button>
@@ -70,7 +72,7 @@ const NotificationToast = ({ notification, onRemove }) => {
           </div>
           <button
             onClick={handleRemove}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-1 -mt-1 -mr-1"
           >
             <FaTimes className="w-4 h-4" />
           </button>

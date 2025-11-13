@@ -5,6 +5,7 @@ import { useSocket } from '../context/SocketContext';
 import { useToast } from '../context/ToastContext';
 import { getMyLocation } from '../utils/api';
 import BottomNavigation from '../components/BottomNavigation';
+import Logo from '../components/Logo';
 import { 
   FaHome, 
   FaUser, 
@@ -240,7 +241,12 @@ const DashboardLayout = ({ userType = 'user' }) => {
       {/* Desktop Sidebar - Always visible */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg">
         <div className="flex items-center justify-between h-16 px-6 border-b">
-          <h1 className="text-xl font-bold text-indigo-600">FindYourFixer</h1>
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors focus:outline-none"
+          >
+            <Logo textClassName="text-lg font-bold text-indigo-600" iconClassName="w-6 h-6" />
+          </button>
         </div>
 
         {/* User info */}
@@ -306,7 +312,12 @@ const DashboardLayout = ({ userType = 'user' }) => {
         <header className="bg-white shadow-sm border-b sticky top-0 z-30">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-bold text-indigo-600 lg:hidden">FindYourFixer</h1>
+              <button
+                onClick={() => navigate('/')}
+                className="lg:hidden flex items-center gap-2 text-indigo-600 hover:text-indigo-700 transition-colors focus:outline-none"
+              >
+                <Logo textClassName="text-lg font-bold text-indigo-600" iconClassName="w-6 h-6" />
+              </button>
             </div>
             
             <div className="flex items-center space-x-3 lg:space-x-4">

@@ -93,16 +93,12 @@ const ProReviews = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Reviews</h1>
         <p className="text-gray-600">What clients say about your work</p>
         <div className="mt-4 flex items-center gap-3">
-          <div className="flex items-center text-yellow-500">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <FaStar key={i} className={i < Math.round(summary.averageRating) ? '' : 'text-gray-300'} />
-            ))}
-          </div>
+          <div className="flex items-center">{Array.from({ length: 5 }).map((_, i) => (<FaStar key={i} className={`w-4 h-4 ${i < Math.round(summary.averageRating) ? 'text-indigo-500' : 'text-gray-300'}`} />))}</div>
           <span className="text-gray-900 font-semibold">{summary.averageRating}</span>
           <span className="text-gray-500">({summary.totalReviews} reviews)</span>
         </div>
@@ -110,14 +106,10 @@ const ProReviews = () => {
 
       <div className="space-y-4">
         {reviews.map((rev) => (
-          <div key={rev._id} className="bg-white rounded-lg shadow p-4">
+          <div key={rev._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-1">
               <p className="font-medium text-gray-900">{rev.reviewerName}</p>
-              <div className="flex items-center text-yellow-500">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <FaStar key={i} className={i < rev.rating ? '' : 'text-gray-300'} />
-                ))}
-              </div>
+              <div className="flex items-center">{Array.from({ length: 5 }).map((_, i) => (<FaStar key={i} className={`w-4 h-4 ${i < rev.rating ? 'text-indigo-500' : 'text-gray-300'}`} />))}</div>
             </div>
             <p className="text-gray-700 text-sm">{rev.comment}</p>
             <p className="text-gray-400 text-xs mt-2">

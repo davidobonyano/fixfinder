@@ -2,16 +2,14 @@ import { useEffect, useState } from 'react';
 import { getProOverview, getProJobs, getConnections } from '../../utils/api';
 import { FaBriefcase, FaClock, FaCheckCircle, FaStar, FaUsers } from 'react-icons/fa';
 
-const StatCard = ({ title, value, icon: Icon, accent }) => (
+const StatCard = ({ title, value, icon: Icon }) => (
   <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-gray-600">{title}</p>
         <p className="text-2xl font-bold text-gray-900">{value}</p>
       </div>
-      <div className={`p-3 rounded-full ${accent}`}>
-        <Icon className="w-6 h-6" />
-      </div>
+      <Icon className="w-6 h-6 text-indigo-500" />
     </div>
   </div>
 );
@@ -101,10 +99,10 @@ const ProOverview = () => {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Overview</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Jobs" value={stats.totalJobs} icon={FaBriefcase} accent="bg-blue-100 text-blue-600" />
-        <StatCard title="Active Jobs" value={stats.activeJobs} icon={FaClock} accent="bg-yellow-100 text-yellow-600" />
-        <StatCard title="Completed" value={stats.completedJobs} icon={FaCheckCircle} accent="bg-green-100 text-green-600" />
-        <StatCard title="Connections" value={stats.connections} icon={FaUsers} accent="bg-purple-100 text-purple-600" />
+        <StatCard title="Total Jobs" value={stats.totalJobs} icon={FaBriefcase} />
+        <StatCard title="Active Jobs" value={stats.activeJobs} icon={FaClock} />
+        <StatCard title="Completed" value={stats.completedJobs} icon={FaCheckCircle} />
+        <StatCard title="Connections" value={stats.connections} icon={FaUsers} />
       </div>
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
         <p className="text-gray-700">Rating: <span className="font-semibold">{(stats.rating||0).toFixed(1)}</span> ({stats.reviewCount} reviews)</p>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ToastContext = createContext();
 
@@ -43,17 +43,39 @@ export const ToastProvider = ({ children }) => {
 
 const ToastContainer = ({ toasts, removeToast }) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 space-y-2">
       {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
-            toast.type === 'success' ? 'border-l-4 border-green-400' :
-            toast.type === 'error' ? 'border-l-4 border-red-400' :
-            toast.type === 'warning' ? 'border-l-4 border-yellow-400' :
-            'border-l-4 border-blue-400'
-          }`}
-        >
+        <ToastItem key={toast.id} toast={toast} removeToast={removeToast} />
+      ))}
+    </div>
+  );
+};
+
+const ToastItem = ({ toast, removeToast }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Trigger animation
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleRemove = () => {
+    setIsVisible(false);
+    setTimeout(() => removeToast(toast.id), 300);
+  };
+
+  return (
+    <div
+      className={`w-[600px] max-w-[calc(100vw-2rem)] bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+      } ${
+        toast.type === 'success' ? 'border-l-4 border-green-400' :
+        toast.type === 'error' ? 'border-l-4 border-red-400' :
+        toast.type === 'warning' ? 'border-l-4 border-yellow-400' :
+        'border-l-4 border-blue-400'
+      }`}
+    >
           <div className="p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
@@ -84,7 +106,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
               <div className="ml-4 flex-shrink-0 flex">
                 <button
                   className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  onClick={() => removeToast(toast.id)}
+                  onClick={handleRemove}
                 >
                   <span className="sr-only">Close</span>
                   <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -95,8 +117,6 @@ const ToastContainer = ({ toasts, removeToast }) => {
             </div>
           </div>
         </div>
-      ))}
-    </div>
   );
 };
 

@@ -467,14 +467,14 @@ const ConnectedUsers = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleStartChat(connectedUser)}
-                      className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                      className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors"
                     >
                       <FaComments className="w-4 h-4" />
                       Message
                     </button>
                     <button
                       onClick={() => handleUnfriendClick(connectedUser)}
-                      className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                      className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors"
                     >
                       Unfriend
                     </button>
@@ -535,14 +535,14 @@ const ConnectedUsers = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleStartChat(connectedUser)}
-                        className="px-6 py-2 rounded-lg flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 transition-colors"
+                        className="px-6 py-2 rounded-lg flex items-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors"
                       >
                         <FaComments className="w-4 h-4" />
                         Message
                       </button>
                       <button
                         onClick={() => handleUnfriendClick(connectedUser)}
-                        className="px-4 py-2 rounded-lg flex items-center gap-2 bg-red-600 text-white hover:bg-red-700 transition-colors"
+                        className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors"
                       >
                         Unfriend
                       </button>
@@ -584,7 +584,7 @@ const ConnectedUsers = () => {
                 </button>
                 <button
                   onClick={handleUnfriendConfirm}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 transition-colors"
                 >
                   Unfriend
                 </button>

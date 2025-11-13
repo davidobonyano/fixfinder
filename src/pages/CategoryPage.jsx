@@ -4,6 +4,7 @@ import { getProfessionals, getProfessionalReviews } from '../utils/api';
 import ProfessionalCard from '../components/ProfessionalCard';
 import ReviewModal from '../components/ReviewModal';
 import SkeletonCard from '../components/SkeletonCard';
+import { useAuth } from '../context/useAuth';
 import { FaPlus, FaLock, FaUser, FaUserPlus } from 'react-icons/fa';
 
 const LOCAL_KEY = 'findyourfixer-reviews';
@@ -355,8 +356,10 @@ const CategoryPage = () => {
   // Normalize category: convert "laptop-repair" to "laptop repair" for display and "laptop repair" for lookup
   const category = categoryParam?.replace(/-/g, ' ') || '';
   const categoryKey = category.toLowerCase(); // For mock data lookup
+  const { isAuthenticated } = useAuth();
   
   const [pros, setPros] = useState([]);
+  const [suggestedPros, setSuggestedPros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPro, setSelectedPro] = useState(null);
@@ -385,6 +388,7 @@ const CategoryPage = () => {
       try {
         setLoading(true);
         setError('');
+        setSuggestedPros([]);
         
         const response = await getProfessionals({ category: categoryKey });
         let professionals = response.professionals || [];
@@ -392,8 +396,66 @@ const CategoryPage = () => {
         console.log('API Response:', response);
         console.log('Professionals from API:', professionals);
 
-        // Always use mock data if no real professionals (for main site pages)
-        if (!Array.isArray(professionals) || professionals.length === 0) {
+        // If authenticated and no professionals in this category, fetch other available professionals
+        if (isAuthenticated && (!Array.isArray(professionals) || professionals.length === 0)) {
+          try {
+            const allProsResponse = await getProfessionals({ limit: 6 });
+            const allPros = allProsResponse.professionals || [];
+            
+            // Enrich suggested professionals with same structure
+            const enrichedSuggested = allPros.slice(0, 6).map((pro) => {
+              let coordinates = null;
+              if (pro.location?.coordinates) {
+                coordinates = [pro.location.coordinates.lat, pro.location.coordinates.lng];
+              }
+              
+              const validPhotos = (pro.photos || []).filter(photo => 
+                photo && typeof photo === 'string' && photo.trim() !== '' && photo !== '/images/placeholder.jpeg'
+              );
+              
+              let finalPhotos = validPhotos;
+              if (finalPhotos.length === 0 && pro.user?.profilePicture) {
+                finalPhotos = [pro.user.profilePicture];
+              }
+              if (finalPhotos.length === 0) {
+                finalPhotos = ['/images/placeholder.jpeg'];
+              }
+              
+              return {
+                ...pro,
+                ratingAvg: pro.ratingAvg || 0,
+                ratingCount: pro.ratingCount || 0,
+                coordinates,
+                photos: finalPhotos,
+                videos: pro.videos || [],
+                bio: pro.bio || `Experienced ${pro.category || 'professional'} available for service.`,
+                pricePerHour: pro.pricePerHour || 0,
+              };
+            });
+            
+            // Fetch reviews for suggested professionals
+            try {
+              const withReviews = await Promise.all(enrichedSuggested.map(async (p) => {
+                try {
+                  const r = await getProfessionalReviews(p._id || p.id, { limit: 2 });
+                  const items = r?.data?.reviews || r?.data || [];
+                  return { ...p, reviews: items.map(x => ({ text: x.comment || x.review || '', rating: Number(x.rating||0) })) };
+                } catch (_) {
+                  return { ...p, reviews: [] };
+                }
+              }));
+              setSuggestedPros(withReviews);
+            } catch (_) {
+              setSuggestedPros(enrichedSuggested.map(p => ({ ...p, reviews: [] })));
+            }
+          } catch (err) {
+            console.error('Error fetching suggested professionals:', err);
+            setSuggestedPros([]);
+          }
+        }
+
+        // Only use mock data if user is NOT authenticated (for public pages)
+        if (!isAuthenticated && (!Array.isArray(professionals) || professionals.length === 0)) {
           console.log('🎭 No real professionals found, using mock data for category:', categoryKey);
           const mockProfs = getMockProfessionals(categoryKey);
           professionals = mockProfs.length > 0 ? mockProfs : [{
@@ -531,15 +593,73 @@ const CategoryPage = () => {
         }
       } catch (err) {
         console.error('Error fetching professionals:', err);
-        console.log('🎭 API failed, using mock data as fallback');
-        // Use mock data as fallback instead of showing empty state
-        const mockProfs = getMockProfessionals(categoryKey);
-        const withMockReviews = mockProfs.map(p => ({
-          ...p,
-          reviews: getMockReviews(p.category?.toLowerCase() || categoryKey)
-        }));
-        setPros(withMockReviews);
-        // Don't set error, just silently fallback to mock data
+        // Only use mock data as fallback if user is NOT authenticated
+        if (!isAuthenticated) {
+          console.log('🎭 API failed, using mock data as fallback');
+          const mockProfs = getMockProfessionals(categoryKey);
+          const withMockReviews = mockProfs.map(p => ({
+            ...p,
+            reviews: getMockReviews(p.category?.toLowerCase() || categoryKey)
+          }));
+          setPros(withMockReviews);
+        } else {
+          // For authenticated users, try to fetch other professionals as suggestions
+          try {
+            const allProsResponse = await getProfessionals({ limit: 6 });
+            const allPros = allProsResponse.professionals || [];
+            
+            // Enrich suggested professionals
+            const enrichedSuggested = allPros.slice(0, 6).map((pro) => {
+              let coordinates = null;
+              if (pro.location?.coordinates) {
+                coordinates = [pro.location.coordinates.lat, pro.location.coordinates.lng];
+              }
+              
+              const validPhotos = (pro.photos || []).filter(photo => 
+                photo && typeof photo === 'string' && photo.trim() !== '' && photo !== '/images/placeholder.jpeg'
+              );
+              
+              let finalPhotos = validPhotos;
+              if (finalPhotos.length === 0 && pro.user?.profilePicture) {
+                finalPhotos = [pro.user.profilePicture];
+              }
+              if (finalPhotos.length === 0) {
+                finalPhotos = ['/images/placeholder.jpeg'];
+              }
+              
+              return {
+                ...pro,
+                ratingAvg: pro.ratingAvg || 0,
+                ratingCount: pro.ratingCount || 0,
+                coordinates,
+                photos: finalPhotos,
+                videos: pro.videos || [],
+                bio: pro.bio || `Experienced ${pro.category || 'professional'} available for service.`,
+                pricePerHour: pro.pricePerHour || 0,
+              };
+            });
+            
+            // Fetch reviews for suggested professionals
+            try {
+              const withReviews = await Promise.all(enrichedSuggested.map(async (p) => {
+                try {
+                  const r = await getProfessionalReviews(p._id || p.id, { limit: 2 });
+                  const items = r?.data?.reviews || r?.data || [];
+                  return { ...p, reviews: items.map(x => ({ text: x.comment || x.review || '', rating: Number(x.rating||0) })) };
+                } catch (_) {
+                  return { ...p, reviews: [] };
+                }
+              }));
+              setSuggestedPros(withReviews);
+            } catch (_) {
+              setSuggestedPros(enrichedSuggested.map(p => ({ ...p, reviews: [] })));
+            }
+          } catch (suggestErr) {
+            console.error('Error fetching suggested professionals:', suggestErr);
+            setSuggestedPros([]);
+          }
+          setPros([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -548,7 +668,7 @@ const CategoryPage = () => {
     if (categoryKey) {
       fetchProfessionals();
     }
-  }, [categoryKey, userLocation, sortBy]);
+  }, [categoryKey, userLocation, sortBy, isAuthenticated]);
 
   const handleReviewSubmit = ({ serviceName, review, rating }) => {
     setPros((prev) =>
@@ -622,74 +742,125 @@ const CategoryPage = () => {
         </div>
       ) : pros.length > 0 ? ( // Show layout with professionals (mock or real)
         <div className="relative">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 filter blur-[2px]">
-            {pros.map((pro) => (
-              <ProfessionalCard
-                key={pro._id || pro.id}
-                pro={pro}
-                userLocation={userLocation}
-                onReviewClick={(pro) => {
-                  setSelectedPro(pro);
-                  setIsModalOpen(true);
-                }}
-              />
-            ))}
-          </div>
+          {/* Show blur and overlay only if NOT authenticated */}
+          {!isAuthenticated ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 filter blur-[2px]">
+                {pros.map((pro) => (
+                  <ProfessionalCard
+                    key={pro._id || pro.id}
+                    pro={pro}
+                    userLocation={userLocation}
+                    onReviewClick={(pro) => {
+                      setSelectedPro(pro);
+                      setIsModalOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
 
-          {/* Login Overlay */}
-          <div className="absolute inset-0 flex items-start justify-center pt-20 bg-white bg-opacity-90 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-200">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FaLock className="text-2xl text-gray-600" />
+              {/* Login Overlay */}
+              <div className="absolute inset-0 flex items-start justify-center pt-20 bg-white bg-opacity-90 backdrop-blur-sm">
+                <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 border border-gray-200">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <FaLock className="text-2xl text-gray-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Professional Profiles</h2>
+                    <p className="text-gray-600">
+                      Sign in or create an account to view detailed profiles, ratings, and connect with {category || categoryKey} professionals
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Link
+                      to="/login"
+                      className="w-full flex items-center justify-center gap-3 bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                    >
+                      <FaUser />
+                      Sign In
+                    </Link>
+                    
+                    <Link
+                      to="/signup"
+                      className="w-full flex items-center justify-center gap-3 bg-white text-indigo-600 py-3 px-4 rounded-lg border-2 border-indigo-600 hover:bg-indigo-50 transition-colors font-medium"
+                    >
+                      <FaUserPlus />
+                      Create Account
+                    </Link>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-500">
+                      Join thousands of users finding trusted professionals
+                    </p>
+                  </div>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Professional Profiles</h2>
-                <p className="text-gray-600">
-                  Sign in or create an account to view detailed profiles, ratings, and connect with {category || categoryKey} professionals
-                </p>
               </div>
-
-              <div className="space-y-4">
-                <Link
-                  to="/login"
-                  className="w-full flex items-center justify-center gap-3 bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-                >
-                  <FaUser />
-                  Sign In
-                </Link>
-                
-                <Link
-                  to="/signup"
-                  className="w-full flex items-center justify-center gap-3 bg-white text-indigo-600 py-3 px-4 rounded-lg border-2 border-indigo-600 hover:bg-indigo-50 transition-colors font-medium"
-                >
-                  <FaUserPlus />
-                  Create Account
-                </Link>
-              </div>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-500">
-                  Join thousands of users finding trusted professionals
-                </p>
-              </div>
+            </>
+          ) : (
+            // Show professionals directly when authenticated (no blur, no overlay)
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pros.map((pro) => (
+                <ProfessionalCard
+                  key={pro._id || pro.id}
+                  pro={pro}
+                  userLocation={userLocation}
+                  onReviewClick={(pro) => {
+                    setSelectedPro(pro);
+                    setIsModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
-          </div>
+          )}
         </div>
       ) : (
+        // Empty state
         <div className="text-center py-12">
-          <p className="text-gray-600 text-lg mb-4">
-            No professionals found for this category yet.
-          </p>
-          <p className="text-gray-500 text-sm mb-6">
-            Be the first to join as a {category || categoryKey} professional!
-          </p>
-          <Link
-            to="/join"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
-          >
-            <FaPlus />
-            Join as Pro
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <p className="text-gray-600 text-lg mb-2">
+                No available pro at this moment for {category || categoryKey}
+              </p>
+              {suggestedPros.length > 0 && (
+                <>
+                  <p className="text-gray-500 text-sm mb-6">
+                    Here are some other available professionals you might be interested in:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+                    {suggestedPros.map((pro) => (
+                      <ProfessionalCard
+                        key={pro._id || pro.id}
+                        pro={pro}
+                        userLocation={userLocation}
+                        onReviewClick={(pro) => {
+                          setSelectedPro(pro);
+                          setIsModalOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-600 text-lg mb-4">
+                No professionals found for this category yet.
+              </p>
+              <p className="text-gray-500 text-sm mb-6">
+                Be the first to join as a {category || categoryKey} professional!
+              </p>
+              <Link
+                to="/join"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2"
+              >
+                <FaPlus />
+                Join as Pro
+              </Link>
+            </>
+          )}
         </div>
       )}
 

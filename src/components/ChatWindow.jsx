@@ -1132,7 +1132,7 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Chat Header */}
       <ChatHeader
         conversation={conversation}
@@ -1271,7 +1271,7 @@ const ChatWindow = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((message) => {
           const isOwn = message.sender._id === user?.id;
           const canEdit = isOwn && !message.isDeleted && 
