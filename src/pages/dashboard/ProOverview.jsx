@@ -3,13 +3,13 @@ import { getProOverview, getProJobs, getConnections } from '../../utils/api';
 import { FaBriefcase, FaClock, FaCheckCircle, FaStar, FaUsers } from 'react-icons/fa';
 
 const StatCard = ({ title, value, icon: Icon }) => (
-  <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+  <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 dark:bg-gray-900 dark:border-gray-800 dark:shadow-lg dark:shadow-black/40 transition-colors">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
       </div>
-      <Icon className="w-6 h-6 text-indigo-500" />
+      <Icon className="w-6 h-6 text-indigo-500 dark:text-indigo-300" />
     </div>
   </div>
 );
@@ -93,19 +93,19 @@ const ProOverview = () => {
     load();
   }, []);
 
-  if (loading) return <div className="p-6">Loading overview...</div>;
+  if (loading) return <div className="p-6 text-gray-600 dark:text-gray-300">Loading overview...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Overview</h1>
+    <div className="max-w-7xl mx-auto px-4 py-6 text-gray-900 dark:text-gray-100">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4 dark:text-gray-100">Overview</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Jobs" value={stats.totalJobs} icon={FaBriefcase} />
         <StatCard title="Active Jobs" value={stats.activeJobs} icon={FaClock} />
         <StatCard title="Completed" value={stats.completedJobs} icon={FaCheckCircle} />
         <StatCard title="Connections" value={stats.connections} icon={FaUsers} />
       </div>
-      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6">
-        <p className="text-gray-700">Rating: <span className="font-semibold">{(stats.rating||0).toFixed(1)}</span> ({stats.reviewCount} reviews)</p>
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
+        <p className="text-gray-700 dark:text-gray-300">Rating: <span className="font-semibold text-gray-900 dark:text-gray-100">{(stats.rating||0).toFixed(1)}</span> ({stats.reviewCount} reviews)</p>
       </div>
     </div>
   );

@@ -478,13 +478,13 @@ const Home = () => {
 
         {/* 🌟 Testimonials - Mint glass marquee */}
         <div className="relative py-16 px-6 rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-50 via-white to-cyan-50" />
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-emerald-200/40 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-cyan-200/40 blur-3xl" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-emerald-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-900 transition-colors" />
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-emerald-200/40 blur-3xl dark:bg-emerald-500/10" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-cyan-200/40 blur-3xl dark:bg-cyan-500/10" />
 
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">What our users say</h2>
-            <p className="mt-2 text-gray-600">Real stories from customers and pros who found the perfect match.</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-gray-100">What our users say</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">Real stories from customers and pros who found the perfect match.</p>
           </div>
 
           {(() => {
@@ -497,17 +497,17 @@ const Home = () => {
               { name: 'Chinedu', role: 'Generator repair', quote: 'Customers can see my ratings—makes closing jobs so much easier.' },
             ];
             const Card = ({ t }) => (
-              <div className="rounded-2xl border border-white/50 bg-white/70 backdrop-blur-md shadow-sm hover:shadow-lg transition-all p-5">
+              <div className="rounded-2xl border border-white/50 bg-white/70 backdrop-blur-md shadow-sm hover:shadow-lg transition-all p-5 dark:bg-gray-900/80 dark:border-gray-800 dark:shadow-lg dark:shadow-black/40">
                 <div className="flex items-start gap-3">
-                  <div className="mt-1 text-emerald-500">“</div>
+                  <div className="mt-1 text-emerald-500 dark:text-emerald-300">“</div>
                   <div className="flex-1">
-                    <p className="text-gray-700 leading-relaxed text-sm">{t.quote}</p>
+                    <p className="text-gray-700 leading-relaxed text-sm dark:text-gray-300">{t.quote}</p>
                     <div className="mt-4 flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-gray-900 text-sm">{t.name}</p>
-                        <p className="text-xs text-gray-500">{t.role}</p>
+                        <p className="font-semibold text-gray-900 text-sm dark:text-gray-100">{t.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{t.role}</p>
                       </div>
-                      <div className="ml-4 flex items-center gap-0.5 text-amber-500 text-sm" aria-label="5 out of 5 stars">
+                      <div className="ml-4 flex items-center gap-0.5 text-amber-500 text-sm dark:text-amber-300" aria-label="5 out of 5 stars">
                         {Array.from({ length: 5 }).map((_, i) => (<span key={i}>★</span>))}
                       </div>
                     </div>

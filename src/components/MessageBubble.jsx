@@ -85,9 +85,9 @@ const MessageBubble = ({
     if (typeof lat !== 'number' || typeof lng !== 'number') return null;
     
     return (
-      <div className="text-sm">
+      <div className="text-sm text-current">
                 <div className="flex items-center gap-2 mb-2">
-                  <FaMapMarkerAlt className="w-4 h-4" />
+                  <FaMapMarkerAlt className="w-4 h-4 text-blue-500 dark:text-blue-300" />
                   <span className="font-semibold">
                     {message.messageType === 'location_share'
                       ? (isOwn ? '🗺️ You are now sharing your location' : `📍 ${message.sender?.name || 'User'} is sharing their location with you`)
@@ -101,8 +101,8 @@ const MessageBubble = ({
             onClick={() => onViewMap && onViewMap(message.content.location)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
               isOwn 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'bg-blue-100 hover:bg-blue-200 text-blue-900'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400' 
+                : 'bg-blue-100 hover:bg-blue-200 text-blue-900 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/20'
             }`}
           >
             <FaMap className="w-3 h-3" />
@@ -113,8 +113,8 @@ const MessageBubble = ({
             onClick={() => onOpenInMaps && onOpenInMaps(lat, lng)}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
               isOwn 
-                ? 'bg-green-600 hover:bg-green-700 text-white' 
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-900'
+                ? 'bg-green-600 hover:bg-green-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-400' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600'
             }`}
           >
             <FaExternalLinkAlt className="w-3 h-3" />
@@ -122,7 +122,7 @@ const MessageBubble = ({
           </button>
         </div>
         
-        <div className="text-xs opacity-75">
+        <div className="text-xs opacity-75 text-current">
           Accuracy: {accuracy ? Math.round(accuracy) : 'N/A'}m
         </div>
       </div>
@@ -133,12 +133,12 @@ const MessageBubble = ({
     if (!message.content?.contact) return null;
 
     return (
-      <div className="text-sm">
-        <div className="font-semibold mb-1">Shared contact</div>
-        <div className="opacity-90">{message.content.contact.name}</div>
-        <div className="opacity-90">{message.content.contact.phone}</div>
+      <div className="text-sm text-current">
+        <div className="font-semibold mb-1 text-gray-900 dark:text-gray-100">Shared contact</div>
+        <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.name}</div>
+        <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.phone}</div>
         {message.content.contact.email && (
-          <div className="opacity-90">{message.content.contact.email}</div>
+          <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.email}</div>
         )}
       </div>
     );
@@ -159,9 +159,9 @@ const MessageBubble = ({
                 onClick={() => window.open(media.url, '_blank')}
               />
             ) : (
-              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded">
+              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded dark:bg-gray-800">
                 <FaFile className="w-4 h-4" />
-                <span className="text-sm">{media.filename}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-200">{media.filename}</span>
               </div>
             )}
           </div>
@@ -175,7 +175,7 @@ const MessageBubble = ({
 
     return (
       <div className={`text-xs mb-2 p-2 rounded ${
-        isOwn ? 'bg-blue-600' : 'bg-gray-300'
+        isOwn ? 'bg-blue-600 text-white dark:bg-indigo-500' : 'bg-gray-300 text-gray-900 dark:bg-slate-700 dark:text-gray-100'
       }`}>
         <div className="font-medium">Replying to:</div>
         <div className="truncate">
@@ -203,7 +203,7 @@ const MessageBubble = ({
   }
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSelected ? 'bg-blue-50 rounded-lg p-2' : ''}`}>
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSelected ? 'bg-blue-50 dark:bg-slate-800/40 rounded-lg p-2 transition-colors' : ''}`}>
       {/* Selection checkbox for bulk actions */}
       {showBulkActions && onSelect && (
         <div className="flex items-center mr-2">
@@ -218,16 +218,16 @@ const MessageBubble = ({
       
       <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
         {!isOwn && (
-          <p className="text-xs text-gray-500 mb-1">
+          <p className="text-xs text-gray-500 mb-1 dark:text-gray-400">
             {message.sender?.name || 'Unknown User'}
           </p>
         )}
         
         <div
-          className={`p-3 rounded-lg relative group ${
+          className={`p-3 rounded-lg relative group transition-colors ${
             isOwn
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-200 text-gray-900'
+              ? 'bg-blue-500 text-white dark:bg-indigo-500'
+              : 'bg-gray-200 text-gray-900 dark:bg-slate-800 dark:text-gray-100'
           }`}
           onMouseEnter={() => setShowActions(true)}
           onMouseLeave={() => setShowActions(false)}
@@ -274,8 +274,8 @@ const MessageBubble = ({
             </div>
           ) : (
             <>
-              {message.content?.text && (
-                <p className="text-sm whitespace-pre-wrap">{message.content.text}</p>
+          {message.content?.text && (
+            <p className="text-sm whitespace-pre-wrap text-current">{message.content.text}</p>
               )}
 
               {message.content?.location && renderLocationMessage()}
@@ -285,7 +285,7 @@ const MessageBubble = ({
               {/* Action buttons */}
               {showActions && (canEdit || canDelete || onReply) && (
                 <div className={`absolute top-2 right-2 flex gap-1 ${
-                  isOwn ? 'bg-blue-600' : 'bg-gray-300'
+                  isOwn ? 'bg-blue-600 dark:bg-indigo-500' : 'bg-gray-300 dark:bg-slate-700'
                 } rounded-lg p-1`}>
                   {onReply && (
                     <button
@@ -321,11 +321,11 @@ const MessageBubble = ({
         </div>
         
         <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {formatTime(message.createdAt)}
           </span>
           {message.isEdited && (
-            <span className="text-xs text-gray-400">(edited)</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">(edited)</span>
           )}
           {isOwn && (
             <div className="flex items-center gap-1">

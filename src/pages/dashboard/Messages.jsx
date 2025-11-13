@@ -768,18 +768,18 @@ const Messages = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-[calc(100dvh-144px)] md:min-h-[calc(100dvh-120px)] bg-gradient-to-br from-indigo-50 via-white to-amber-50 rounded-none md:rounded-3xl shadow-none md:shadow-2xl border-0 md:border border-indigo-100 -mx-4 md:mx-0 -mt-4 md:mt-0 -mb-20 md:mb-0">
+    <div className="flex flex-col md:flex-row h-[calc(100dvh-144px)] md:min-h-[calc(100dvh-120px)] rounded-none md:rounded-3xl shadow-none md:shadow-2xl border-0 md:border border-indigo-100 -mx-4 md:mx-0 -mt-4 md:mt-0 -mb-20 md:mb-0 bg-gradient-to-br from-indigo-50 via-white to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Conversations Sidebar */}
       <div
-        className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] flex-col bg-white/70 backdrop-blur-md border-r border-white/40`}
+        className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] flex-col bg-white/70 backdrop-blur-md border-r border-white/40 dark:bg-gray-900/75 dark:border-gray-800`}
       >
-        <div className="p-6 border-b border-white/40 space-y-5">
+        <div className="p-6 border-b border-white/40 space-y-5 dark:border-gray-800">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2 dark:text-gray-100">
               <FaComments className="w-6 h-6 text-indigo-500" />
               Messages
             </h1>
-            <p className="text-sm text-gray-500">Stay in touch with your connections</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Stay in touch with your connections</p>
           </div>
 
           <div className="relative">
@@ -789,19 +789,19 @@ const Messages = () => {
               placeholder="Search conversations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 border-2 border-white/70 rounded-xl bg-white/70 shadow-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-gray-400"
+              className="w-full pl-11 pr-4 py-3 border-2 border-white/70 rounded-xl bg-white/70 shadow-sm focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-gray-400 dark:bg-gray-900/60 dark:border-gray-800 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
           {filteredConversations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-white/70 rounded-2xl border border-white/60 shadow-inner">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center text-center py-12 px-4 bg-white/70 rounded-2xl border border-white/60 shadow-inner dark:bg-gray-900/70 dark:border-gray-800">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mb-4 dark:from-indigo-900 dark:to-indigo-800">
                 <FaComments className="w-7 h-7 text-indigo-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No conversations yet</h3>
-              <p className="text-sm text-gray-500">Start by connecting with a professional to begin chatting.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 dark:text-gray-100">No conversations yet</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Start by connecting with a professional to begin chatting.</p>
             </div>
           ) : (
             filteredConversations.map((conversation) => {
@@ -818,7 +818,7 @@ const Messages = () => {
                   className={`rounded-2xl border transition-all cursor-pointer ${
                     isSelected
                       ? 'border-indigo-300 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-lg shadow-indigo-500/40 scale-[1.01]'
-                      : 'border-white/60 bg-white/80 hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5'
+                      : 'border-white/60 bg-white/80 hover:border-indigo-200 hover:shadow-md hover:-translate-y-0.5 dark:border-gray-800 dark:bg-gray-900/70 dark:hover:border-gray-700'
                   }`}
                 >
                   <div className="p-4 flex items-start gap-3">
@@ -833,15 +833,15 @@ const Messages = () => {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <h3 className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                        <h3 className={`font-semibold truncate ${isSelected ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                           {(hydratedUsers[otherParticipant?.user?._id] || otherParticipant?.user)?.name || 'Unknown User'}
                         </h3>
-                        <span className={`text-xs ${isSelected ? 'text-indigo-100' : 'text-gray-400'}`}>
+                        <span className={`text-xs ${isSelected ? 'text-indigo-100' : 'text-gray-400 dark:text-gray-500'}`}>
                           {presenceByUser[otherParticipant?.user._id]?.isOnline ? 'Online' : formatLastSeen(presenceByUser[otherParticipant?.user._id]?.lastSeen)}
                         </span>
                       </div>
 
-                      <p className={`text-sm truncate mt-1 ${isSelected ? 'text-indigo-100/80' : 'text-gray-500'}`}>
+                      <p className={`text-sm truncate mt-1 ${isSelected ? 'text-indigo-100/80' : 'text-gray-500 dark:text-gray-400'}`}>
                         {conversation.lastMessage?.content?.text || 'No messages yet'}
                       </p>
 
@@ -852,10 +852,10 @@ const Messages = () => {
                         const isClosed = ls === 'closed' || ls === 'cancelled' || st === 'cancelled' || st === 'completed';
                         if (isClosed) return null;
                         return (
-                          <p className={`text-xs mt-2 flex items-center gap-2 ${isSelected ? 'text-indigo-100' : 'text-indigo-600'}`}>
+                          <p className={`text-xs mt-2 flex items-center gap-2 ${isSelected ? 'text-indigo-100' : 'text-indigo-600 dark:text-indigo-300'}`}>
                             <span>Job: {job.title}</span>
                             {ls && (
-                              <span className={`px-2 py-0.5 text-[10px] rounded-full border ${isSelected ? 'bg-white/20 text-white border-white/30' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+                              <span className={`px-2 py-0.5 text-[10px] rounded-full border ${isSelected ? 'bg-white/20 text-white border-white/30' : 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/30'}`}>
                                 {ls.replaceAll('_', ' ')}
                               </span>
                             )}
@@ -872,7 +872,7 @@ const Messages = () => {
       </div>
 
       {/* Chat Area */}
-      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden min-h-0`}>
+      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden min-h-0 dark:bg-gray-900/80`}>
         {selectedConversation ? (
           <div className="flex-1 flex flex-col min-h-0">
             <ChatWindow
@@ -930,12 +930,12 @@ const Messages = () => {
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-sm px-6 py-12 bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div className="text-center max-w-sm px-6 py-12 bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-xl dark:bg-gray-900/70 dark:border-gray-800">
+              <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center mx-auto mb-6 dark:from-indigo-900 dark:to-indigo-800">
                 <FaComments className="w-9 h-9 text-indigo-500" />
               </div>
-              <h3 className="text-2xl font-semibold text-gray-900 mb-3">Select a conversation</h3>
-              <p className="text-gray-500">Choose someone from your inbox to start chatting. Messages appear here in real time.</p>
+              <h3 className="text-2xl font-semibold text-gray-900 mb-3 dark:text-gray-100">Select a conversation</h3>
+              <p className="text-gray-500 dark:text-gray-400">Choose someone from your inbox to start chatting. Messages appear here in real time.</p>
             </div>
           </div>
         )}
@@ -944,20 +944,20 @@ const Messages = () => {
       {/* Location Modal */}
       {showLocationModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full dark:bg-gray-900/95 dark:border-gray-800">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 dark:text-gray-100">
               <FaMapMarkerAlt className="w-5 h-5 text-indigo-500" />
               Share Your Location
             </h3>
 
             {userLocation ? (
               <div className="space-y-6">
-                <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl border border-indigo-100">
-                  <div className="flex items-center gap-2 text-indigo-700 font-semibold">
+                <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl border border-indigo-100 dark:from-indigo-950 dark:to-indigo-900 dark:border-indigo-900">
+                  <div className="flex items-center gap-2 text-indigo-700 font-semibold dark:text-indigo-300">
                     <FaMapMarkerAlt className="w-4 h-4" />
                     Location detected
                   </div>
-                  <p className="text-sm text-indigo-600 mt-2">
+                  <p className="text-sm text-indigo-600 mt-2 dark:text-indigo-300">
                     Lat: {userLocation.lat.toFixed(6)}, Lng: {userLocation.lng.toFixed(6)}
                   </p>
                 </div>
@@ -977,7 +977,7 @@ const Messages = () => {
                   </button>
                   <button
                     onClick={() => setShowLocationModal(false)}
-                    className="px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+                    className="px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all dark:border-gray-700 dark:text-gray-300 dark:hover:border-indigo-500 dark:hover:text-indigo-300"
                   >
                     Cancel
                   </button>
@@ -986,7 +986,7 @@ const Messages = () => {
             ) : (
               <div className="text-center py-6">
                 <div className="h-10 w-10 rounded-full border-2 border-indigo-200 border-t-indigo-600 animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Getting your location...</p>
+                <p className="text-gray-600 dark:text-gray-400">Getting your location...</p>
               </div>
             )}
           </div>
@@ -996,12 +996,12 @@ const Messages = () => {
       {/* User Info Modal */}
       {showUserInfo && selectedConversation && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full">
+          <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-2xl p-8 max-w-md w-full dark:bg-gray-900/95 dark:border-gray-800">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">User Information</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">User Information</h3>
               <button
                 onClick={() => setShowUserInfo(false)}
-                className="text-gray-400 hover:text-indigo-500 transition-colors"
+                className="text-gray-400 hover:text-indigo-500 transition-colors dark:hover:text-indigo-300"
               >
                 <FaTimes className="w-5 h-5" />
               </button>
@@ -1014,17 +1014,17 @@ const Messages = () => {
               return (
                 <div className="space-y-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center shadow-md">
-                      <span className="text-2xl font-semibold text-indigo-600">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center shadow-md dark:from-indigo-900 dark:to-indigo-800">
+                      <span className="text-2xl font-semibold text-indigo-600 dark:text-indigo-300">
                         {otherParticipant?.user.name?.charAt(0) || '?'}
                       </span>
                     </div>
                     <div>
-                      <h4 className="text-lg font-semibold text-gray-900">{otherParticipant?.user.name || 'Unknown User'}</h4>
-                      <p className="text-sm text-gray-500">{otherParticipant?.user.email}</p>
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{otherParticipant?.user.name || 'Unknown User'}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{otherParticipant?.user.email}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${pres.isOnline ? 'bg-emerald-500' : 'bg-gray-300'}`} />
-                        <span className="text-xs text-gray-500">
+                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${pres.isOnline ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {pres.isOnline ? 'Online now' : formatLastSeen(pres.lastSeen)}
                         </span>
                       </div>
@@ -1032,9 +1032,9 @@ const Messages = () => {
                   </div>
 
                   {selectedConversation.job && (
-                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-                      <h5 className="font-semibold text-indigo-700 mb-1">Related Job</h5>
-                      <p className="text-sm text-indigo-600">{selectedConversation.job.title}</p>
+                  <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-900/30">
+                      <h5 className="font-semibold text-indigo-700 mb-1 dark:text-indigo-300">Related Job</h5>
+                      <p className="text-sm text-indigo-600 dark:text-indigo-300">{selectedConversation.job.title}</p>
                     </div>
                   )}
 
@@ -1051,7 +1051,7 @@ const Messages = () => {
                     <Link
                       to={user?.role === 'professional' ? '/dashboard/professional/connected-users' : '/dashboard/professionals'}
                       onClick={() => setShowUserInfo(false)}
-                      className="flex-1 px-4 py-3 rounded-xl border-2 border-indigo-100 text-indigo-600 hover:border-indigo-300 hover:text-indigo-700 transition-all text-center font-semibold"
+                      className="flex-1 px-4 py-3 rounded-xl border-2 border-indigo-100 text-indigo-600 hover:border-indigo-300 hover:text-indigo-700 transition-all text-center font-semibold dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:text-indigo-200"
                     >
                       Manage Connections
                     </Link>

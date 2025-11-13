@@ -9,6 +9,7 @@ import { AuthProvider } from "./context/AuthProvider";
 import { SocketProvider } from "./context/SocketContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { ToastProvider } from "./context/ToastContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Layouts & Pages
 import RootLayout from "./layout/Rootlayout";
@@ -154,7 +155,9 @@ export default function App() {
       <SocketProvider>
         <NotificationProvider>
           <ToastProvider>
-            <RouterProvider router={router} />
+            <ThemeProvider>
+              <RouterProvider router={router} />
+            </ThemeProvider>
           </ToastProvider>
         </NotificationProvider>
       </SocketProvider>

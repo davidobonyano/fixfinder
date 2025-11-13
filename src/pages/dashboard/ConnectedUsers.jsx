@@ -336,27 +336,35 @@ const ConnectedUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-10 dark:bg-gray-900/85 dark:border-gray-800 dark:shadow-none backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 py-4 text-gray-900 dark:text-gray-100">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Connected Users</h1>
-              <p className="text-gray-600">{filteredConnections.length} connected users</p>
+              <p className="text-gray-600 dark:text-gray-400">{filteredConnections.length} connected users</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 dark:bg-gray-800 dark:border dark:border-gray-700">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                  className={`p-2 rounded-md ${
+                    viewMode === 'grid'
+                      ? 'bg-white shadow-sm dark:bg-gray-700 dark:shadow-none'
+                      : 'dark:text-gray-300'
+                  }`}
                   title="Grid View"
                 >
                   <FaTh className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                  className={`p-2 rounded-md ${
+                    viewMode === 'list'
+                      ? 'bg-white shadow-sm dark:bg-gray-700 dark:shadow-none'
+                      : 'dark:text-gray-300'
+                  }`}
                   title="List View"
                 >
                   <FaList className="w-4 h-4" />
@@ -368,30 +376,30 @@ const ConnectedUsers = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b dark:bg-gray-900/80 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex gap-3">
             <div className="flex-1">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search by name or service..."
                   value={filters.service}
                   onChange={(e) => setFilters(prev => ({ ...prev, service: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
             <div className="flex-1">
               <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search by location..."
                   value={filters.location}
                   onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
@@ -406,7 +414,7 @@ const ConnectedUsers = () => {
             {filteredConnections.map((connectedUser) => (
               <div
                 key={connectedUser._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:hover:shadow-lg dark:hover:shadow-black/40"
                 onClick={(e) => {
                   // Only navigate if clicking on the card itself, not buttons
                   if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
@@ -425,9 +433,9 @@ const ConnectedUsers = () => {
                 
                 <div className="p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{connectedUser.name}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{connectedUser.name}</h3>
                     {connectedUser.location?.coordinates && userLat && userLng && (
-                      <span className="text-sm font-medium text-green-700">
+                      <span className="text-sm font-medium text-indigo-600 dark:text-indigo-300">
                         {formatDistance(haversineDistance(
                           Number(userLat),
                           Number(userLng),
@@ -438,9 +446,9 @@ const ConnectedUsers = () => {
                     )}
                   </div>
                   
-                  <p className="text-gray-600 mb-2">{connectedUser.category || 'User'}</p>
+                  <p className="text-gray-600 mb-2 dark:text-gray-400">{connectedUser.category || 'User'}</p>
                 {connectedUser.userType === 'professional' && connectedUser.location?.coordinates && userLat && userLng && (
-                  <div className="text-sm text-gray-700 mb-2">
+                  <div className="text-sm text-gray-700 mb-2 dark:text-gray-300">
                     {formatDistance(
                       haversineDistance(
                         Number(userLat),
@@ -452,7 +460,7 @@ const ConnectedUsers = () => {
                   </div>
                 )}
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                  <div className="flex items-center gap-4 text-sm text-gray-500 mb-4 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <FaClock className="w-3 h-3" />
                       <span>Available</span>
@@ -467,14 +475,14 @@ const ConnectedUsers = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleStartChat(connectedUser)}
-                      className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors"
+                      className="flex-1 py-2 rounded-lg flex items-center justify-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors dark:border-indigo-500/30 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:text-indigo-200"
                     >
                       <FaComments className="w-4 h-4" />
                       Message
                     </button>
                     <button
                       onClick={() => handleUnfriendClick(connectedUser)}
-                      className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors"
+                      className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors dark:border-red-500/40 dark:text-red-400 dark:hover:border-red-500 dark:hover:text-red-300"
                     >
                       Unfriend
                     </button>
@@ -488,7 +496,7 @@ const ConnectedUsers = () => {
             {filteredConnections.map((connectedUser) => (
               <div
                 key={connectedUser._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer dark:bg-gray-900 dark:border-gray-800 dark:hover:shadow-lg dark:hover:shadow-black/40"
                 onClick={(e) => {
                   // Only navigate if clicking on the card itself, not buttons
                   if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
@@ -507,20 +515,20 @@ const ConnectedUsers = () => {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{connectedUser.name}</h3>
-                        <p className="text-gray-600">{connectedUser.category || 'User'}</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{connectedUser.name}</h3>
+                        <p className="text-gray-600 dark:text-gray-400">{connectedUser.category || 'User'}</p>
                       </div>
                       <div className="flex items-center gap-2" />
                     </div>
                     
-                    <div className="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                    <div className="flex items-center gap-6 text-sm text-gray-500 mb-4 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <FaClock className="w-3 h-3" />
                       <span>Available</span>
                     </div>
                     {connectedUser.location?.coordinates && userLat && userLng && (
                       <div className="flex items-center gap-1">
-                        <span className="text-green-700 font-medium">
+                        <span className="text-indigo-600 font-medium dark:text-indigo-300">
                           {formatDistance(haversineDistance(
                             Number(userLat),
                             Number(userLng),
@@ -535,14 +543,14 @@ const ConnectedUsers = () => {
                     <div className="flex gap-3">
                       <button
                         onClick={() => handleStartChat(connectedUser)}
-                        className="px-6 py-2 rounded-lg flex items-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors"
+                        className="px-6 py-2 rounded-lg flex items-center gap-2 border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700 transition-colors dark:border-indigo-500/40 dark:text-indigo-300 dark:hover:border-indigo-400 dark:hover:text-indigo-200"
                       >
                         <FaComments className="w-4 h-4" />
                         Message
                       </button>
                       <button
                         onClick={() => handleUnfriendClick(connectedUser)}
-                        className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors"
+                        className="px-4 py-2 rounded-lg flex items-center gap-2 border border-red-300 text-red-600 hover:border-red-400 hover:text-red-700 transition-colors dark:border-red-500/40 dark:text-red-400 dark:hover:border-red-500 dark:hover:text-red-300"
                       >
                         Unfriend
                       </button>
@@ -558,12 +566,12 @@ const ConnectedUsers = () => {
       {/* Unfriend Confirmation Modal */}
       {showUnfriendModal && userToUnfriend && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 dark:bg-gray-900 dark:border dark:border-gray-700">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 dark:text-gray-100">
                 Unfriend {userToUnfriend.name}?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6 dark:text-gray-300">
                 Are you sure you want to unfriend {userToUnfriend.name}? This action is irreversible and will:
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>Remove them from your connections</li>
@@ -584,7 +592,7 @@ const ConnectedUsers = () => {
                 </button>
                 <button
                   onClick={handleUnfriendConfirm}
-                  className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 transition-colors"
+                  className="flex-1 px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:border-red-400 hover:text-red-700 transition-colors dark:border-red-500/40 dark:text-red-400 dark:hover:border-red-500 dark:hover:text-red-300"
                 >
                   Unfriend
                 </button>

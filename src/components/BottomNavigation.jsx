@@ -128,7 +128,7 @@ const BottomNavigation = ({ userType = 'user' }) => {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden dark:bg-gray-900 dark:border-gray-800">
       <div className="flex items-center justify-around h-16 px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -148,29 +148,40 @@ const BottomNavigation = ({ userType = 'user' }) => {
                   flex-1 h-full 
                   transition-all duration-200
                   ${isItemActive 
-                    ? 'text-indigo-600' 
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-indigo-600 dark:text-indigo-400' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                   }
                 `;
               }}
             >
               <div className="relative">
                 {item.highlight ? (
-                  <div className={`
+                  <div
+                    className={`
                     w-12 h-12 rounded-full flex items-center justify-center
                     transition-all duration-200
-                    ${isActive(item) 
-                      ? 'bg-indigo-600 text-white shadow-lg' 
-                      : 'bg-gray-100 text-gray-600'
+                    ${
+                      isActive(item)
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
                     }
-                  `}>
+                  `}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
                 ) : (
-                  <Icon className={`w-6 h-6 transition-transform ${isActive(item) ? 'scale-110' : ''}`} />
+                  <Icon
+                    className={`w-6 h-6 transition-transform ${
+                      isActive(item) ? 'scale-110 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  />
                 )}
               </div>
-              <span className={`text-xs mt-1 font-medium ${isActive(item) ? 'text-indigo-600' : 'text-gray-500'}`}>
+              <span
+                className={`text-xs mt-1 font-medium ${
+                  isActive(item) ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
                 {item.label}
               </span>
             </NavLink>
@@ -179,7 +190,7 @@ const BottomNavigation = ({ userType = 'user' }) => {
       </div>
       
       {/* Safe area for devices with home indicator */}
-      <div className="h-safe-area-inset-bottom bg-white" style={{ height: 'env(safe-area-inset-bottom, 0.5rem)' }} />
+      <div className="h-safe-area-inset-bottom bg-white dark:bg-gray-900" style={{ height: 'env(safe-area-inset-bottom, 0.5rem)' }} />
     </nav>
   );
 };

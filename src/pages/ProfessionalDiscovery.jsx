@@ -573,24 +573,24 @@ const ProfessionalDiscovery = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Finding professionals near you...</p>
+          <p className="text-gray-600 dark:text-gray-400">Finding professionals near you...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100/60 backdrop-blur-sm overflow-x-hidden">
+    <div className="min-h-screen bg-slate-100/60 dark:bg-slate-950/80 backdrop-blur-sm overflow-x-hidden transition-colors">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Discover Professionals</h1>
-              <p className="text-gray-600">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Discover Professionals</h1>
+              <p className="text-gray-600 dark:text-gray-400">
                 {errorMessage ? 'Unable to load professionals right now.' : `${filteredAndSortedProfessionals.length} professionals found`}
               </p>
             </div>
@@ -607,29 +607,29 @@ const ProfessionalDiscovery = () => {
                     checkExistingConnections();
                   }
                 }}
-                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800"
                 title="Refresh"
               >
                 <FaSync className="w-4 h-4" />
               </button>
-              <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 dark:bg-gray-800">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+                  className={`p-2 rounded-md ${viewMode === 'grid' ? 'bg-white shadow-sm dark:bg-gray-700' : 'dark:text-gray-300'}`}
                   title="Grid View"
                 >
                   <FaTh className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+                  className={`p-2 rounded-md ${viewMode === 'list' ? 'bg-white shadow-sm dark:bg-gray-700' : 'dark:text-gray-300'}`}
                   title="List View"
                 >
                   <FaList className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('map')}
-                  className={`p-2 rounded-md ${viewMode === 'map' ? 'bg-white shadow-sm' : ''}`}
+                  className={`p-2 rounded-md ${viewMode === 'map' ? 'bg-white shadow-sm dark:bg-gray-700' : 'dark:text-gray-300'}`}
                   title="Map View"
                 >
                   <FaMap className="w-4 h-4" />
@@ -637,14 +637,14 @@ const ProfessionalDiscovery = () => {
               </div>
               <button
                 onClick={() => setShowSearchModal(true)}
-                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800"
                 title="Search professionals"
               >
                 <FaSearch className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setShowFilterModal(true)}
-                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="p-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 dark:text-gray-300 dark:border-gray-700 dark:hover:bg-gray-800"
                 title="Filter professionals"
               >
                 <FaFilter className="w-4 h-4" />
@@ -655,7 +655,7 @@ const ProfessionalDiscovery = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white/80 backdrop-blur border-b border-white/50">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-white/50 dark:border-gray-800 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
             <ServiceSelector
@@ -667,11 +667,11 @@ const ProfessionalDiscovery = () => {
               className="w-full"
             />
             <div className="flex items-center gap-2 text-sm">
-              <FaSortAmountDown className="w-4 h-4 text-gray-400" />
+              <FaSortAmountDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/60"
+                className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
               >
                 <option value="distance">Sort by Distance</option>
                 <option value="price">Sort by Price</option>
@@ -685,15 +685,15 @@ const ProfessionalDiscovery = () => {
       {/* Professionals Grid/List/Map */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {errorMessage ? (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
             <div>
               <h2 className="text-lg font-semibold">We couldn’t load professionals</h2>
-              <p className="text-sm mt-1 text-amber-700">{errorMessage}</p>
+              <p className="text-sm mt-1 text-amber-700 dark:text-amber-200">{errorMessage}</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={loadProfessionals}
-                className="px-4 py-2 rounded-lg bg-amber-500 text-indigo-900 font-medium hover:bg-amber-400 transition-colors"
+                className="px-4 py-2 rounded-lg bg-amber-500 text-indigo-900 font-medium hover:bg-amber-400 transition-colors dark:text-gray-900"
               >
                 Retry
               </button>
@@ -701,7 +701,7 @@ const ProfessionalDiscovery = () => {
           </div>
         ) : viewMode === 'map' ? (
           // Map View
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 dark:bg-gray-900 dark:border-gray-800">
             <LiveLocationMap 
               professionals={filteredAndSortedProfessionals}
               userLocation={userLocation}
@@ -712,9 +712,9 @@ const ProfessionalDiscovery = () => {
           </div>
         ) : filteredAndSortedProfessionals.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🔍</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No professionals found</h3>
-            <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+            <div className="text-gray-400 text-6xl mb-4 dark:text-gray-600">🔍</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2 dark:text-gray-100">No professionals found</h3>
+            <p className="text-gray-500 dark:text-gray-400">Try adjusting your search or filter criteria</p>
           </div>
         ) : (
           <div
@@ -727,7 +727,7 @@ const ProfessionalDiscovery = () => {
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
-                className={`group relative block overflow-hidden rounded-3xl border border-white/40 bg-white/80 shadow-[0_25px_45px_-25px_rgba(15,23,42,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_55px_-25px_rgba(15,23,42,0.35)] ${
+                className={`group relative block overflow-hidden rounded-3xl border border-white/40 bg-white/80 shadow-[0_25px_45px_-25px_rgba(15,23,42,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_55px_-25px_rgba(15,23,42,0.35)] dark:bg-gray-900/80 dark:border-gray-800 dark:shadow-[0_25px_45px_-25px_rgba(15,15,30,0.55)] dark:hover:shadow-[0_35px_65px_-30px_rgba(15,15,40,0.7)] ${
                   viewMode === 'list' ? 'flex flex-col gap-4 p-5 sm:flex-row sm:items-center' : 'p-0'
                 }`}
               >
@@ -741,12 +741,12 @@ const ProfessionalDiscovery = () => {
                         className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {professional.isVerified && (
-                        <div className="absolute top-3 right-3 rounded-full bg-indigo-600/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow">
+                        <div className="absolute top-3 right-3 rounded-full bg-indigo-600/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow dark:bg-indigo-500/90">
                           ✓ Verified
                         </div>
                       )}
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm">
-                        <FaMapMarkerAlt className="h-3 w-3 text-emerald-500" />
+                      <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-gray-900/90 dark:text-gray-100">
+                        <FaMapMarkerAlt className="h-3 w-3 text-emerald-500 dark:text-emerald-300" />
                         <span>
                           {formatDistance(professional.distance)}
                         </span>
@@ -756,29 +756,29 @@ const ProfessionalDiscovery = () => {
                     <div className="flex h-full flex-col gap-4 p-6">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="text-lg font-semibold text-slate-900">{professional.name}</h3>
-                          <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700">
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                          <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
                             <FaStar className="h-3 w-3" />
                             {professional.rating || 0}
                           </span>
                         </div>
-                        <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
+                        <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">
                           {professional.category}
                         </p>
                       </div>
                       
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-gray-400">
                         <div className="flex items-center gap-1">
-                          <FaClock className="h-3 w-3 text-slate-400" />
+                          <FaClock className="h-3 w-3 text-slate-400 dark:text-gray-500" />
                           <span>Responds in under an hour</span>
                         </div>
-                        <span className="font-semibold text-indigo-600">
+                        <span className="font-semibold text-indigo-600 dark:text-indigo-300">
                           ₦{professional.hourlyRate?.toLocaleString()}/hr
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500 ring-1 ring-slate-200/80">
-                        <FaMapMarkerAlt className="h-3.5 w-3.5 text-emerald-500" />
+                      <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:text-gray-300 dark:ring-slate-700/60">
+                        <FaMapMarkerAlt className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-300" />
                         <span className="line-clamp-1">{professional.location?.address || 'Location on request'}</span>
                       </div>
                       
@@ -807,7 +807,7 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleStartChat(professional);
                                 }}
-                                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500"
+                                className="flex-1 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                               >
                                 Chat
                               </button>
@@ -818,7 +818,7 @@ const ProfessionalDiscovery = () => {
                               <>
                                 <button
                                   disabled
-                                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500"
+                                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400"
                                 >
                                   Pending
                                 </button>
@@ -830,21 +830,21 @@ const ProfessionalDiscovery = () => {
                                       // Toggle menu (we'll implement this)
                                       console.log('Three dots clicked for:', professional.name);
                                     }}
-                                    className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50 transition-colors"
+                                    className="rounded-lg border border-slate-200 p-2 hover:bg-slate-50 transition-colors dark:border-gray-700 dark:hover:bg-gray-800"
                                   >
                                     <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                                       <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                     </svg>
                                   </button>
                                   {/* Dropdown menu */}
-                                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg">
+                                  <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-gray-900 dark:border-gray-700">
                                     <button
                                       onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
                                         handleCancelRequest(professional);
                                       }}
-                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-lg dark:text-gray-300 dark:hover:bg-gray-800"
                                     >
                                       Cancel Request
                                     </button>
@@ -861,7 +861,7 @@ const ProfessionalDiscovery = () => {
                                   e.stopPropagation();
                                   handleConnect(professional);
                                 }}
-                                className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                                className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-400 dark:bg-emerald-500 dark:hover:bg-emerald-400"
                               >
                                 Connect
                               </button>
@@ -881,7 +881,7 @@ const ProfessionalDiscovery = () => {
                         className="h-full w-full object-cover"
                       />
                       {professional.isVerified && (
-                        <div className="absolute -top-1 -right-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        <div className="absolute -top-1 -right-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white dark:bg-indigo-500">
                           ✓
                         </div>
                       )}
@@ -890,12 +890,12 @@ const ProfessionalDiscovery = () => {
                     <div className="min-w-0 flex-1 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <h3 className="truncate text-lg font-semibold text-slate-900">{professional.name}</h3>
-                          <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{professional.category}</p>
+                          <h3 className="truncate text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                          <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">{professional.category}</p>
                         </div>
                         
                         <div className="text-right">
-                          <div className="text-lg font-semibold text-indigo-600">
+                          <div className="text-lg font-semibold text-indigo-600 dark:text-indigo-300">
                             ₦{professional.hourlyRate?.toLocaleString()}/hr
                           </div>
                           <div className="mt-2 flex gap-2">
@@ -912,7 +912,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleStartChat(professional);
                                     }}
-                                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 transition"
+                                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 transition dark:bg-indigo-500 dark:hover:bg-indigo-400"
                                   >
                                     Chat
                                   </button>
@@ -923,7 +923,7 @@ const ProfessionalDiscovery = () => {
                                   <>
                                     <button
                                       disabled
-                                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-600"
+                                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-600 dark:border-gray-700 dark:text-gray-400"
                                     >
                                       Pending
                                     </button>
@@ -934,21 +934,21 @@ const ProfessionalDiscovery = () => {
                                           e.stopPropagation();
                                           console.log('Three dots clicked for:', professional.name);
                                         }}
-                                        className="rounded border border-gray-300 p-1.5 hover:bg-gray-50 transition"
+                                        className="rounded border border-gray-300 p-1.5 hover:bg-gray-50 transition dark:border-gray-700 dark:hover:bg-gray-800"
                                       >
                                         <svg className="h-3 w-3 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                         </svg>
                                       </button>
                                       {/* Dropdown menu */}
-                                      <div className="absolute right-0 top-full mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg">
+                                      <div className="absolute right-0 top-full mt-1 w-40 rounded-lg border border-gray-200 bg-white shadow-lg dark:bg-gray-900 dark:border-gray-700">
                                         <button
                                           onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
                                             handleCancelRequest(professional);
                                           }}
-                                          className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50"
+                                          className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                                         >
                                           Cancel Request
                                         </button>
@@ -965,7 +965,7 @@ const ProfessionalDiscovery = () => {
                                       e.stopPropagation();
                                       handleConnect(professional);
                                     }}
-                                    className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-400"
+                                    className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-400 dark:hover:bg-emerald-500"
                                   >
                                     Connect
                                   </button>
@@ -976,13 +976,13 @@ const ProfessionalDiscovery = () => {
                         </div>
                       </div>
                       
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                        <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-2.5 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
                           <FaStar className="h-3 w-3" />
                           {professional.rating || 0} · {professional.ratingCount || 0}
                         </span>
                         <div className="flex items-center gap-1">
-                          <FaMapMarkerAlt className="h-3 w-3 text-emerald-500" />
+                          <FaMapMarkerAlt className="h-3 w-3 text-emerald-500 dark:text-emerald-300" />
                           <span className="truncate text-sm">{professional.location?.address}</span>
                         </div>
                       </div>
@@ -998,13 +998,13 @@ const ProfessionalDiscovery = () => {
       {/* Filter Modal */}
       {showFilterModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm md:items-center">
-          <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-white shadow-2xl md:rounded-3xl">
+          <div className="w-full max-w-lg overflow-hidden rounded-t-3xl bg-white shadow-2xl md:rounded-3xl dark:bg-gray-900 dark:shadow-2xl dark:shadow-black/60">
             <div className="space-y-6 p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Filter Professionals</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Filter Professionals</h2>
                 <button
                   onClick={() => setShowFilterModal(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700"
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <FaTimes className="w-5 h-5" />
                 </button>
@@ -1013,34 +1013,34 @@ const ProfessionalDiscovery = () => {
               <div className="space-y-6 pb-2">
                 {/* Service Search */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Service</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Service</label>
                   <div className="relative">
-                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
                     <input
                       type="text"
                       placeholder="e.g., Electrician, Plumber, Barber"
                       value={filters.service}
                       onChange={(e) => setFilters(prev => ({ ...prev, service: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 {/* Location */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Location</label>
                   <input
                     type="text"
                     placeholder="e.g., Lagos, Victoria Island"
                     value={filters.location}
                     onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                   />
                 </div>
 
                 {/* Price Range */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price Range (₦/hr)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Price Range (₦/hr)</label>
                   <div className="flex items-center gap-4">
                     <input
                       type="number"
@@ -1050,9 +1050,9 @@ const ProfessionalDiscovery = () => {
                         ...prev, 
                         priceRange: { ...prev.priceRange, min: parseInt(e.target.value) || 0 }
                       }))}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     />
-                    <span className="text-gray-500">to</span>
+                    <span className="text-gray-500 dark:text-gray-400">to</span>
                     <input
                       type="number"
                       placeholder="Max"
@@ -1061,14 +1061,14 @@ const ProfessionalDiscovery = () => {
                         ...prev, 
                         priceRange: { ...prev.priceRange, max: parseInt(e.target.value) || 100000 }
                       }))}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 {/* Rating */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Rating</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Minimum Rating</label>
                   <div className="flex items-center gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -1076,8 +1076,8 @@ const ProfessionalDiscovery = () => {
                         onClick={() => setFilters(prev => ({ ...prev, rating: star }))}
                         className={`p-2 rounded-lg ${
                           filters.rating >= star 
-                            ? 'bg-yellow-100 text-yellow-600' 
-                            : 'bg-gray-100 text-gray-400'
+                            ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-300' 
+                            : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
                         }`}
                       >
                         <FaStar className="w-5 h-5" />
@@ -1093,7 +1093,7 @@ const ProfessionalDiscovery = () => {
                       // Apply filters logic here
                       setShowFilterModal(false);
                     }}
-                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500"
+                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                   >
                     Apply Filters
                   </button>
@@ -1107,13 +1107,13 @@ const ProfessionalDiscovery = () => {
       {/* Search Modal */}
       {showSearchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="mx-4 w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-gray-900 dark:shadow-2xl dark:shadow-black/60">
             <div className="space-y-6 p-6 md:p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Search Professionals</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Search Professionals</h2>
                 <button
                   onClick={() => setShowSearchModal(false)}
-                  className="p-2 text-gray-500 hover:text-gray-700"
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   <FaTimes className="w-5 h-5" />
                 </button>
@@ -1122,19 +1122,19 @@ const ProfessionalDiscovery = () => {
                 <div className="space-y-6">
                 {/* Search Input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">What service do you need?</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">What service do you need?</label>
                   <ServiceSelector
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder="Search for any service (e.g., Electrician, Hair Stylist, Tutor, DJ...)"
                     allowCustom={true}
-                    className="w-full"
+                    className="w-full dark:bg-gray-900"
                   />
                 </div>
 
                 {/* Popular Services */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Popular Services</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-3 dark:text-gray-300">Popular Services</label>
                     <div className="grid grid-cols-2 gap-2">
                       {['Electrician', 'Plumber', 'Hair Stylist', 'Hairdresser', 'Mechanic', 'Carpenter', 'Painter', 'Makeup Artist', 'Tailor', 'AC Technician', 'Generator Repair'].map((service) => (
                       <button
@@ -1142,8 +1142,8 @@ const ProfessionalDiscovery = () => {
                         onClick={() => setSearchQuery(service)}
                         className={`p-3 text-left rounded-lg border transition-colors ${
                           searchQuery === service
-                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-800'
                         }`}
                       >
                         {service}
@@ -1154,13 +1154,13 @@ const ProfessionalDiscovery = () => {
 
                 {/* Location Search */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Location</label>
                   <input
                     type="text"
                     placeholder="e.g., Lagos, Victoria Island, Abuja..."
                     value={filters.location}
                     onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                   />
                 </div>
 
@@ -1168,7 +1168,7 @@ const ProfessionalDiscovery = () => {
                 <div className="border-t pt-4">
                   <button
                     onClick={() => setShowSearchModal(false)}
-                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500"
+                    className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                   >
                     Search Professionals
                   </button>
@@ -1182,17 +1182,17 @@ const ProfessionalDiscovery = () => {
       {/* Unfriend Confirmation Modal */}
       {showUnfriendModal && professionalToUnfriend && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 dark:bg-gray-900 dark:shadow-2xl dark:shadow-black/60">
             <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 dark:text-gray-100">
                 Unfriend {professionalToUnfriend.name}?
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-6 dark:text-gray-300">
                 Are you sure you want to unfriend {professionalToUnfriend.name}? This action is irreversible and will:
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>Remove them from your connections</li>
                   <li>Remove you from their connections</li>
-                  <li className="text-red-600 font-semibold">Delete all chat history permanently</li>
+                  <li className="text-red-600 font-semibold dark:text-red-400">Delete all chat history permanently</li>
                   <li>Remove them from your messaging interface</li>
                 </ul>
               </p>
@@ -1202,13 +1202,13 @@ const ProfessionalDiscovery = () => {
                     setShowUnfriendModal(false);
                     setProfessionalToUnfriend(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleUnfriendConfirm}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors dark:bg-red-500 dark:hover:bg-red-400"
                 >
                   Unfriend
                 </button>

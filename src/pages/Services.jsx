@@ -86,27 +86,27 @@ const Services = () => {
   }, [filteredServices, currentPage]);
 
   return (
-    <section className="px-4 md:px-12 py-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 min-h-screen">
+    <section className="px-4 md:px-12 py-0 min-h-screen bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 transition-colors">
       {/* Hero */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-white" />
+        <div className="absolute inset-0 -z-10 bg-white dark:bg-gray-900" />
         <div className="max-w-6xl mx-auto py-12 md:py-16">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">Explore Verified Local Services</h1>
-            <p className="text-gray-600 text-lg mt-3 max-w-2xl mx-auto">Find trusted professionals near you. Filter by skill, location, and more.</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight dark:text-gray-100">Explore Verified Local Services</h1>
+            <p className="text-gray-600 text-lg mt-3 max-w-2xl mx-auto dark:text-gray-300">Find trusted professionals near you. Filter by skill, location, and more.</p>
             {/* Quick category chips */}
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               {allCategories.slice(0,8).map((c)=> (
-                <button key={c} onClick={()=>{ setCategory(c); setPage(1); }} className={`px-3 py-1.5 rounded-full text-sm border ${category===c? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'}`}>{c}</button>
+                <button key={c} onClick={()=>{ setCategory(c); setPage(1); }} className={`px-3 py-1.5 rounded-full text-sm border ${category===c? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-800'}`}>{c}</button>
               ))}
             </div>
             {/* View toggle */}
             <div className="flex justify-center mt-6">
-              <div className="bg-white rounded-lg p-1 shadow-md border">
-                <button onClick={() => setViewMode("list")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "list"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"}`}>
+              <div className="bg-white rounded-lg p-1 shadow-md border dark:bg-gray-900 dark:border-gray-800">
+                <button onClick={() => setViewMode("list")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "list"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"}`}>
                   <FaList size={16} /> List View
                 </button>
-                <button onClick={() => setViewMode("map")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "map"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800"}`}>
+                <button onClick={() => setViewMode("map")} className={`px-4 py-2 rounded-md flex items-center gap-2 transition-all ${viewMode === "map"? "bg-blue-600 text-white shadow-sm" : "text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white"}`}>
                   <FaMap size={16} /> Map View
                 </button>
               </div>
@@ -136,8 +136,8 @@ const Services = () => {
           <div className="lg:w-3/4">
             {/* Toolbar */}
             <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-gray-600">{filteredServices.length} results</p>
-              <select value={sortBy} onChange={(e)=>{ setSortBy(e.target.value); setPage(1); }} className="border rounded-md px-3 py-2 text-sm">
+              <p className="text-sm text-gray-600 dark:text-gray-400">{filteredServices.length} results</p>
+              <select value={sortBy} onChange={(e)=>{ setSortBy(e.target.value); setPage(1); }} className="border rounded-md px-3 py-2 text-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700">
                 <option value="relevance">Sort: Relevance</option>
                 <option value="name-asc">Name A–Z</option>
                 <option value="name-desc">Name Z–A</option>
@@ -156,7 +156,7 @@ const Services = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center mt-16 text-gray-600">
+              <div className="text-center mt-16 text-gray-600 dark:text-gray-400">
                 <img
                   src="/images/empty.png"
                   alt="No services"
@@ -165,7 +165,7 @@ const Services = () => {
                 <h2 className="text-2xl font-semibold mb-2">
                   No matching services found
                 </h2>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-400 dark:text-gray-500">
                   Try adjusting your search terms or filters.
                 </p>
               </div>
@@ -174,20 +174,20 @@ const Services = () => {
             {/* Pagination */}
             {filteredServices.length > pageSize && (
               <div className="mt-8 flex items-center justify-center gap-2">
-                <button onClick={()=> setPage((p)=> Math.max(1, p-1))} disabled={currentPage===1} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50">Prev</button>
+                <button onClick={()=> setPage((p)=> Math.max(1, p-1))} disabled={currentPage===1} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700">Prev</button>
                 {Array.from({length: totalPages}).slice(0,6).map((_, i)=> {
                   const num = i+1;
                   return (
-                    <button key={num} onClick={()=> setPage(num)} className={`px-3 py-1.5 rounded border text-sm ${currentPage===num? 'bg-blue-600 text-white border-blue-600' : 'bg-white'}`}>{num}</button>
+                    <button key={num} onClick={()=> setPage(num)} className={`px-3 py-1.5 rounded border text-sm ${currentPage===num? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700'}`}>{num}</button>
                   );
                 })}
-                <button onClick={()=> setPage((p)=> Math.min(totalPages, p+1))} disabled={currentPage===totalPages} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50">Next</button>
+                <button onClick={()=> setPage((p)=> Math.min(totalPages, p+1))} disabled={currentPage===totalPages} className="px-3 py-1.5 rounded border text-sm disabled:opacity-50 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700">Next</button>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 dark:bg-gray-900 dark:border dark:border-gray-800">
           <ServicesMap />
         </div>
       )}
