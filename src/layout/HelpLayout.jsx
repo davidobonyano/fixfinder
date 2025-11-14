@@ -1,8 +1,24 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { FaQuestionCircle, FaEnvelope, FaArrowLeft } from "react-icons/fa";
+import { FaQuestionCircle, FaEnvelope, FaArrowLeft, FaFileContract } from "react-icons/fa";
 
 const HelpLayout = () => {
   const location = useLocation();
+  
+  // Determine back link based on current page and state
+  const getBackLink = () => {
+    // If on terms page and came from join page, go back to join
+    if (location.pathname === '/help/terms' && location.state?.from === '/join') {
+      return { to: '/join', text: 'Back to Join as Pro' };
+    }
+    // If on terms page and came from signup page, go back to signup
+    if (location.pathname === '/help/terms' && location.state?.from === '/signup') {
+      return { to: '/signup', text: 'Back to Signup' };
+    }
+    // Default: go to home
+    return { to: '/', text: 'Back to Home' };
+  };
+  
+  const backLink = getBackLink();
 
   const breadcrumbs = location.pathname
     .split("/")
@@ -50,6 +66,19 @@ const HelpLayout = () => {
             <FaEnvelope />
             Contact Support
           </NavLink>
+          <NavLink
+            to="/help/terms"
+            className={({ isActive }) =>
+              `flex items-center gap-2 transition ${
+                isActive
+                  ? "text-indigo-600 font-semibold"
+                  : "text-gray-700 hover:text-indigo-500"
+              }`
+            }
+          >
+            <FaFileContract />
+            Terms & Conditions
+          </NavLink>
         </nav>
       </aside>
 
@@ -58,11 +87,11 @@ const HelpLayout = () => {
         {/* Breadcrumb navigation */}
         <div className="mb-6">
           <NavLink
-            to="/"
+            to={backLink.to}
             className="inline-flex items-center text-sm text-indigo-600 hover:underline mb-2"
           >
             <FaArrowLeft className="mr-1 text-xs" />
-            Back to Home
+            {backLink.text}
           </NavLink>
 
           <div className="text-sm text-gray-500 flex flex-wrap gap-1">

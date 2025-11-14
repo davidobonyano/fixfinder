@@ -22,6 +22,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Join from "./pages/Join";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 
 // Dashboard Pages
@@ -105,6 +106,7 @@ const router = createBrowserRouter(
           <Route path="help" element={<HelpLayout />}>
             <Route path="faq" element={<Faq />} />
             <Route path="contact" element={<Contact />} />
+            <Route path="terms" element={<Terms />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
@@ -143,6 +145,7 @@ const router = createBrowserRouter(
         <Route path="profile" element={<ProProfile />} />
         <Route path="create-profile" element={<ProfessionalForm />} />
         <Route path="edit-profile" element={<ProfessionalForm />} />
+          <Route path="verify-face" element={<Verify />} />
         {/* Add more professional dashboard routes here */}
       </Route>
     </>

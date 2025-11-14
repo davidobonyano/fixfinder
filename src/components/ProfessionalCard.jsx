@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkerAlt, faStar, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
+import VerifiedBadge from './VerifiedBadge';
+import { getVerificationState } from '../utils/verificationUtils';
 
 const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
   // Handle real professional data structure from backend
@@ -61,6 +63,8 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
     }
   } catch (e) {}
 
+  const { fullyVerified } = getVerificationState(pro);
+
   return (
     <Link 
       to={`/dashboard/professional/${pro._id || pro.id}`}
@@ -74,19 +78,25 @@ const ProfessionalCard = ({ pro, onReviewClick, userLocation }) => {
         console.log('ProfessionalCard: Card clicked, navigating to:', pro._id || pro.id);
       }}
     >
-      <img
-        src={image}
-        alt={pro.name}
-        className="w-full h-40 object-cover rounded-lg mb-4"
-        onError={(e) => {
-          console.log('Image failed to load:', image);
-          e.currentTarget.src = '/images/placeholder.jpeg';
-        }}
-        onLoad={() => console.log('Image loaded successfully:', image)}
-      />
+      <div className="relative mb-4">
+        <img
+          src={image}
+          alt={pro.name}
+          className="w-full h-40 object-cover rounded-lg"
+          onError={(e) => {
+            console.log('Image failed to load:', image);
+            e.currentTarget.src = '/images/placeholder.jpeg';
+          }}
+          onLoad={() => console.log('Image loaded successfully:', image)}
+        />
+        {fullyVerified && <VerifiedBadge size="sm" className="absolute top-2 right-2 shadow-lg" />}
+      </div>
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-1">{pro.name}</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
+          {pro.name}
+          {fullyVerified && <VerifiedBadge size="sm" />}
+        </h3>
         <p className="text-sm text-gray-600 mb-2 flex items-center gap-1">
           <FontAwesomeIcon icon={faMapMarkerAlt} className="text-blue-500" />
           {location}

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { createProfessional, uploadProfessionalMedia, registerUser, loginUser, getServicesApi, uploadProfilePicture, snapToLGAApi } from '../utils/api';
 import ServiceSelector from '../components/ServiceSelector';
@@ -528,7 +528,7 @@ const JoinAsPro = () => {
             )}
           </div>
 
-          <p className="text-sm text-center text-gray-500 mt-6 dark:text-gray-400">By joining, you agree to FixFinder's <span className="underline text-[#003366] cursor-pointer dark:text-indigo-300">Terms & Privacy</span>.</p>
+          <p className="text-sm text-center text-gray-500 mt-6 dark:text-gray-400">By joining, you agree to FindYourFixer's <Link to="/help/terms" state={{ from: '/join' }} className="underline text-[#003366] cursor-pointer dark:text-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400">Terms & Privacy</Link>.</p>
         </form>
         </div>
       </div>

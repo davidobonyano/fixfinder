@@ -96,6 +96,13 @@ export default function Signup() {
         >
           {loading ? "Creating Account..." : "Create User Account"}
         </button>
+        
+        <p className="text-sm text-center text-gray-500 mt-4">
+          By signing up, you agree to FindYourFixer's{" "}
+          <Link to="/help/terms" state={{ from: '/signup' }} className="underline text-blue-600 hover:text-blue-700">
+            Terms & Privacy
+          </Link>.
+        </p>
       </form>
 
       {/* Professional Registration Link */}

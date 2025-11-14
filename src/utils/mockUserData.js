@@ -21,6 +21,13 @@ export const mockUserData = {
     videoDurationMs: null,
     hasAudio: null,
     frameCount: null
+  },
+  faceVerification: {
+    status: "not_started",
+    referenceImageUrl: null,
+    lastScore: null,
+    modelVersion: null,
+    verifiedAt: null
   }
 };
 
@@ -38,6 +45,13 @@ export const mockUserWithPicture = {
     status: "approved",
     submittedAt: "2024-01-20T14:30:00Z",
     reviewedAt: "2024-01-21T09:15:00Z"
+  },
+  faceVerification: {
+    status: "verified",
+    referenceImageUrl: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
+    lastScore: 0.92,
+    modelVersion: "face-api.js@1",
+    verifiedAt: "2024-01-21T09:15:00Z"
   }
 };
 
@@ -56,6 +70,13 @@ export const mockProfessionalUser = {
     status: "approved",
     submittedAt: "2024-01-18T11:20:00Z",
     reviewedAt: "2024-01-19T16:45:00Z"
+  },
+  faceVerification: {
+    status: "verified",
+    referenceImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+    lastScore: 0.9,
+    modelVersion: "face-api.js@1",
+    verifiedAt: "2024-01-19T16:45:00Z"
   }
 };
 

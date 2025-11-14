@@ -31,6 +31,8 @@ import {
   FaTimes,
   FaSpinner
 } from 'react-icons/fa';
+import VerifiedBadge from '../components/VerifiedBadge';
+import { getVerificationState } from '../utils/verificationUtils';
 
 const ProfessionalDetail = () => {
   const { id } = useParams();
@@ -615,6 +617,9 @@ const ProfessionalDetail = () => {
     return stars;
   };
 
+  const verificationState = useMemo(() => getVerificationState(professional), [professional]);
+  const { fullyVerified, emailVerified, faceVerified } = verificationState;
+
   if (loading) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -793,20 +798,22 @@ const ProfessionalDetail = () => {
                 className="h-28 w-28 sm:h-36 sm:w-36 rounded-2xl border-4 border-white shadow-xl object-cover"
                 onError={(e) => (e.currentTarget.src = '/images/placeholder.jpeg')}
               />
-              {professional.isVerified && (
-                <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
-                  <FaCheckCircle className="w-3 h-3" />
-                  Verified
-                </span>
+              {fullyVerified && (
+                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2">
+                  <VerifiedBadge size="sm" />
+                </div>
               )}
             </div>
 
             <div className="flex-1">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                    {professional.name}
-                  </h1>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                      {professional.name}
+                    </h1>
+                    {fullyVerified && <VerifiedBadge size="md" />}
+                  </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-600">
                     {professional.category && (
                       <span className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-medium capitalize">
@@ -862,6 +869,20 @@ const ProfessionalDetail = () => {
                         {availabilityLabel}
                       </span>
                     </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {emailVerified && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-emerald-700">
+                        <FaCheckCircle className="w-3 h-3" />
+                        Email verified
+                      </span>
+                    )}
+                    {faceVerified && (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-sky-700">
+                        <FaShieldAlt className="w-3 h-3" />
+                        Face verified
+                      </span>
+                    )}
+                  </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     {!isOwner && (
@@ -1227,7 +1248,7 @@ const ProfessionalDetail = () => {
                   <FaBriefcase className="w-4 h-4 text-amber-500" />
                   <span>{completedJobs} jobs completed</span>
                 </div>
-                {professional.isVerified && (
+                {fullyVerified && (
                   <div className="flex items-center gap-3">
                     <FaShieldAlt className="w-4 h-4 text-emerald-500" />
                     <span>Verified professional</span>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   FaUser, 
   FaCamera, 
@@ -29,10 +30,13 @@ import { compressImage, validateImageFile } from '../../utils/imageCompression';
 import { compressVideo, validateVideoFile, getFileSizeString } from '../../utils/videoCompression';
 import { useAuth } from '../../context/useAuth';
 import ServiceSelector from '../../components/ServiceSelector';
+import VerifiedBadge from '../../components/VerifiedBadge';
 import { validateProfessionalForm, validatePortfolioUpload } from '../../utils/validation';
 import { useLocation as useLocationHook } from '../../hooks/useLocation';
+import { getVerificationState } from '../../utils/verificationUtils';
 
 export default function ProProfile() {
+  const navigate = useNavigate();
   const { user: authUser, login, logout, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
   const [professionalData, setProfessionalData] = useState(null);
@@ -76,6 +80,8 @@ export default function ProProfile() {
   });
   const { location: detectedLocation } = useLocationHook(false);
   const [updatingLocation, setUpdatingLocation] = useState(false);
+  const { emailVerified, faceVerified, fullyVerified } = getVerificationState(user);
+  const faceStatus = user?.faceVerification?.status || "not_started";
 
   const handleUpdateLocation = async () => {
     try {
@@ -717,7 +723,10 @@ export default function ProProfile() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Professional Profile</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex flex-wrap items-center gap-3">
+          Professional Profile
+          {fullyVerified && <VerifiedBadge size="sm" />}
+        </h1>
         <p className="text-gray-600">Manage your professional profile and showcase your expertise</p>
       </div>
 
@@ -734,6 +743,57 @@ export default function ProProfile() {
           {error}
         </div>
       )}
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 mb-8 flex flex-col lg:flex-row gap-6">
+        <div className="flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">Get more jobs</p>
+          <h2 className="text-2xl font-bold text-slate-900 mt-1">Verify your identity</h2>
+          <p className="text-sm text-slate-600 mt-2">
+            Complete both email and face verification to unlock the Verified Pro badge. Verified pros rank higher in search
+            results and build instant trust with new customers.
+          </p>
+          <div className="flex flex-wrap gap-3 mt-4 text-sm">
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${
+                emailVerified ? "border-emerald-500/40 bg-emerald-50 text-emerald-700 dark:border-emerald-500/60 dark:bg-emerald-500/15 dark:text-emerald-200" : "border-amber-500/40 bg-amber-50 text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/15 dark:text-amber-200"
+              }`}
+            >
+              <FaCheck className="w-3 h-3" />
+              Email {emailVerified ? "verified" : "pending"}
+            </span>
+            <span
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${
+                faceVerified
+                  ? "border-sky-500/50 bg-sky-50 text-sky-700 dark:border-sky-500/60 dark:bg-sky-500/15 dark:text-sky-200"
+                  : faceStatus === "in_progress"
+                    ? "border-amber-500/40 bg-amber-50 text-amber-700 dark:border-amber-500/60 dark:bg-amber-500/15 dark:text-amber-200"
+                    : "border-slate-400/50 bg-slate-100 text-slate-600 dark:border-slate-500 dark:bg-slate-800/60 dark:text-slate-300"
+              }`}
+            >
+              <FaShieldAlt className="w-3 h-3" />
+              Face{" "}
+              {faceVerified ? "verified" : faceStatus === "in_progress" ? "in progress" : "not verified"}
+            </span>
+          </div>
+          {fullyVerified && (
+            <VerifiedBadge size="lg" className="mt-4 w-max" />
+          )}
+        </div>
+        <div className="w-full lg:w-auto">
+          <button
+            onClick={() => navigate("/dashboard/professional/verify-face")}
+            disabled={faceVerified}
+            className="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white bg-indigo-600 shadow-sm hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {faceVerified ? "Face Verified" : "Start Face Verification"}
+          </button>
+          {faceVerified && user?.faceVerification?.verifiedAt && (
+            <p className="text-xs text-slate-500 mt-2">
+              Verified on {new Date(user.faceVerification.verifiedAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Profile Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

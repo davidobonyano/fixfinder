@@ -8,6 +8,8 @@ import { calculateDistance as haversineDistance, formatDistance } from '../../ut
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import ServiceSelector from '../../components/ServiceSelector';
+import VerifiedBadge from '../../components/VerifiedBadge';
+import { getVerificationState } from '../../utils/verificationUtils';
 
 const ProfessionalsPage = () => {
   const { user } = useAuth();
@@ -554,8 +556,11 @@ const ProfessionalsPage = () => {
             </div>
           </div>
         ) : viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-            {filteredProfessionals.map((professional) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-6">
+            {filteredProfessionals.map((professional) => {
+              const verificationState = getVerificationState(professional);
+              const fullyVerified = verificationState.fullyVerified;
+              return (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
@@ -567,6 +572,7 @@ const ProfessionalsPage = () => {
                     alt={professional.name}
                     className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
+                  {/* Badge removed from image per request */}
                   <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-gray-900/85 dark:text-gray-100">
                     <FaMapMarkerAlt className="h-3 w-3 text-emerald-500 dark:text-emerald-300" />
                     <span>
@@ -578,7 +584,10 @@ const ProfessionalsPage = () => {
                 <div className="flex h-full flex-col gap-4 p-6">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100 flex items-center gap-2">
+                        {professional.name}
+                        {fullyVerified && <VerifiedBadge size="sm" />}
+                      </h3>
                       <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">{professional.category}</p>
                     </div>
                     <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
@@ -667,11 +676,14 @@ const ProfessionalsPage = () => {
                   </div>
                 </div>
               </Link>
-            ))}
+            )})}
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredProfessionals.map((professional) => (
+            {filteredProfessionals.map((professional) => {
+              const verificationState = getVerificationState(professional);
+              const fullyVerified = verificationState.fullyVerified;
+              return (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
@@ -684,6 +696,7 @@ const ProfessionalsPage = () => {
                       alt={professional.name}
                       className="h-full w-full object-cover"
                     />
+                    {/* Badge removed from image per request */}
                     <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-gray-900/85 dark:text-gray-100">
                       <FaMapMarkerAlt className="h-3 w-3 text-emerald-500 dark:text-emerald-300" />
                       {formatDistance(professional.distance)}
@@ -693,7 +706,10 @@ const ProfessionalsPage = () => {
                   <div className="flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100 flex items-center gap-2">
+                          {professional.name}
+                          {fullyVerified && <VerifiedBadge size="sm" />}
+                        </h3>
                         <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">{professional.category}</p>
                       </div>
                       <div className="flex items-center gap-2 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
@@ -776,7 +792,7 @@ const ProfessionalsPage = () => {
                   </div>
                 </div>
               </Link>
-            ))}
+            )})}
           </div>
         )}
       </div>

@@ -10,6 +10,8 @@ import { useToast } from '../context/ToastContext';
 import LiveLocationMap from '../components/LiveLocationMap';
 import ServiceSelector from '../components/ServiceSelector';
 import { searchServices, normalizeService } from '../data/services';
+import VerifiedBadge from '../components/VerifiedBadge';
+import { getVerificationState } from '../utils/verificationUtils';
 
 const ProfessionalDiscovery = () => {
   const { user } = useAuth();
@@ -194,7 +196,8 @@ const ProfessionalDiscovery = () => {
       const ratingVal = typeof professional.rating === 'number' ? professional.rating : 0;
       const matchesRating = ratingVal >= filters.rating;
       
-      const matchesVerified = !filters.verified || professional.isVerified;
+      const verificationState = getVerificationState(professional);
+      const matchesVerified = !filters.verified || verificationState.fullyVerified;
       
       const passes = matchesSearch && matchesService && matchesLocation && matchesPrice && matchesRating && matchesVerified;
       
@@ -330,13 +333,13 @@ const ProfessionalDiscovery = () => {
               } catch (e) {}
             }
             
-            // Handle images - use professional photos first, then user profile picture, then placeholder
-            let image = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop';
-            if (pro.photos && pro.photos.length > 0 && pro.photos[0] !== '/images/placeholder.jpeg') {
-              image = pro.photos[0];
-            } else if (pro.user?.profilePicture) {
-              image = pro.user.profilePicture;
-            }
+            // Handle images - prioritize profile picture like other pages, then fallback to placeholder
+            const image = pro.user?.profilePicture
+              || pro.user?.avatarUrl
+              || pro.profilePicture
+              || pro.avatarUrl
+              || pro.image
+              || '/images/placeholder.jpeg';
             
             const normalizedPro = {
               ...pro,
@@ -373,7 +376,6 @@ const ProfessionalDiscovery = () => {
               rating: normalizedPro.rating,
               ratingCount: normalizedPro.ratingCount,
               isActive: normalizedPro.isActive,
-              photos: pro.photos,
               userProfilePicture: pro.user?.profilePicture,
               finalImage: image
             });
@@ -720,10 +722,23 @@ const ProfessionalDiscovery = () => {
           <div
             className={
               viewMode === 'grid'
-                ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-6"
                 : "space-y-4"
             }>
-            {filteredAndSortedProfessionals.map((professional) => (
+            {filteredAndSortedProfessionals.map((professional) => {
+              const verificationState = getVerificationState(professional);
+              const fullyVerified = verificationState.fullyVerified;
+              console.log('✅ Verification state for', professional.name, {
+                professionalId: professional._id,
+                isVerified: professional?.isVerified,
+                verified: professional?.verified,
+                userIsVerified: professional?.user?.isVerified,
+                userVerified: professional?.user?.verified,
+                emailVerification: professional?.emailVerification,
+                faceVerification: professional?.faceVerification,
+                computed: verificationState,
+              });
+              return (
               <Link
                 key={professional._id}
                 to={`/dashboard/professional/${professional._id}`}
@@ -740,11 +755,7 @@ const ProfessionalDiscovery = () => {
                         alt={professional.name}
                         className="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      {professional.isVerified && (
-                        <div className="absolute top-3 right-3 rounded-full bg-indigo-600/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white shadow dark:bg-indigo-500/90">
-                          ✓ Verified
-                        </div>
-                      )}
+                      {/* Badge removed from image per request */}
                       <div className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm dark:bg-gray-900/90 dark:text-gray-100">
                         <FaMapMarkerAlt className="h-3 w-3 text-emerald-500 dark:text-emerald-300" />
                         <span>
@@ -756,7 +767,10 @@ const ProfessionalDiscovery = () => {
                     <div className="flex h-full flex-col gap-4 p-6">
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-gray-100 flex items-center gap-2">
+                            {professional.name}
+                            {fullyVerified && <VerifiedBadge size="sm" />}
+                          </h3>
                           <span className="flex items-center gap-1 rounded-full bg-amber-100/80 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
                             <FaStar className="h-3 w-3" />
                             {professional.rating || 0}
@@ -777,7 +791,7 @@ const ProfessionalDiscovery = () => {
                         </span>
                       </div>
                       
-                      <div className="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:text-gray-300 dark:ring-slate-700/60">
+                      <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2 text-sm text-slate-500 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:text-gray-300 dark:ring-slate-700/60">
                         <FaMapMarkerAlt className="h-3.5 w-3.5 text-emerald-500 dark:text-emerald-300" />
                         <span className="line-clamp-1">{professional.location?.address || 'Location on request'}</span>
                       </div>
@@ -880,17 +894,16 @@ const ProfessionalDiscovery = () => {
                         alt={professional.name}
                         className="h-full w-full object-cover"
                       />
-                      {professional.isVerified && (
-                        <div className="absolute -top-1 -right-1 rounded-full bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white dark:bg-indigo-500">
-                          ✓
-                        </div>
-                      )}
+                      {/* Badge removed from image per request */}
                     </div>
                     
                     <div className="min-w-0 flex-1 space-y-3">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <h3 className="truncate text-lg font-semibold text-slate-900 dark:text-gray-100">{professional.name}</h3>
+                          <h3 className="truncate text-lg font-semibold text-slate-900 dark:text-gray-100 flex items-center gap-2">
+                            {professional.name}
+                            {fullyVerified && <VerifiedBadge size="sm" />}
+                          </h3>
                           <p className="text-sm font-medium uppercase tracking-wide text-slate-500 dark:text-gray-400">{professional.category}</p>
                         </div>
                         
@@ -990,7 +1003,7 @@ const ProfessionalDiscovery = () => {
                   </>
                 )}
               </Link>
-            ))}
+            )})}
           </div>
         )}
       </div>

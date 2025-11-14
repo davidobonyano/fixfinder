@@ -400,6 +400,30 @@ export const sendProfessionalEmailVerification = () => request("/api/professiona
   auth: true
 });
 
+export const getFaceVerificationStatus = () => request("/api/verify/face/status", { auth: true });
+
+export const startFaceVerification = () => request("/api/verify/face/start", {
+  method: "POST",
+  auth: true
+});
+
+export const setFaceReference = (payload) => request("/api/verify/face/reference", {
+  method: "POST",
+  body: payload,
+  auth: true
+});
+
+export const submitFaceCapture = (formData) => request("/api/verify/face/capture", {
+  method: "POST",
+  body: formData,
+  auth: true
+});
+
+export const resetFaceVerification = () => request("/api/verify/face/reset", {
+  method: "POST",
+  auth: true
+});
+
 export const deleteAccount = () => request("/api/users/delete-account", {
   method: "DELETE",
   auth: true
