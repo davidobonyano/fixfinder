@@ -424,14 +424,14 @@ const Home = () => {
 
         {/* 🔥 Popular Categories - Mint Blue section with V-shaped image cards */}
         <div className="py-16 relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-cyan-50 via-emerald-50 to-white" />
-          <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full bg-cyan-200/30 blur-3xl" />
-          <div className="absolute -bottom-24 -right-24 w-[520px] h-[520px] rounded-full bg-emerald-200/30 blur-3xl" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-cyan-50 via-emerald-50 to-white dark:from-gray-900 dark:via-slate-800 dark:to-gray-950 transition-colors" />
+          <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full bg-cyan-200/30 dark:bg-cyan-500/10 blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-[520px] h-[520px] rounded-full bg-emerald-200/30 dark:bg-emerald-500/10 blur-3xl" />
 
-          <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-center text-gray-800 dark:text-gray-100">
             Top 10 Most Popular Categories for {new Date().getFullYear()}
           </h2>
-          <p className="mt-3 text-center text-gray-600">Hand-picked categories people book the most this year.</p>
+          <p className="mt-3 text-center text-gray-600 dark:text-gray-400">Hand-picked categories people book the most this year.</p>
 
           {(() => {
             const categories = [
@@ -453,7 +453,7 @@ const Home = () => {
                   {loop.map((cat, idx) => (
                     <div
                       key={`${cat.label}-${idx}`}
-                      className={`group relative flex-shrink-0 w-[220px] h-[300px] rounded-2xl overflow-hidden shadow-lg border border-white/40 bg-white/70 backdrop-blur-sm transition-transform duration-300 ${idx % 2 === 0 ? '-rotate-6' : 'rotate-6'} hover:rotate-0`}
+                      className={`group relative flex-shrink-0 w-[220px] h-[300px] rounded-2xl overflow-hidden shadow-lg border border-white/40 dark:border-gray-700/40 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm transition-transform duration-300 ${idx % 2 === 0 ? '-rotate-6' : 'rotate-6'} hover:rotate-0`}
                     >
                       <img
                         src={cat.img}
@@ -466,7 +466,7 @@ const Home = () => {
                         <div>
                           <p className="text-white font-semibold drop-shadow-sm">{cat.label}</p>
                         </div>
-                        <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-white/90 text-gray-800 shadow">Explore</span>
+                        <span className="px-2 py-1 rounded-full text-[10px] font-medium bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 shadow dark:shadow-gray-900/50">Explore</span>
                       </div>
                     </div>
                   ))}

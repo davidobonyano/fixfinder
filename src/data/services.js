@@ -21,7 +21,8 @@ export const SERVICES = {
     'AC Technician': ['ac technician', 'air conditioning', 'cooling', 'hvac'],
     'Generator Repair': ['generator', 'power backup', 'inverter', 'electrical repair'],
     'Bricklayer': ['bricklayer', 'brickwork', 'mason', 'masonry', 'construction', 'building'],
-    'Engineer': ['engineer', 'civil engineer', 'structural engineer', 'engineering']
+    'Engineer': ['engineer', 'civil engineer', 'structural engineer', 'engineering'],
+    'Laundry Services': ['laundry', 'laundry service', 'washing', 'dry cleaning', 'clothes washing', 'laundryman', 'laundry woman']
   },
 
   // Education & Tutoring
@@ -80,7 +81,10 @@ export const SERVICES = {
     'Taxi Service': ['taxi', 'cab', 'ride service', 'transport'],
     'Mechanic': ['mechanic', 'auto mechanic', 'car mechanic', 'vehicle repair', 'automotive repair', 'car repair'],
     'Errand Boy': ['errand boy', 'errand service', 'personal assistant', 'task runner', 'errand runner'],
-    'Errand Girl': ['errand girl', 'errand service', 'personal assistant', 'task runner', 'errand runner']
+    'Errand Girl': ['errand girl', 'errand service', 'personal assistant', 'task runner', 'errand runner'],
+    'Bike Man': ['bike man', 'bike delivery', 'bike rider', 'bicycle delivery', 'bike errand', 'okada', 'motorcycle delivery'],
+    'Gas Refill': ['gas refill', 'gas filling', 'cooking gas', 'lpg refill', 'gas cylinder', 'gas service', 'gas delivery'],
+    'Car Wash Services': ['car wash', 'car washing', 'vehicle wash', 'auto wash', 'car cleaning', 'car detailing', 'vehicle cleaning']
   },
 
   // Health & Fitness
