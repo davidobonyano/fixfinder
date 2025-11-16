@@ -744,11 +744,11 @@ export default function ProProfile() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 mb-8 flex flex-col lg:flex-row gap-6">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white rounded-3xl p-6 mb-8 flex flex-col lg:flex-row gap-6">
         <div className="flex-1">
-          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500">Get more jobs</p>
-          <h2 className="text-2xl font-bold text-slate-900 mt-1">Verify your identity</h2>
-          <p className="text-sm text-slate-600 mt-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-indigo-500 dark:text-white">Get more jobs</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">Verify your identity</h2>
+          <p className="text-sm text-slate-600 dark:text-gray-300 mt-2">
             Complete both email and face verification to unlock the Verified Pro badge. Verified pros rank higher in search
             results and build instant trust with new customers.
           </p>
@@ -788,7 +788,7 @@ export default function ProProfile() {
             {faceVerified ? "Face Verified" : "Start Face Verification"}
           </button>
           {faceVerified && user?.faceVerification?.verifiedAt && (
-            <p className="text-xs text-slate-500 mt-2">
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-2">
               Verified on {new Date(user.faceVerification.verifiedAt).toLocaleDateString()}
             </p>
           )}
@@ -797,35 +797,35 @@ export default function ProProfile() {
 
       {/* Profile Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-white p-6">
           <div className="flex items-center gap-3">
-            <FaBriefcase className="w-6 h-6 text-indigo-500" />
+            <FaBriefcase className="w-6 h-6 text-indigo-500 dark:text-white" />
             <div>
-              <p className="text-sm font-medium text-gray-600">Account Type</p>
-              <p className="text-2xl font-bold text-gray-900 capitalize">{user?.role || "Professional"}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Account Type</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{user?.role || "Professional"}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-white p-6">
           <div className="flex items-center gap-3">
-            <FaShieldAlt className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-emerald-500' : 'text-amber-500'}`} />
+            <FaShieldAlt className={`w-6 h-6 ${user?.emailVerification?.isVerified ? 'text-emerald-500 dark:text-emerald-400' : 'text-amber-500 dark:text-amber-400'}`} />
             <div>
-              <p className="text-sm font-medium text-gray-600">Verification</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Verification</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {user?.emailVerification?.isVerified ? "Verified" : "Pending"}
               </p>
             </div>
             <div className="ml-auto">
               {user?.emailVerification?.isVerified ? (
-                <span className="text-sm font-medium text-emerald-600">
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                   ✓ Email Verified
                 </span>
               ) : (
                 <button
                   onClick={() => loadProfile(true)}
                   disabled={refreshing}
-                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 disabled:opacity-50"
                   title="Refresh verification status"
                 >
                   <FaSync className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
@@ -836,12 +836,12 @@ export default function ProProfile() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-white p-6">
           <div className="flex items-center gap-3">
-            <FaCalendarAlt className="w-6 h-6 text-indigo-500" />
+            <FaCalendarAlt className="w-6 h-6 text-indigo-500 dark:text-white" />
             <div>
-              <p className="text-sm font-medium text-gray-600">Member Since</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Member Since</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : "N/A"}
               </p>
             </div>
@@ -1517,13 +1517,13 @@ export default function ProProfile() {
             {!professionalData?.isVerified && (
               <button 
                 onClick={() => setSuccess("Professional verification request sent! Our team will review your profile and get back to you within 24-48 hours.")}
-                className="px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg hover:border-indigo-400 hover:text-indigo-700 transition-colors"
+                className="px-4 py-2 border border-indigo-200 dark:border-white text-indigo-600 dark:text-white rounded-lg hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition-colors"
               >
                 Request Verification
               </button>
             )}
             {professionalData?.isVerified && (
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                 <FaShieldAlt className="w-4 h-4" />
                 <span className="text-sm font-medium">Verified Professional</span>
               </div>

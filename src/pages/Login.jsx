@@ -80,7 +80,21 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (e) {
-      setError(e.message || "Login failed");
+      // Handle ban error with detailed message
+      if (e.status === 403 && e.data?.message === "Your account has been banned") {
+        const banReason = e.data?.reason || "Violation of Terms and Conditions";
+        const banExpiresAt = e.data?.banExpiresAt;
+        let banMessage = `Your account has been banned. Reason: ${banReason}`;
+        if (banExpiresAt) {
+          const expiresDate = new Date(banExpiresAt).toLocaleDateString();
+          banMessage += ` The ban will expire on ${expiresDate}.`;
+        } else {
+          banMessage += " This is a permanent ban.";
+        }
+        setError(banMessage);
+      } else {
+        setError(e.message || "Login failed");
+      }
     } finally {
       setLoading(false);
     }

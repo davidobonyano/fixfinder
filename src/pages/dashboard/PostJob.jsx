@@ -41,24 +41,24 @@ const PostJob = () => {
   // Using unified ServiceSelector; no local categories list needed
 
   const inputClasses = (hasError = false) =>
-    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none ${
+    `w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all focus:outline-none ${
       hasError
-        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
-        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+        ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500'
+        : 'border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400'
     }`;
 
   const textareaClasses = (hasError = false) =>
-    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none resize-none ${
+    `w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all focus:outline-none resize-none ${
       hasError
-        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
-        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+        ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500'
+        : 'border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400'
     }`;
 
   const selectClasses = (hasError = false) =>
-    `w-full px-4 py-3 border-2 rounded-xl bg-white transition-all focus:outline-none appearance-none ${
+    `w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-all focus:outline-none appearance-none ${
       hasError
-        ? 'border-red-400 focus:ring-2 focus:ring-red-200 focus:border-red-400'
-        : 'border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
+        ? 'border-red-400 dark:border-red-500 focus:ring-2 focus:ring-red-200 dark:focus:ring-red-900 focus:border-red-400 dark:focus:border-red-500'
+        : 'border-gray-200 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400'
     }`;
 
   const handleChange = (e) => {
@@ -333,22 +333,22 @@ const PostJob = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 lg:p-8">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
               <FaMagic className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
-              <p className="text-sm text-gray-500">Share what you need help with — the more specific, the better.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Job Details</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Share what you need help with — the more specific, the better.</p>
             </div>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 <span>Job Title *</span>
-                <span className="text-xs font-medium text-gray-400">{formData.title.length}/100</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{formData.title.length}/100</span>
               </label>
               <input
                 type="text"
@@ -364,9 +364,9 @@ const PostJob = () => {
             </div>
 
             <div>
-              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 <span>Description *</span>
-                <span className="text-xs font-medium text-gray-400">{formData.description.length}/1000</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{formData.description.length}/1000</span>
               </label>
               <textarea
                 name="description"
@@ -382,9 +382,9 @@ const PostJob = () => {
             </div>
 
             <div>
-              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 mb-2">
+              <label className="flex items-center justify-between text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 <span>Requirements (optional)</span>
-                <span className="text-xs font-medium text-gray-400">{formData.requirements.length}/500</span>
+                <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{formData.requirements.length}/500</span>
               </label>
               <textarea
                 name="requirements"
@@ -401,7 +401,7 @@ const PostJob = () => {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Service Category *</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Service Category *</label>
               <div className="rounded-xl border-2 border-gray-200 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
                 <ServiceSelector
                   value={formData.category}
@@ -418,20 +418,20 @@ const PostJob = () => {
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 lg:p-8">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
               <FaMapMarkerAlt className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Location</h2>
-              <p className="text-sm text-gray-500">Help your professional understand where the job will happen.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Location</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Help your professional understand where the job will happen.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">State & LGA *</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">State & LGA *</label>
               <div className="rounded-xl border-2 border-gray-200 p-1 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
                 <LocationSelector
                   value={{ state: locationForm.state, city: locationForm.city, neighborhood: locationForm.neighbourhood }}
@@ -444,7 +444,7 @@ const PostJob = () => {
               )}
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Neighbourhood / Address (optional)</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Neighbourhood / Address (optional)</label>
               <input
                 type="text"
                 value={locationForm.neighbourhood}
@@ -456,20 +456,20 @@ const PostJob = () => {
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 lg:p-8">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
               <FaClock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Budget & Schedule</h2>
-              <p className="text-sm text-gray-500">Set expectations for time and investment.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Budget & Schedule</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Set expectations for time and investment.</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Budget Range (₦) *</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">Budget Range (₦) *</label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <input
@@ -501,8 +501,8 @@ const PostJob = () => {
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <FaCalendarAlt className="w-4 h-4 text-indigo-500" />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <FaCalendarAlt className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 Preferred Date *
               </label>
               <input
@@ -521,8 +521,8 @@ const PostJob = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <FaClock className="w-4 h-4 text-indigo-500" />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <FaClock className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
                 Preferred Time
               </label>
               <div className="relative">
@@ -541,8 +541,8 @@ const PostJob = () => {
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                <FaExclamationTriangle className="w-4 h-4 text-amber-500" />
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <FaExclamationTriangle className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 Urgency Level
               </label>
               <div className="flex flex-wrap gap-3">
@@ -551,8 +551,8 @@ const PostJob = () => {
                     key={option}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all ${
                       formData.urgency === option
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 shadow-sm'
-                        : 'border-gray-200 text-gray-600 hover:border-indigo-300'
+                        ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 shadow-sm'
+                        : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-300 dark:hover:border-indigo-500 bg-white dark:bg-gray-800'
                     }`}
                   >
                     <input
@@ -571,20 +571,20 @@ const PostJob = () => {
           </div>
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 lg:p-8">
           <div className="flex items-start gap-4 mb-6">
             <div className="p-3 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl text-white shadow-md">
               <FaUpload className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Photo (Optional)</h2>
-              <p className="text-sm text-gray-500">A quick snapshot helps pros understand the task at a glance.</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Photo (Optional)</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">A quick snapshot helps pros understand the task at a glance.</p>
             </div>
           </div>
 
-          <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center bg-gradient-to-br from-indigo-50 to-indigo-100 hover:border-indigo-400 transition-all">
-            <FaUpload className="w-12 h-12 text-indigo-500 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">Upload one clear photo of your project</p>
+          <div className="border-2 border-dashed border-indigo-200 dark:border-indigo-600 rounded-2xl p-8 text-center bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-900 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all">
+            <FaUpload className="w-12 h-12 text-indigo-500 dark:text-indigo-400 mx-auto mb-4" />
+            <p className="text-gray-600 dark:text-gray-300 mb-2">Upload one clear photo of your project</p>
             <input
               type="file"
               accept="image/*"
@@ -622,10 +622,10 @@ const PostJob = () => {
           )}
         </section>
 
-        <section className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 lg:p-8">
+        <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3 text-sm text-gray-600">
-              <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-xl text-indigo-600">
+            <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300">
+              <div className="p-2 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/50 dark:to-indigo-800/50 rounded-xl text-indigo-600 dark:text-indigo-300">
                 <FaCheckCircle className="w-4 h-4" />
               </div>
               <span>Your job goes live instantly for nearby, verified professionals.</span>

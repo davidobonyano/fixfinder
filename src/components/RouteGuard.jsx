@@ -23,7 +23,8 @@ const RouteGuard = ({ children }) => {
       '/user/',              // user public profile
       '/services',
       '/verify',
-      '/verify-email'
+      '/verify-email',
+      '/help'                // help pages (FAQ, Contact, Terms, Report)
     ];
     const isAllowed = allowlist.some(prefix => path.startsWith(prefix));
     if (isAllowed) return; // don't redirect from allowed public routes
@@ -45,7 +46,7 @@ const RouteGuard = ({ children }) => {
     if (path === '/') return children; // Allow homepage
     
     // Check other allowed paths
-    const allowlist = ['/professionals', '/professional/', '/user/', '/services', '/verify', '/verify-email'];
+    const allowlist = ['/professionals', '/professional/', '/user/', '/services', '/verify', '/verify-email', '/help'];
     const isAllowed = allowlist.some(prefix => path.startsWith(prefix));
     if (!isAllowed) return null;
   }

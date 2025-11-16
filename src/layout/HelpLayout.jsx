@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { FaQuestionCircle, FaEnvelope, FaArrowLeft, FaFileContract } from "react-icons/fa";
+import { FaQuestionCircle, FaEnvelope, FaArrowLeft, FaFileContract, FaExclamationTriangle } from "react-icons/fa";
 
 const HelpLayout = () => {
   const location = useLocation();
@@ -78,6 +78,19 @@ const HelpLayout = () => {
           >
             <FaFileContract />
             Terms & Conditions
+          </NavLink>
+          <NavLink
+            to="/help/report"
+            className={({ isActive }) =>
+              `flex items-center gap-2 transition ${
+                isActive
+                  ? "text-indigo-600 font-semibold"
+                  : "text-gray-700 hover:text-indigo-500"
+              }`
+            }
+          >
+            <FaExclamationTriangle />
+            Report User
           </NavLink>
         </nav>
       </aside>

@@ -1,110 +1,104 @@
+# FindYourFixer
 
-# 🔧 FixFinder – Local Services Directory Web App
+A platform connecting users with verified local service professionals.
 
-FixFinder is a responsive and modern web application built with React and Tailwind CSS that helps users easily find verified local service providers—such as electricians, plumbers, tailors, and more—based on category and location.
+## Features
 
-## 🌟 Features
+- User and professional authentication
+- Job posting and management
+- Real-time chat messaging
+- Professional verification (email and face verification)
+- Location-based service discovery
+- Admin dashboard for user management
+- Reporting and ban system
+- Dark mode support
 
-- 🏠 **Home Page** with:
-  - Hero section
-  - "How It Works" overview
-  - User testimonials
-  - "Why Choose Us" highlights
-  - Dynamic service cards
-  - Geo-filtered search
+## Tech Stack
 
-- 📂 **Services Directory** (`/services`)
-  - Displays all service categories with icons and brief descriptions
+**Frontend:**
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Socket.io Client
 
-- 📁 **Category Page** (`/services/:category`)
-  - Shows professionals for each selected service category
+**Backend:**
+- Node.js
+- Express
+- MongoDB
+- Socket.io
+- JWT Authentication
 
-- 👤 **Professional Profiles**
-  - Profile cards with name, location, rating, and quick contact options
-  - Integrated user review modal
+## Getting Started
 
-- ➕ **Add a Service** (`/add-service`)
-  - Simple form for anyone to list their service (for now, no backend)
+### Prerequisites
 
-- 🚀 **Future: Join as a Pro (Planned)**
-  - Placeholder for verified professional registration (saved for backend implementation)
+- Node.js (v16 or higher)
+- MongoDB
+- npm or yarn
 
-## 🧱 Tech Stack
+### Installation
 
-- **Frontend**: React, Vite
-- **Styling**: Tailwind CSS, Font Awesome, React Icons
-- **Routing**: React Router
-- **State Management**: React Context (for basic auth simulation)
-- **Data**: Local JSON (`services.json`, `professionals.json`)
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd fixfinder
+```
 
-## 📁 Project Structure
+2. Install dependencies
+```bash
+npm install
+```
 
-\`\`\`
-src/
-├── public/               # Images and static files
-│   └── pros/             # Professional profile pictures
-├── components/           # Reusable UI components
-├── context/              # AuthContext and related hooks
-├── data/                 # Static JSON for services & professionals
-├── layout/               # RootLayout, Header, Footer
-├── pages/                # Home, Services, Category, AddService, Contact, etc.
-├── utils/                # API utilities, validation functions
-└── App.jsx               # Main routing and layout wrapper
-\`\`\`
+3. Set up environment variables
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
-## 🛠 Setup Instructions
+4. Start the development server
+```bash
+npm run dev
+```
 
-1. **Clone the repo**
-   \`\`\`bash
-   git clone https:/davidobonyano/github.com//fixfinder.git
-   cd fixfinder
-   \`\`\`
+### Backend Setup
 
-2. **Install dependencies**
-   \`\`\`bash
-   npm install
-   \`\`\`
+1. Navigate to the backend directory
+```bash
+cd "fix-finder backend"
+```
 
-3. **Start the development server**
-   \`\`\`bash
-   npm run dev
-   \`\`\`
+2. Install dependencies
+```bash
+npm install
+```
 
-4. **View locally**
-   Open your browser to fixfinder-cyan.vercel.app
+3. Configure environment variables in `.env`
 
-## 🧩 To-Do / Planned Enhancements
+4. Start the server
+```bash
+npm start
+```
 
-- ✅ Build responsive and animated UI for all core pages
-- 🕒 Backend integration (Express, MongoDB/MySQL) – *Coming Soon*
-- 🛡 Verified Pro onboarding + login system
-- 🗃 Admin dashboard (Saved for backend phase)
-- 📍 Google Maps integration
-- 📱 PWA optimization
+## Project Structure
 
-## 📸 Screenshots
+```
+fixfinder/
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── pages/          # Page components
+│   ├── context/        # React context providers
+│   ├── utils/          # Utility functions
+│   └── layout/         # Layout components
 
-## 📸 Screenshots
+fix-finder backend/
+├── controllers/        # Route controllers
+├── models/            # Database models
+├── routes/            # API routes
+├── middleware/        # Express middleware
+└── utils/             # Utility functions
+```
 
-### 🏠 Homepage
-📁 View screenshot at: `src/assets/screenshots/homepage.jpeg`
+## License
 
-### 📂 Services Page
-📁 View screenshot at: `src/assets/screenshots/servicespage.jpeg`
-
-### 👤 Professional Modal
-📁 View screenshot at: `src/assets/screenshots/modal.jpeg`
-
-
-## 🤝 Contributing
-
-FixFinder is currently a solo-built project in active development. Contributions, ideas, and feedback are welcome!
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
-
----
-
-Built with ❤️ by  David yano
-    
+MIT

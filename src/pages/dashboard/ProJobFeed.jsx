@@ -247,34 +247,34 @@ const ProJobFeed = () => {
       </div>
 
       {/* Filters Section - Modern Design */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-6">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-white p-6 mb-6">
         <div className="flex items-center gap-2 mb-6">
-          <FaFilter className="w-5 h-5 text-indigo-500" />
-          <h2 className="text-xl font-bold text-gray-900">Search & Filters</h2>
+          <FaFilter className="w-5 h-5 text-indigo-500 dark:text-white" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Search & Filters</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">Search</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Search</label>
             <div className="relative">
-              <FaSearch className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <FaSearch className="w-4 h-4 text-gray-400 dark:text-white absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by title or description"
-                className="w-full pl-9 pr-3 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                className="w-full pl-9 pr-3 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white transition-all dark:bg-gray-800 dark:text-white"
               />
             </div>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">Service</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Service</label>
             <ServiceSelector value={service} onChange={setService} placeholder="Any service" />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">State</label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">State</label>
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+              className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white transition-all dark:bg-gray-800 dark:text-white"
             >
               <option value="">All states</option>
               {[
@@ -283,7 +283,7 @@ const ProJobFeed = () => {
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">Distance: <span className="text-indigo-600 font-bold">{kmRange} km</span></label>
+            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Distance: <span className="text-indigo-600 dark:text-white font-bold">{kmRange} km</span></label>
             <input
               type="range"
               min={1}
@@ -291,11 +291,11 @@ const ProJobFeed = () => {
               step={1}
               value={kmRange}
               onChange={(e) => setKmRange(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 dark:accent-white"
             />
           </div>
           <div className="flex items-end">
-            <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-all">
+            <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl text-sm font-semibold text-gray-600 dark:text-white hover:border-indigo-300 dark:hover:border-gray-300 hover:text-indigo-600 dark:hover:text-gray-200 transition-all">
               <FaFilter className="w-4 h-4" /> More
             </button>
           </div>
@@ -321,9 +321,9 @@ const ProJobFeed = () => {
         <div className="space-y-8">
           {displayedJobs.inSameCity.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500" />
-                <h2 className="text-2xl font-bold text-gray-900">Jobs near you in {userCity || 'your city'}</h2>
+              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
+                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Jobs near you in {userCity || 'your city'}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {displayedJobs.inSameCity.map((job) => (
@@ -334,9 +334,9 @@ const ProJobFeed = () => {
           )}
           {displayedJobs.inSameState.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500" />
-                <h2 className="text-2xl font-bold text-gray-900">More jobs in {userState || 'your state'}</h2>
+              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
+                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">More jobs in {userState || 'your state'}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {displayedJobs.inSameState.map((job) => (
@@ -347,9 +347,9 @@ const ProJobFeed = () => {
           )}
           {displayedJobs.inOtherStates.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500" />
-                <h2 className="text-2xl font-bold text-gray-900">Other jobs across Nigeria</h2>
+              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
+                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Other jobs across Nigeria</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {displayedJobs.inOtherStates.map((job) => (
@@ -387,29 +387,29 @@ const JobCard = ({ job }) => {
   const isClosed = (!isExplicitlyOpen) || closedByLifecycle || closedByFlags || closedByAssignment;
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md overflow-hidden transition-all duration-300">
+            <div className="group bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white shadow-sm hover:shadow-md overflow-hidden transition-all duration-300">
       {/* Header */}
-      <div className="p-6 bg-gray-50 border-b border-gray-200">
+      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-white">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 font-semibold">
               {(job.category || 'J')[0]}
             </div>
             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setDetailsOpen(true)}>
-              <h3 className="font-bold text-gray-900 text-lg mb-1 group-hover:text-indigo-600 transition-colors truncate">{job.title || 'Untitled job'}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-1 group-hover:text-indigo-600 dark:group-hover:text-gray-200 transition-colors truncate">{job.title || 'Untitled job'}</h3>
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <FaMapMarkerAlt className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{job.location?.city || job.city || 'Unknown'}</span>
-                <span className="text-gray-400">•</span>
-                <span className="font-medium text-indigo-600">{job.category}</span>
+                <span className="text-gray-400 dark:text-gray-500">•</span>
+                <span className="font-medium text-indigo-600 dark:text-white">{job.category}</span>
               </div>
             </div>
           </div>
           <div className="text-right">
             {isClosed && (
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 border border-gray-200 mb-2">Closed</span>
+              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white border border-gray-200 dark:border-white mb-2">Closed</span>
             )}
-            <div className="text-gray-900 font-semibold text-lg">
+            <div className="text-gray-900 dark:text-white font-semibold text-lg">
               {(() => {
                 const b = job.budget;
                 if (b && typeof b === 'object' && (b.min != null || b.max != null)) {
@@ -431,39 +431,39 @@ const JobCard = ({ job }) => {
         </div>
       )}
       {/* Body */}
-      <div className="p-6">
-        <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3 mb-4">{job.description || 'No description'}</p>
+      <div className="p-6 dark:bg-gray-900">
+        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3 mb-4">{job.description || 'No description'}</p>
         {job.requirements && (
           <div className="mb-4">
-            <p className="text-sm text-gray-700"><span className="font-semibold text-gray-900">Requirements:</span> {job.requirements}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300"><span className="font-semibold text-gray-900 dark:text-white">Requirements:</span> {job.requirements}</p>
           </div>
         )}
-        <div className="flex items-center gap-4 text-sm text-gray-600">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-            <FaMapMarkerAlt className="w-4 h-4 text-indigo-500" />
+        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <FaMapMarkerAlt className="w-4 h-4 text-indigo-500 dark:text-white" />
             <span className="font-medium">{job.location?.address || job.location?.city || job.city || 'Unknown'}</span>
           </span>
           {job.distanceFormatted && (
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-700 font-medium rounded-lg">
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white font-medium rounded-lg">
               {job.distanceFormatted} away
             </span>
           )}
         </div>
       </div>
       {/* Footer */}
-      <div className="p-6 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-3">
+      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-white flex items-center justify-end gap-3">
         <button 
           onClick={() => setDetailsOpen(true)} 
-          className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+          className="px-5 py-2 border border-gray-300 dark:border-white rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:border-indigo-300 dark:hover:border-gray-300 hover:text-indigo-600 dark:hover:text-gray-200 transition-all"
         >
           View details
         </button>
         {isClosed ? (
-          <span className="px-5 py-2 text-sm font-medium text-gray-600">Closed</span>
+          <span className="px-5 py-2 text-sm font-medium text-gray-600 dark:text-white">Closed</span>
         ) : (
           <button 
             onClick={() => setOpen(true)} 
-            className="px-5 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:border-indigo-400 hover:text-indigo-700 transition-colors"
+            className="px-5 py-2 text-sm font-medium text-indigo-600 dark:text-white border border-indigo-200 dark:border-white rounded-lg hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition-colors"
           >
             Apply Now
           </button>
@@ -472,9 +472,9 @@ const JobCard = ({ job }) => {
 
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Apply to this job</h3>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6 border dark:border-white">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Apply to this job</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               <span className="font-medium">{job.title || 'Untitled job'}</span>
               {job?.budget && (typeof job.budget === 'object') && (job.budget.min != null || job.budget.max != null) && (
                 <>
@@ -488,7 +488,7 @@ const JobCard = ({ job }) => {
                 value={proposal}
                 onChange={(e) => setProposal(e.target.value)}
                 placeholder="Proposal"
-                className="w-full px-3 py-2 border border-gray-300 rounded"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
                 rows={3}
               />
               <div className="flex gap-2">
@@ -497,24 +497,24 @@ const JobCard = ({ job }) => {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="Proposed price"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
                 />
                 <input
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
                   placeholder="Estimated duration"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-600 mb-1 block">Attach CV (PDF)</label>
+                <label className="text-sm text-gray-600 dark:text-gray-300 mb-1 block">Attach CV (PDF)</label>
                 <input
                   type="file"
                   accept="application/pdf"
                   onChange={(e) => setCvFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
                 />
-                <p className="text-xs text-gray-500 mt-1">Optional. PDF only, max 2MB.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional. PDF only, max 2MB.</p>
               </div>
             </div>
             <div className="mt-5 flex gap-3">
@@ -548,21 +548,21 @@ const JobCard = ({ job }) => {
           onClick={() => setDetailsOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden"
+            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-5 border-b border-gray-200 flex items-start justify-between gap-4">
+            <div className="px-6 py-5 border-b border-gray-200 dark:border-white flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-wide text-indigo-500 font-semibold mb-1">Job opportunity</p>
-                <h2 className="text-2xl font-bold text-gray-900">{job.title || 'Untitled job'}</h2>
-                <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-                  <FaMapMarkerAlt className="w-4 h-4 text-indigo-500" />
+                <p className="text-xs uppercase tracking-wide text-indigo-500 dark:text-white font-semibold mb-1">Job opportunity</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{job.title || 'Untitled job'}</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 flex items-center gap-2">
+                  <FaMapMarkerAlt className="w-4 h-4 text-indigo-500 dark:text-white" />
                   <span>{job.location?.address || job.location?.city || 'Unknown'} • {job.category}</span>
                 </p>
               </div>
               <button
                 onClick={() => setDetailsOpen(false)}
-                className="px-3 py-1 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+                className="px-3 py-1 text-sm text-gray-500 dark:text-white hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
               >
                 Close
               </button>
@@ -610,10 +610,10 @@ const JobCard = ({ job }) => {
               </DetailItem>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-white flex justify-end gap-2">
               <button
                 onClick={() => setDetailsOpen(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:text-gray-900 hover:border-gray-400 transition"
+                className="px-4 py-2 border border-gray-300 dark:border-white rounded-lg text-sm text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-300 transition"
               >
                 Close
               </button>
@@ -623,7 +623,7 @@ const JobCard = ({ job }) => {
                     setDetailsOpen(false);
                     setOpen(true);
                   }}
-                  className="px-4 py-2 text-sm text-indigo-600 border border-indigo-200 rounded-lg hover:border-indigo-400 hover:text-indigo-700 transition"
+                  className="px-4 py-2 text-sm text-indigo-600 dark:text-white border border-indigo-200 dark:border-white rounded-lg hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition"
                 >
                   Apply Now
                 </button>
@@ -638,8 +638,8 @@ const JobCard = ({ job }) => {
 
 const DetailItem = ({ label, children, fullWidth = false }) => (
   <div className={fullWidth ? 'col-span-1 md:col-span-2' : ''}>
-    <div className="text-xs uppercase tracking-wide text-gray-500 mb-1">{label}</div>
-    <div className="text-sm text-gray-900 whitespace-pre-wrap">{children}</div>
+    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{label}</div>
+    <div className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{children}</div>
   </div>
 );
 

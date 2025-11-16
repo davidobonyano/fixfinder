@@ -515,3 +515,50 @@ export const getProfessionalReviews = (professionalId, params = {}) => {
 
 // Admin API functions (public endpoint - no auth required)
 export const getAdminStats = () => request("/api/admin/stats/public", { method: "GET", auth: false });
+
+// Admin User Management API functions (public - secret URL protection)
+export const getAllUsers = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/admin/users${query ? `?${query}` : ''}`, { method: "GET", auth: false });
+};
+
+export const getBannedUsers = () => request("/api/admin/users/banned", { method: "GET", auth: false });
+
+export const banUser = (userId, { reason, expiresAt }) => request(`/api/admin/users/${userId}/ban`, {
+  method: "POST",
+  body: { reason, expiresAt },
+  auth: false
+});
+
+export const unbanUser = (userId) => request(`/api/admin/users/${userId}/unban`, {
+  method: "POST",
+  auth: false
+});
+
+// Report API functions
+export const createReport = (payload) => request(`/api/reports`, {
+  method: "POST",
+  body: payload,
+  auth: true
+});
+
+// Admin report functions (public - secret URL protection)
+export const getAllReports = (params = {}) => {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/admin/reports${query ? `?${query}` : ''}`, { method: "GET", auth: false });
+};
+
+export const getPendingReportsCount = () => request("/api/admin/reports/pending/count", { method: "GET", auth: false });
+
+export const updateReportStatus = (reportId, { status, adminNotes }) => request(`/api/reports/${reportId}/status`, {
+  method: "PATCH",
+  body: { status, adminNotes },
+  auth: false
+});
+
+// Contact form API
+export const sendContactMessage = (payload) => request("/api/contact", {
+  method: "POST",
+  body: payload,
+  auth: false
+});

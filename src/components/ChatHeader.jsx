@@ -6,7 +6,8 @@ import {
   FaEllipsisV, 
   FaMap,
   FaTrash,
-  FaUser
+  FaUser,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { getProfessional } from '../utils/api';
@@ -106,7 +107,7 @@ const ChatHeader = ({
   };
 
   return (
-    <div className="p-4 border-b border-gray-200 bg-white">
+    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {onBack && (
@@ -134,14 +135,14 @@ const ChatHeader = ({
             />
           
             <div>
-              <h2 className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+              <h2 className="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 {hydratedUser?.name || 'Unknown User'}
               </h2>
               <div className="flex items-center gap-2">
                 <span className={`inline-block w-2.5 h-2.5 rounded-full ${
-                  presence?.isOnline ? 'bg-green-500' : 'bg-gray-300'
+                  presence?.isOnline ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                 }`} />
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {presence?.isOnline ? 'Online' : formatLastSeen(presence?.lastSeen)}
                 </span>
               </div>
@@ -154,29 +155,58 @@ const ChatHeader = ({
           <div className="relative">
             <button
               onClick={() => setShowOptions(!showOptions)}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               title="More Options"
             >
               <FaEllipsisV className="w-5 h-5" />
             </button>
             
             {showOptions && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="border-t border-gray-100 my-1"></div>
-                
-                <Link
-                  to={userRole === 'professional' ? '/dashboard/professional/connected-users' : '/dashboard/professionals'}
-                  className="w-full px-4 py-2 text-left text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+              <>
+                <div 
+                  className="fixed inset-0 z-40" 
                   onClick={() => setShowOptions(false)}
-                >
-                  <FaUser className="w-4 h-4" />
-                  Manage Connections
-                </Link>
+                />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                  
+                  <Link
+                    to={userRole === 'professional' ? '/dashboard/professional/connected-users' : '/dashboard/professionals'}
+                    className="w-full px-4 py-2 text-left text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowOptions(false);
+                    }}
+                  >
+                    <FaUser className="w-4 h-4" />
+                    Manage Connections
+                  </Link>
+                  
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const username = hydratedUser?.name || hydratedUser?.email;
+                      setShowOptions(false);
+                      // Use setTimeout to ensure dropdown closes before navigation
+                      setTimeout(() => {
+                        navigate('/help/report', { 
+                          state: { reportedUsername: username },
+                          replace: false
+                        });
+                      }, 100);
+                    }}
+                    className="w-full px-4 py-2 text-left text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 flex items-center gap-2"
+                  >
+                    <FaExclamationTriangle className="w-4 h-4" />
+                    Report User
+                  </button>
                 
                 {onDeleteAllMessages && (
                   <button
                     onClick={() => handleOptionClick(onDeleteAllMessages)}
-                    className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                   >
                     <FaTrash className="w-4 h-4" />
                     Delete All Messages
@@ -186,13 +216,14 @@ const ChatHeader = ({
                 {onDeleteConversation && (
                   <button
                     onClick={() => handleOptionClick(onDeleteConversation)}
-                    className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
+                    className="w-full px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
                   >
                     <FaTrash className="w-4 h-4" />
                     Delete Conversation
                   </button>
                 )}
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>

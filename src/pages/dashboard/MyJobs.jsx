@@ -472,27 +472,27 @@ const MyJobs = () => {
       </div>
 
       {/* Filters - Modern Design */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <div className="relative">
-              <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5" />
+          <div className="relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 dark:text-white w-5 h-5" />
               <input
                 type="text"
                 placeholder="Search jobs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white transition-all dark:bg-gray-800 dark:text-white"
               />
             </div>
           </div>
           <div className="md:w-56">
             <div className="relative">
-              <FaFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 w-5 h-5 pointer-events-none" />
+              <FaFilter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-indigo-400 dark:text-white w-5 h-5 pointer-events-none" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition-all"
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white appearance-none bg-white dark:bg-gray-800 dark:text-white transition-all"
               >
                 <option value="">All Status</option>
                 <option value="Pending">Pending</option>
@@ -530,7 +530,7 @@ const MyJobs = () => {
           </div>
         ) : (
           filteredJobs.map((job) => (
-            <div key={job._id} className="group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+            <div key={job._id} className="group bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-white overflow-hidden hover:shadow-xl transition-all duration-300">
               {Array.isArray(job.media) && job.media[0]?.url && (
                 <div className="w-full bg-gradient-to-br from-indigo-50 to-gray-50 overflow-hidden">
                   <img src={job.media[0].url} alt="job" className="w-full max-h-80 object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -538,9 +538,9 @@ const MyJobs = () => {
               )}
               <div className="p-6">
                 <div className="flex items-start justify-between mb-6">
-                  <div className="flex-1">
+                    <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3 flex-wrap">
-                      <h3 className="text-xl font-bold text-gray-900">{job.title}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">{job.title}</h3>
                       <span className={`text-sm font-semibold ${getStatusColor(deriveStatus(job))}`}>
                         {deriveStatus(job)}
                       </span>
@@ -550,49 +550,49 @@ const MyJobs = () => {
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600 mb-4 leading-relaxed">{job.description}</p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">{job.description}</p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
                       <span className="flex items-center gap-2">
-                        <FaMapMarkerAlt className="w-4 h-4 text-indigo-400" />
+                        <FaMapMarkerAlt className="w-4 h-4 text-indigo-400 dark:text-white" />
                         {job.location?.city}, {job.location?.state}
                       </span>
                       <span className="flex items-center gap-2">
-                        <FaCalendarAlt className="w-4 h-4 text-indigo-400" />
+                        <FaCalendarAlt className="w-4 h-4 text-indigo-400 dark:text-white" />
                         {formatDate(job.preferredDate)}
                       </span>
                       <span className="flex items-center gap-2">
-                        <FaClock className="w-4 h-4 text-indigo-400" />
+                        <FaClock className="w-4 h-4 text-indigo-400 dark:text-white" />
                         {job.preferredTime}
                       </span>
                     </div>
                   </div>
                   <div className="text-right ml-4 space-y-1">
-                    <p className="text-2xl font-bold text-gray-900">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
                       {formatCurrency(job.budget?.min || 0)}
                     </p>
-                    <p className="text-sm text-gray-600 font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                       - {formatCurrency(job.budget?.max || 0)}
                     </p>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">{job.category}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{job.category}</p>
                   </div>
                 </div>
 
                 {/* Client Info for pro view */}
                 {String(user?.role).toLowerCase() === 'professional' && job.client && (
-                  <div className="rounded-xl p-4 mb-4 border border-gray-200">
+                  <div className="rounded-xl p-4 mb-4 border border-gray-200 dark:border-white">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
                           <FaUser className="w-6 h-6 text-gray-500" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-gray-900">{job.client.name}</h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <h4 className="font-bold text-gray-900 dark:text-white">{job.client.name}</h4>
+                          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                             <span>{job.client.phone || ''}</span>
                           </div>
                         </div>
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-700 transition-colors">
+                      <button className="flex items-center gap-2 px-4 py-2 border border-indigo-200 dark:border-white text-indigo-600 dark:text-white rounded-lg font-semibold hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition-colors">
                         <FaComments className="w-4 h-4" />
                         Message
                       </button>
@@ -604,7 +604,7 @@ const MyJobs = () => {
                 {job.applications && job.applications.length > 0 && (
                   <div className="mb-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                      <h4 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
                         <span className="text-sm font-semibold text-gray-500">
                           {job.applications.length}
                         </span>
@@ -612,7 +612,7 @@ const MyJobs = () => {
                       </h4>
                       <Link 
                         to={`/dashboard/my-jobs/${job._id}/applications`} 
-                        className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-1 group"
+                        className="text-indigo-600 dark:text-white hover:text-indigo-700 dark:hover:text-gray-200 font-semibold text-sm flex items-center gap-1 group"
                       >
                         View All
                         <FaArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -620,24 +620,24 @@ const MyJobs = () => {
                     </div>
                     <div className="space-y-3">
                       {job.applications.slice(0, 2).map((app) => (
-                        <div key={app._id} className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all">
+                        <div key={app._id} className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-white hover:border-indigo-300 dark:hover:border-gray-300 transition-all">
                           <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
-                              <FaUser className="w-6 h-6 text-gray-500" />
+                            <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <FaUser className="w-6 h-6 text-gray-500 dark:text-white" />
                             </div>
                             <div>
-                              <p className="font-bold text-gray-900">{app.professional?.name || 'Unknown Professional'}</p>
-                              <p className="text-sm text-gray-600 mt-1">{app.proposal}</p>
+                              <p className="font-bold text-gray-900 dark:text-white">{app.professional?.name || 'Unknown Professional'}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{app.proposal}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold text-gray-900">{formatCurrency(app.proposedPrice)}</p>
-                            <p className="text-sm text-gray-600">{app.estimatedDuration}</p>
+                            <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(app.proposedPrice)}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">{app.estimatedDuration}</p>
                           </div>
                         </div>
                       ))}
                       {job.applications.length > 2 && (
-                        <p className="text-sm text-gray-600 text-center py-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 text-center py-2">
                           +{job.applications.length - 2} more applications
                         </p>
                       )}
@@ -646,8 +646,8 @@ const MyJobs = () => {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-white">
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
                     <span className="flex items-center gap-1">
                       <FaClock className="w-4 h-4 text-gray-400" />
                       Posted {formatDate(job.createdAt)}
@@ -668,7 +668,7 @@ const MyJobs = () => {
                         setSelectedJob(job);
                         setShowModal(true);
                       }}
-                      className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-600 rounded-lg font-semibold hover:border-indigo-400 hover:text-indigo-700 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 border border-indigo-200 dark:border-white text-indigo-600 dark:text-white rounded-lg font-semibold hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition-colors"
                     >
                       <FaEye className="w-4 h-4" />
                       View Details

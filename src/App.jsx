@@ -23,6 +23,7 @@ import Join from "./pages/Join";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import Terms from "./pages/Terms";
+import Report from "./pages/Report";
 import NotFound from "./pages/NotFound";
 
 // Dashboard Pages
@@ -94,7 +95,6 @@ const router = createBrowserRouter(
           <Route path="verify-email" element={<VerifyEmail />} />
           <Route path="verify-email/success" element={<VerifyEmailSuccess />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="admin" element={<AdminDashboard />} />
           <Route path="davidobonyanoefe" element={<AdminDashboard />} />
           
           {/* Professional Routes */}
@@ -107,6 +107,7 @@ const router = createBrowserRouter(
             <Route path="faq" element={<Faq />} />
             <Route path="contact" element={<Contact />} />
             <Route path="terms" element={<Terms />} />
+            <Route path="report" element={<Report />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
