@@ -1132,7 +1132,7 @@ const ChatWindow = ({
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Chat Header */}
       <ChatHeader
         conversation={conversation}
@@ -1354,7 +1354,7 @@ const ChatWindow = ({
       )}
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
+      <div className="p-4 border-t border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 flex-shrink-0">
         {replyingTo && (
           <div className="mb-3 p-2 bg-gray-100 rounded-lg flex items-center justify-between">
             <div>
