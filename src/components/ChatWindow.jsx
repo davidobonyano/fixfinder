@@ -51,6 +51,9 @@ const ChatWindow = ({
   const { user } = useAuth();
   const { socket, isConnected, emit, on, off } = useSocket();
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -362,13 +365,41 @@ const ChatWindow = ({
     };
   }, []);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Check if user is near bottom of scroll container
+  const isNearBottom = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    const threshold = 100; // pixels from bottom
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return distanceFromBottom < threshold;
+  };
+
+  // Handle scroll events to detect user scrolling
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    const nearBottom = isNearBottom();
+    setShouldAutoScroll(nearBottom);
+    setIsUserScrolling(true);
+    
+    // Reset user scrolling flag after a delay
+    setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1000);
+  };
+
+  // Auto-scroll to bottom when new messages arrive (only if user is near bottom)
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (shouldAutoScroll && !isUserScrolling) {
+      scrollToBottom();
+    }
+  }, [messages, shouldAutoScroll, isUserScrolling]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -421,6 +452,10 @@ const ChatWindow = ({
     if (onMessageSent) {
       onMessageSent(optimisticMessage);
     }
+    
+    // Force scroll to bottom when user sends a message
+    setShouldAutoScroll(true);
+    setTimeout(() => scrollToBottom(), 100);
 
     try {
       const response = await sendMessage(conversation._id, {
@@ -1152,7 +1187,7 @@ const ChatWindow = ({
       />
 
       {/* Job lifecycle banner */}
-      <div className="px-4 pt-3">
+      <div className="px-4 pt-3 flex-shrink-0">
         {(
           !activeJob ||
           effectiveState === 'cancelled' ||
@@ -1271,7 +1306,11 @@ const ChatWindow = ({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      <div 
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 min-h-0 max-h-full"
+      >
         {messages.map((message) => {
           const isOwn = message.sender._id === user?.id;
           const canEdit = isOwn && !message.isDeleted && 

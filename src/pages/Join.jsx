@@ -338,7 +338,7 @@ const JoinAsPro = () => {
       <div className="mt-10 md:mt-12 p-8 md:p-12 bg-white shadow-2xl rounded-3xl relative overflow-hidden mx-4 md:mx-auto md:max-w-5xl dark:bg-gray-900 dark:shadow-2xl dark:shadow-black/60">
         <div className="absolute inset-0 bg-[url('/images/join-bg.jpeg')] bg-cover bg-center opacity-5 z-0 dark:opacity-10" />
         <div className="relative z-10">
-        <h2 className="text-4xl font-extrabold text-center text-gray-800 leading-tight mb-3 dark:text-gray-100">Become a Verified Pro on FixFinder</h2>
+        <h2 className="text-4xl font-extrabold text-center text-gray-800 leading-tight mb-3 dark:text-gray-100">Become a Verified Pro on FindYourFixer</h2>
         <p className="text-center text-gray-600 mb-8 dark:text-gray-400">Join thousands of professionals growing their businesses by connecting with local customers.</p>
 
         {/* Progress */}

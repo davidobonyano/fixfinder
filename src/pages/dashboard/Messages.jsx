@@ -780,7 +780,7 @@ const Messages = () => {
   }
 
   return (
-    <div className="fixed inset-0 top-16 bottom-16 md:relative md:inset-auto md:top-auto md:bottom-auto flex flex-col md:flex-row h-auto md:min-h-[calc(100dvh-120px)] rounded-none md:rounded-3xl shadow-none md:shadow-2xl border-0 md:border border-indigo-100 mx-0 md:mx-0 mt-0 md:mt-0 mb-0 md:mb-0 bg-gradient-to-br from-indigo-50 via-white to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 z-10">
+    <div className="fixed inset-0 top-16 bottom-16 md:relative md:inset-auto md:top-auto md:bottom-auto flex flex-col md:flex-row h-auto md:h-[calc(100dvh-120px)] rounded-none md:rounded-3xl shadow-none md:shadow-2xl border-0 md:border border-indigo-100 mx-0 md:mx-0 mt-0 md:mt-0 mb-0 md:mb-0 bg-gradient-to-br from-indigo-50 via-white to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 z-10">
       {/* Conversations Sidebar */}
       <div
         className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-[360px] flex-col bg-white/70 backdrop-blur-md border-r border-white/40 dark:bg-gray-900/75 dark:border-gray-800`}
@@ -886,7 +886,7 @@ const Messages = () => {
       {/* Chat Area */}
       <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 bg-white/80 backdrop-blur-md flex flex-col overflow-hidden h-full dark:bg-gray-900/80`}>
         {selectedConversation ? (
-          <div className="flex-1 flex flex-col h-full overflow-hidden">
+          <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
             <ChatWindow
             conversation={selectedConversation}
             messages={visibleMessages}
