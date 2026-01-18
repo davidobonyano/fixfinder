@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  FaPaperPlane, 
-  FaUser, 
-  FaSpinner,
-  FaComments,
-  FaTrash
-} from 'react-icons/fa';
+import {
+  FiSend,
+  FiUser,
+  FiMessageSquare,
+  FiTrash2,
+  FiPaperclip,
+  FiX,
+  FiLoader,
+  FiMapPin
+} from 'react-icons/fi';
 import { useAuth } from '../context/useAuth';
 import { useSocket } from '../context/SocketContext';
-import { 
-  sendMessage, 
-  editMessage, 
+import {
+  sendMessage,
+  editMessage,
   deleteMessage,
-  shareLocation,
-  stopLocationShare,
   deleteMyMessagesInConversation,
   createJobRequestInChat,
   acceptJobRequest,
@@ -26,18 +27,21 @@ import {
 } from '../utils/api';
 import MessageBubble from './MessageBubble';
 import ChatHeader from './ChatHeader';
+import ReviewModal from './ReviewModal';
+import ChatProfileModal from './ChatProfileModal';
 import LocationModal from './LocationModal';
 import MapView from './MapView';
-import LocationButton from './LocationButton';
-import ChatProfileModal from './ChatProfileModal';
-import ReviewModal from './ReviewModal';
 import { useLocation as useLocationHook } from '../hooks/useLocation';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import ServiceSelector from './ServiceSelector';
+import {
+  shareLocation,
+  stopLocationShare
+} from '../utils/api';
 
-const ChatWindow = ({ 
-  conversation, 
-  messages = [], 
+const ChatWindow = ({
+  conversation,
+  messages = [],
   onMessageSent,
   onUpdateMessages,
   onHideMessages,
@@ -46,27 +50,30 @@ const ChatWindow = ({
   onDeleteConversation,
   onDeleteAllMessages,
   formatTime,
-  formatLastSeen 
+  formatLastSeen
 }) => {
   const { user } = useAuth();
   const { socket, isConnected, emit, on, off } = useSocket();
   const messagesEndRef = useRef(null);
+
+  // Default formatters
+  const defaultFormatTime = (date) => {
+    if (!date) return '';
+    return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  const formatTimeFn = formatTime || defaultFormatTime;
+
   const messagesContainerRef = useRef(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  
+
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [typingUsers, setTypingUsers] = useState([]);
   const [presence, setPresence] = useState({});
-  const [showLocationModal, setShowLocationModal] = useState(false);
-  const [showMapView, setShowMapView] = useState(false);
-  const [isSharingLocation, setIsSharingLocation] = useState(false);
-  const [sharedLocations, setSharedLocations] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [locationWatchId, setLocationWatchId] = useState(null);
   const [selectedMessages, setSelectedMessages] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
@@ -85,6 +92,11 @@ const ChatWindow = ({
   const [hasPromptedReview, setHasPromptedReview] = useState(false);
   const [reviewedJobs, setReviewedJobs] = useState([]);
   const [showMessageLimitModal, setShowMessageLimitModal] = useState(false);
+  const [isSharingLocation, setIsSharingLocation] = useState(false);
+  const [sharedLocations, setSharedLocations] = useState([]);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const locationWatchId = useRef(null);
 
   // Get other participant
   const otherParticipant = conversation?.participants?.find(p => p?.user?._id !== user?.id);
@@ -140,10 +152,10 @@ const ChatWindow = ({
   // Seed shared locations from existing messages
   useEffect(() => {
     const jobValue = conversation?.job || null;
-    console.log('🔄 Setting activeJob from conversation:', { 
-      hasJob: !!jobValue, 
+    console.log('🔄 Setting activeJob from conversation:', {
+      hasJob: !!jobValue,
       jobValue,
-      conversationId: conversation?._id 
+      conversationId: conversation?._id
     });
     setActiveJob(jobValue);
     try {
@@ -173,7 +185,7 @@ const ChatWindow = ({
         });
       });
       if (seeded.length > 0) setSharedLocations(seeded);
-    } catch (_) {}
+    } catch (_) { }
   }, [messages, user?.id, user?.profilePicture, user?.avatarUrl, otherParticipant?.user?.profilePicture, otherParticipant?.user?.avatarUrl]);
 
   // Handle message deletion events
@@ -181,8 +193,8 @@ const ChatWindow = ({
     console.log('Message deleted received:', data);
     // Update the message in real-time
     if (data.messageId && onUpdateMessages) {
-      onUpdateMessages(prev => prev.map(msg => 
-        msg._id === data.messageId 
+      onUpdateMessages(prev => prev.map(msg =>
+        msg._id === data.messageId
           ? { ...msg, isDeleted: true, deletedAt: data.deletedAt }
           : msg
       ));
@@ -193,7 +205,7 @@ const ChatWindow = ({
     console.log('Messages deleted received:', data);
     // Update messages in real-time
     if (data.messageIds && data.messageIds.length > 0 && onUpdateMessages) {
-      onUpdateMessages(prev => prev.map(msg => 
+      onUpdateMessages(prev => prev.map(msg =>
         data.messageIds.includes(msg._id)
           ? { ...msg, isDeleted: true }
           : msg
@@ -206,8 +218,8 @@ const ChatWindow = ({
     console.log('Message edited received:', data);
     // Update the message in real-time
     if (data.messageId && data.content && onUpdateMessages) {
-      onUpdateMessages(prev => prev.map(msg => 
-        msg._id === data.messageId 
+      onUpdateMessages(prev => prev.map(msg =>
+        msg._id === data.messageId
           ? { ...msg, content: { ...msg.content, text: data.content }, isEdited: true, editedAt: data.editedAt }
           : msg
       ));
@@ -233,7 +245,7 @@ const ChatWindow = ({
           const filtered = prev.filter(u => u.userId !== data.userId);
           return [...filtered, { userId: data.userId, name: data.userName }];
         });
-        
+
         // Clear typing indicator after 3 seconds
         setTimeout(() => {
           setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
@@ -269,7 +281,7 @@ const ChatWindow = ({
         // Append/replace location_share message in chat with latest? (optional)
         if (onUpdateMessages) {
           const locMessage = {
-            _id: `loc-${Date.now()}`,
+            _id: `loc - ${Date.now()} `,
             sender: sharedLoc.user,
             content: { location: { lat: sharedLoc.lat, lng: sharedLoc.lng, accuracy: sharedLoc.accuracy } },
             messageType: 'location_share',
@@ -327,7 +339,7 @@ const ChatWindow = ({
         if (data.job) {
           setActiveJob(data.job);
         }
-      } catch (_) {}
+      } catch (_) { }
     };
 
     on('receive_message', handleReceiveMessage);
@@ -380,7 +392,7 @@ const ChatWindow = ({
     const nearBottom = isNearBottom();
     setShouldAutoScroll(nearBottom);
     setIsUserScrolling(true);
-    
+
     // Reset user scrolling flag after a delay
     setTimeout(() => {
       setIsUserScrolling(false);
@@ -404,7 +416,7 @@ const ChatWindow = ({
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
+
     // Check conditions before sending
     if (!newMessage.trim() || !conversation || sending) {
       return;
@@ -412,11 +424,11 @@ const ChatWindow = ({
 
     // Block if limit reached - this is critical
     if (isMessageLimitReached) {
-      console.log('🚫 Message blocked by frontend: limit reached', { 
-        userMessageCount, 
-        MESSAGE_LIMIT_PER_USER, 
+      console.log('🚫 Message blocked by frontend: limit reached', {
+        userMessageCount,
+        MESSAGE_LIMIT_PER_USER,
         activeJob,
-        isMessageLimitReached 
+        isMessageLimitReached
       });
       setShowMessageLimitModal(true);
       return;
@@ -427,8 +439,8 @@ const ChatWindow = ({
     setNewMessage('');
 
     // Create a temporary ID for the optimistic message
-    const tempId = `temp-${Date.now()}`;
-    
+    const tempId = `temp - ${Date.now()} `;
+
     // Create the optimistic message object immediately
     const optimisticMessage = {
       _id: tempId,
@@ -452,7 +464,7 @@ const ChatWindow = ({
     if (onMessageSent) {
       onMessageSent(optimisticMessage);
     }
-    
+
     // Force scroll to bottom when user sends a message
     setShouldAutoScroll(true);
     setTimeout(() => scrollToBottom(), 100);
@@ -488,7 +500,7 @@ const ChatWindow = ({
         if (onMessageSent) {
           onMessageSent(realMessage, tempId);
         }
-        
+
         // Emit message via Socket.IO for real-time delivery
         if (socket && isConnected) {
           emit('send_message', {
@@ -496,7 +508,7 @@ const ChatWindow = ({
             conversationId: conversation._id
           });
         }
-        
+
         setReplyingTo(null);
       }
     } catch (error) {
@@ -507,22 +519,22 @@ const ChatWindow = ({
         data: error.data || error.response?.data,
         code: error.data?.code || error.response?.data?.code
       });
-      
+
       // Handle message limit error - check multiple error formats
       const statusCode = error.status || error.response?.status;
       const errorData = error.data || error.response?.data;
       const errorMessage = errorData?.message || error.message || '';
       const errorCode = errorData?.code;
-      
-      if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
-          (statusCode === 403 && errorMessage.includes('Message limit'))) {
+
+      if (errorCode === 'MESSAGE_LIMIT_REACHED' ||
+        (statusCode === 403 && errorMessage.includes('Message limit'))) {
         // Show modal instead of alert
         setShowMessageLimitModal(true);
       } else {
         // Show other errors with alert (for now, can be converted to modal later)
         alert(errorMessage || 'Failed to send message. Please try again.');
       }
-      
+
       // Remove the optimistic message on error
       if (onMessageSent && tempId) {
         onMessageSent(null, tempId, true); // true = remove
@@ -540,13 +552,13 @@ const ChatWindow = ({
       if (response.success) {
         // Update message in local state immediately
         if (onUpdateMessages) {
-          onUpdateMessages(prev => prev.map(msg => 
-            msg._id === messageId 
+          onUpdateMessages(prev => prev.map(msg =>
+            msg._id === messageId
               ? { ...msg, content: { ...msg.content, text: content }, isEdited: true, editedAt: new Date().toISOString() }
               : msg
           ));
         }
-        
+
         // Emit edit via Socket.IO
         if (socket && isConnected) {
           emit('message_edited', {
@@ -567,13 +579,13 @@ const ChatWindow = ({
       if (response.success) {
         // Update message in local state immediately
         if (onUpdateMessages) {
-          onUpdateMessages(prev => prev.map(msg => 
-            msg._id === messageId 
+          onUpdateMessages(prev => prev.map(msg =>
+            msg._id === messageId
               ? { ...msg, isDeleted: true, deletedAt: new Date().toISOString() }
               : msg
           ));
         }
-        
+
         // Emit delete via Socket.IO
         if (socket && isConnected) {
           emit('message_deleted', {
@@ -616,10 +628,10 @@ const ChatWindow = ({
       const hideOnly = selectedMessages.filter(id => !myMessageIds.includes(id));
       const deletePromises = deletable.map(messageId => deleteMessage(messageId));
       await Promise.all(deletePromises);
-      
+
       // Update messages in local state immediately
       if (onUpdateMessages) {
-        onUpdateMessages(prev => prev.map(msg => 
+        onUpdateMessages(prev => prev.map(msg =>
           deletable.includes(msg._id)
             ? { ...msg, isDeleted: true }
             : msg
@@ -630,7 +642,7 @@ const ChatWindow = ({
       if (hideOnly.length > 0 && onHideMessages) {
         onHideMessages(hideOnly);
       }
-      
+
       // Emit bulk delete via Socket.IO
       if (socket && isConnected) {
         emit('messages_deleted', {
@@ -638,7 +650,7 @@ const ChatWindow = ({
           conversationId: conversation._id
         });
       }
-      
+
       setSelectedMessages([]);
       setShowBulkActions(false);
     } catch (error) {
@@ -678,8 +690,8 @@ const ChatWindow = ({
       return;
     }
 
-    const tempId = `temp-loc-${Date.now()}`;
-    
+    const tempId = `temp - loc - ${Date.now()} `;
+
     // Create optimistic message IMMEDIATELY for instant UI update
     const optimisticLocationMessage = {
       _id: tempId,
@@ -765,7 +777,7 @@ const ChatWindow = ({
             }, tempId);
           }
         }
-        
+
         // Emit location share via Socket.IO for real-time delivery
         if (socket && isConnected) {
           emit('shareLocation', {
@@ -786,22 +798,22 @@ const ChatWindow = ({
       }
     } catch (error) {
       console.error('Error sharing location:', error);
-      
+
       // Handle message limit error for location sharing
       const statusCode = error.status || error.response?.status;
       const errorData = error.data || error.response?.data;
       const errorMessage = errorData?.message || error.message || '';
       const errorCode = errorData?.code;
-      
-      if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
-          (statusCode === 403 && errorMessage.includes('Message limit'))) {
+
+      if (errorCode === 'MESSAGE_LIMIT_REACHED' ||
+        (statusCode === 403 && errorMessage.includes('Message limit'))) {
         setShowMessageLimitModal(true);
         // Don't re-open location modal if limit reached
       } else {
         // Revert UI state on error
         setShowLocationModal(true); // Re-open modal to allow retry
       }
-      
+
       // Remove optimistic message on error
       if (onMessageSent) {
         onMessageSent(null, tempId, true);
@@ -858,29 +870,29 @@ const ChatWindow = ({
       }
     );
 
-    setLocationWatchId(watchId);
+    locationWatchId.current = watchId;
   };
 
   const stopLiveLocationTracking = () => {
-    if (locationWatchId) {
-      navigator.geolocation.clearWatch(locationWatchId);
-      setLocationWatchId(null);
+    if (locationWatchId.current) {
+      navigator.geolocation.clearWatch(locationWatchId.current);
+      locationWatchId.current = null;
     }
   };
 
   const handleStopLocationShare = async () => {
     try {
       setSending(true);
-      
+
       // Stop live tracking
       stopLiveLocationTracking();
-      
+
       const response = await stopLocationShare(conversation._id);
 
       if (response.success) {
         setIsSharingLocation(false);
         setUserLocation(null);
-        
+
         // Emit stop location share via Socket.IO
         if (socket && isConnected) {
           emit('stopLocationShare', {
@@ -898,7 +910,7 @@ const ChatWindow = ({
 
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
-    
+
     // Emit typing indicator
     if (socket && isConnected && conversation && e.target.value.trim()) {
       emit('user_typing', {
@@ -912,7 +924,7 @@ const ChatWindow = ({
   const openInMaps = (lat, lng) => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
-    
+
     let mapsUrl;
     if (isIOS) {
       mapsUrl = `http://maps.apple.com/?q=${lat},${lng}`;
@@ -921,7 +933,7 @@ const ChatWindow = ({
     } else {
       mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
     }
-    
+
     window.open(mapsUrl, '_blank');
   };
 
@@ -1010,7 +1022,7 @@ const ChatWindow = ({
   const deriveEffectiveState = (job) => {
     if (!job) return undefined;
     const ls = String(job.lifecycleState || '').toLowerCase();
-    if (['job_requested','in_progress','completed_by_pro','completed_by_user','closed','cancelled'].includes(ls)) return ls;
+    if (['job_requested', 'in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(ls)) return ls;
     // Fallback mapping from legacy status
     const st = String(job.status || '').toLowerCase();
     if (st === 'pending') return 'job_requested';
@@ -1027,21 +1039,21 @@ const ChatWindow = ({
       const senderId = msg.sender?._id || msg.sender?.id || msg.sender;
       const currentUserId = user?.id || user?._id;
       const isMyMessage = String(senderId) === String(currentUserId);
-      const isCountable = !msg.isDeleted && 
-                          msg.messageType !== 'system' && 
-                          msg.messageType !== 'location_share';
+      const isCountable = !msg.isDeleted &&
+        msg.messageType !== 'system' &&
+        msg.messageType !== 'location_share';
       return isMyMessage && isCountable;
     }
   ).length;
 
   const MESSAGE_LIMIT_PER_USER = 5;
-  
+
   // Check if job is active (not completed/closed/cancelled)
   // Only active jobs allow unlimited messaging
   const effectiveState = deriveEffectiveState(activeJob);
   // Job is active if it exists and is NOT closed/cancelled
   const isJobActive = activeJob && effectiveState && !['closed', 'cancelled', 'completed_by_pro', 'completed_by_user'].includes(effectiveState);
-  
+
   const isMessageLimitReached = !isJobActive && userMessageCount >= MESSAGE_LIMIT_PER_USER;
   const messagesRemaining = Math.max(0, MESSAGE_LIMIT_PER_USER - userMessageCount);
 
@@ -1083,7 +1095,7 @@ const ChatWindow = ({
     if (!activeJob) return;
     const isClient = String(user?.role).toLowerCase() !== 'professional';
     const closed = String(activeJob?.lifecycleState || '').toLowerCase() === 'closed' || String(activeJob?.status || '').toLowerCase() === 'completed';
-    
+
     if (!isClient || !closed || hasPromptedReview) return;
 
     // Check if already reviewed or dismissed
@@ -1091,7 +1103,7 @@ const ChatWindow = ({
     const dismissKey = 'ff_dismissed_reviews';
     const reviewed = JSON.parse(localStorage.getItem(reviewKey) || '[]');
     const dismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
-    
+
     // If already reviewed or dismissed, don't show
     if (reviewed.includes(activeJob._id) || dismissed.includes(activeJob._id)) {
       setReviewedJobs(reviewed);
@@ -1105,7 +1117,7 @@ const ChatWindow = ({
         // Double-check we haven't reviewed or dismissed while waiting
         const currentReviewed = JSON.parse(localStorage.getItem(reviewKey) || '[]');
         const currentDismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
-        
+
         if (currentReviewed.includes(activeJob._id) || currentDismissed.includes(activeJob._id)) {
           setHasPromptedReview(true);
           return;
@@ -1118,10 +1130,10 @@ const ChatWindow = ({
           try {
             const proData = await getProfessional(otherUserId, { byUser: true });
             proId = proData?.data?._id || proData?._id;
-          } catch (_) {}
+          } catch (_) { }
         }
         if (!proId) proId = otherUserId;
-        
+
         if (proId) {
           try {
             const r = await getProfessionalReviews(proId, { limit: 100 });
@@ -1137,13 +1149,13 @@ const ChatWindow = ({
               setHasPromptedReview(true);
               return;
             }
-          } catch (_) {}
+          } catch (_) { }
         }
 
         // Show modal after 10 seconds
         setHasPromptedReview(true);
         setShowReviewModal(true);
-      } catch (_) {}
+      } catch (_) { }
     }, 10000); // 10 second delay
 
     // Cleanup timeout if component unmounts or dependencies change
@@ -1154,13 +1166,13 @@ const ChatWindow = ({
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaComments className="w-8 h-8 text-gray-400" />
+      <div className="flex-1 flex flex-col items-center justify-center bg-stone-50/50 dark:bg-charcoal/20 transition-colors">
+        <div className="text-center animate-in fade-in zoom-in duration-700">
+          <div className="w-24 h-24 bg-white dark:bg-stone-800 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-sm border border-stone-100 dark:border-stone-700">
+            <FiMessageSquare className="w-10 h-10 text-stone-200 dark:text-stone-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-          <p className="text-gray-500">Choose a conversation to start messaging</p>
+          <h3 className="text-2xl font-tight font-bold text-charcoal dark:text-stone-100 tracking-tight mb-3">Communication Matrix</h3>
+          <p className="text-stone-400 dark:text-stone-500 max-w-xs mx-auto text-sm leading-relaxed uppercase tracking-widest font-bold text-[10px]">Select a secure thread from the registry to initialize high-fidelity communication.</p>
         </div>
       </div>
     );
@@ -1168,7 +1180,6 @@ const ChatWindow = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* Chat Header */}
       <ChatHeader
         conversation={conversation}
         otherParticipant={otherParticipant}
@@ -1184,139 +1195,36 @@ const ChatWindow = ({
         userRole={user?.role}
         distanceFormatted={headerDistance}
         otherAddressLabel={headerAddress}
+        activeJob={activeJob}
+        effectiveState={effectiveState}
+        isMessageLimitReached={isMessageLimitReached}
+        userMessageCount={userMessageCount}
+        messageLimit={MESSAGE_LIMIT_PER_USER}
+        onAction={async (action) => {
+          switch (action) {
+            case 'create': setShowJobModal(true); break;
+            case 'accept': await handleAcceptJob(); break;
+            case 'cancel': setShowCancelModal(true); break;
+            case 'complete': await handleProMarkCompleted(); break;
+            case 'confirm': await handleUserConfirmCompletion(); break;
+            case 'dispute': /* handle dispute */ break;
+          }
+        }}
       />
 
-      {/* Job lifecycle banner */}
-      <div className="px-4 pt-3 flex-shrink-0">
-        {(
-          !activeJob ||
-          effectiveState === 'cancelled' ||
-          effectiveState === 'closed'
-        ) && (
-          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-3 flex items-center justify-between">
-            <span>
-              {String(user?.role).toLowerCase() === 'professional' 
-                ? 'Waiting for user to create a job request to start work.'
-                : 'Create a job request so the pro can start work.'}
-            </span>
-            {String(user?.role).toLowerCase() !== 'professional' && (
-              <button
-                onClick={() => setShowJobModal(true)}
-                className="ml-3 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-              >
-                Create Job Request
-              </button>
-            )}
-          </div>
-        )}
-
-        {activeJob && effectiveState === 'job_requested' && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 flex items-center justify-between">
-            <span>
-              {String(user?.role).toLowerCase() === 'professional' 
-                ? 'Job requested by user. Review and accept to start.'
-                : 'Job created! Waiting for pro to accept.'}
-            </span>
-            <div className="flex gap-2">
-              {String(user?.role).toLowerCase() === 'professional' && (
-                <button onClick={handleAcceptJob} disabled={sending} className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50">
-                  {sending ? 'Accepting...' : 'Accept Job'}
-                </button>
-              )}
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-              >
-                Cancel Job
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeJob && effectiveState === 'in_progress' && (
-          <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3`}>
-            <div><span>Job is in progress.</span></div>
-            <div className="flex gap-2 mt-2 md:mt-0">
-              {String(user?.role).toLowerCase() === 'professional' && (
-                <button onClick={handleProMarkCompleted} disabled={sending} className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm disabled:opacity-50">
-                  {sending ? 'Submitting...' : 'Mark Completed'}
-                </button>
-              )}
-              {/* Cancel Job for both user and pro in requested or in_progress */}
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-              >
-                Cancel Job
-              </button>
-            </div>
-          </div>
-        )}
-        {activeJob && effectiveState === 'cancelled' && (
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-3">
-            Job Cancelled. Reason: {activeJob.cancellationReason || 'N/A'}
-          </div>
-        )}
-
-        {activeJob && activeJob.lifecycleState === 'completed_by_pro' && (
-          <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 rounded-lg p-3 flex items-center justify-between">
-            <span>Pro marked this job as completed. Please confirm if work is done.</span>
-            {String(user?.role).toLowerCase() !== 'professional' && (
-              <div className="ml-3 flex gap-2">
-                <button
-                  onClick={handleUserConfirmCompletion}
-                  disabled={sending}
-                  className="px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm disabled:opacity-50"
-                >
-                  {sending ? 'Confirming...' : 'Confirm Completion'}
-                </button>
-                <button
-                  onClick={() => {}}
-                  className="px-3 py-1.5 bg-gray-200 text-gray-800 rounded text-sm"
-                >
-                  Dispute
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeJob && activeJob.lifecycleState === 'closed' && (
-          <div className="bg-gray-50 border border-gray-200 text-gray-700 rounded-lg p-3 flex items-center justify-between">
-            <span>Job closed. Thank you!</span>
-            {String(user?.role).toLowerCase() !== 'professional' && (() => {
-              const alreadyReviewed = reviewedJobs.includes(activeJob._id);
-              return (
-                <button 
-                  onClick={() => !alreadyReviewed && setShowReviewModal(true)} 
-                  disabled={alreadyReviewed}
-                  className={`px-3 py-1.5 text-white rounded text-sm transition-colors ${
-                    alreadyReviewed 
-                      ? 'bg-gray-400 cursor-not-allowed opacity-60' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                  title={alreadyReviewed ? 'You have already reviewed this job' : 'Leave a review for this completed job'}
-                >
-                  {alreadyReviewed ? '✓ Review Submitted' : 'Leave a review'}
-                </button>
-              );
-            })()}
-          </div>
-        )}
-      </div>
 
       {/* Messages */}
-      <div 
+      <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 min-h-0 max-h-full"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-0 space-y-0 min-h-0 max-h-full"
       >
         {messages.map((message) => {
           const isOwn = message.sender._id === user?.id;
-          const canEdit = isOwn && !message.isDeleted && 
+          const canEdit = isOwn && !message.isDeleted &&
             (new Date() - new Date(message.createdAt)) < 2 * 60 * 1000; // 2 minutes
           const canDelete = isOwn && !message.isDeleted;
-          
+
           return (
             <MessageBubble
               key={message._id}
@@ -1327,7 +1235,7 @@ const ChatWindow = ({
               onReply={setReplyingTo}
               onViewMap={() => setShowMapView(true)}
               onOpenInMaps={openInMaps}
-              formatTime={formatTime}
+              formatTime={formatTimeFn}
               canEdit={canEdit}
               canDelete={canDelete}
               isSelected={selectedMessages.includes(message._id)}
@@ -1337,7 +1245,7 @@ const ChatWindow = ({
             />
           );
         })}
-        
+
         {/* Typing Indicators */}
         {typingUsers.length > 0 && (
           <div className="flex items-center gap-2 p-3 text-sm text-gray-500">
@@ -1351,23 +1259,23 @@ const ChatWindow = ({
             </span>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Bulk Actions Bar */}
       {showBulkActions && (
-        <div className="bg-blue-50 border-t border-blue-200 p-4">
+        <div className="bg-stone-50/90 backdrop-blur-sm border-t border-stone-200 p-6 animate-in slide-in-from-bottom duration-300">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-blue-700">
-                {selectedMessages.length} message{selectedMessages.length !== 1 ? 's' : ''} selected
+            <div className="flex items-center gap-6">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-stone-400">
+                {selectedMessages.length} Segment{selectedMessages.length !== 1 ? 's' : ''} Selected
               </span>
               <button
                 onClick={handleSelectAllMessages}
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
+                className="text-[10px] font-bold text-trust hover:underline underline-offset-4 uppercase tracking-widest"
               >
-                Select All My Messages
+                Select Full Sequence
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -1376,24 +1284,24 @@ const ChatWindow = ({
                   setSelectedMessages([]);
                   setShowBulkActions(false);
                 }}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                className="px-6 py-2 text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-charcoal transition-colors"
               >
-                Cancel
+                ABORT
               </button>
               <button
                 onClick={handleBulkDeleteMessages}
                 disabled={selectedMessages.length === 0 || sending}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="px-6 py-3 bg-clay text-white rounded-xl hover:bg-clay/90 disabled:opacity-30 transition-all font-bold uppercase tracking-widest text-[10px] shadow-sm"
               >
-                Delete Selected
+                PURGE SELECTED
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 flex-shrink-0">
+      {/* Message Input Container */}
+      <div className="p-6 border-t border-stone-100 bg-white dark:bg-charcoal flex-shrink-0">
         {replyingTo && (
           <div className="mb-3 p-2 bg-gray-100 rounded-lg flex items-center justify-between">
             <div>
@@ -1409,506 +1317,394 @@ const ChatWindow = ({
           </div>
         )}
 
-        {/* Message Limit Warning */}
-        {isMessageLimitReached && (
-          <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-orange-800 mb-1">
-                  Message limit reached ({userMessageCount}/{MESSAGE_LIMIT_PER_USER})
-                </p>
-                <p className="text-xs text-orange-700">
-                  Create a job request to continue this conversation and unlock unlimited messaging.
-                </p>
+        <div className="relative">
+          {/* Locked Input Overlay */}
+          {isMessageLimitReached && (
+            <div className="absolute inset-0 z-20 backdrop-blur-[2px] bg-white/60 dark:bg-charcoal/60 rounded-2xl flex items-center justify-center border border-dashed border-stone-200 dark:border-stone-800 group transition-all hover:backdrop-blur-none">
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400">Communication Paused</p>
+                {String(user?.role).toLowerCase() !== 'professional' ? (
+                  <button
+                    onClick={() => setShowJobModal(true)}
+                    className="text-xs font-bold text-trust hover:underline underline-offset-4"
+                  >
+                    Unlock with Job Request
+                  </button>
+                ) : (
+                  <p className="text-[9px] text-stone-300">Awaiting user service initialization</p>
+                )}
               </div>
-              {String(user?.role).toLowerCase() !== 'professional' && (
+            </div>
+          )}
+
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+            <div className="flex-1">
+              <textarea
+                value={newMessage}
+                onChange={handleTyping}
+                placeholder={isMessageLimitReached ? "Unlock to continue..." : "Type a message..."}
+                disabled={isMessageLimitReached}
+                className={`w-full p-4 bg-stone-50 dark:bg-stone-900/50 border rounded-2xl resize-none focus:outline-none transition-all text-sm font-medium ${isMessageLimitReached
+                  ? 'border-stone-100 text-stone-300 cursor-not-allowed'
+                  : 'border-stone-100 focus:border-trust shadow-sm'
+                  }`}
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !isMessageLimitReached) {
+                    e.preventDefault();
+                    handleSendMessage(e);
+                  }
+                }}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isMessageLimitReached}
+                className={`p-2 transition-colors ${isMessageLimitReached
+                  ? 'text-stone-300 cursor-not-allowed'
+                  : 'text-stone-400 hover:text-stone-600 dark:hover:text-stone-300'
+                  }`}
+                title={isMessageLimitReached ? 'Create job request to continue' : 'Share location'}
+                onClick={() => {
+                  if (isMessageLimitReached) {
+                    if (String(user?.role).toLowerCase() !== 'professional') {
+                      setShowJobModal(true);
+                    }
+                    return;
+                  }
+                  setShowLocationModal(true);
+                }}
+              >
+                <FiMapPin className="w-5 h-5" />
+              </button>
+
+
+
+              {/* Send Button */}
+              <button
+                type="submit"
+                disabled={!newMessage.trim() || sending || isMessageLimitReached}
+                className="p-3 bg-charcoal dark:bg-stone-50 text-white dark:text-charcoal rounded-xl hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex-shrink-0"
+                title={isMessageLimitReached ? 'Create job request to continue messaging' : ''}
+              >
+                {sending ? (
+                  <FiLoader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <FiSend className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Review Modal */}
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            // Track dismissed review so it doesn't show again
+            if (activeJob?._id) {
+              const dismissKey = 'ff_dismissed_reviews';
+              const dismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
+              if (!dismissed.includes(activeJob._id)) {
+                dismissed.push(activeJob._id);
+                localStorage.setItem(dismissKey, JSON.stringify(dismissed));
+              }
+            }
+            setShowReviewModal(false);
+          }}
+          serviceName={otherParticipant?.user?.name || 'Professional'}
+          onSubmit={async ({ review, rating }) => {
+            try {
+              if (!activeJob) return;
+              // Get the other participant's user ID
+              const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
+              if (!otherUserId) {
+                console.error('Cannot create review: No user ID found for other participant');
+                return;
+              }
+
+              // Resolve professional ID from user ID
+              let professionalId = otherParticipant?.user?.professionalId;
+              if (!professionalId && otherUserId) {
+                try {
+                  const proData = await getProfessional(otherUserId, { byUser: true });
+                  professionalId = proData?.data?._id || proData?._id;
+                  console.log('🔍 Resolved professional ID for review:', professionalId);
+                } catch (err) {
+                  console.error('❌ Failed to resolve professional ID:', err);
+                  // Fallback: use user ID (backend will handle it if needed)
+                  professionalId = otherUserId;
+                }
+              }
+
+              if (!professionalId) {
+                console.error('Cannot create review: No professional ID found');
+                return;
+              }
+
+              console.log('📝 Creating review with professional ID:', professionalId);
+              const response = await createReview({ professional: professionalId, jobId: activeJob._id, rating, comment: review });
+
+              if (response?.success || response?._id) {
+                // Persist that this job was reviewed to prevent duplicates
+                const key = 'ff_reviewed_jobs';
+                const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
+                if (!reviewed.includes(activeJob._id)) {
+                  reviewed.push(activeJob._id);
+                  localStorage.setItem(key, JSON.stringify(reviewed));
+                  setReviewedJobs(reviewed); // Update state to disable button
+                }
+
+                // Close modal after successful submission
+                setTimeout(() => {
+                  setShowReviewModal(false);
+                }, 2000);
+              } else {
+                throw new Error('Review submission failed');
+              }
+            } catch (e) {
+              console.error('Failed to submit review', e);
+            }
+          }}
+        />
+
+        {/* Create Job Request Modal */}
+        {showJobModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Job Request</h3>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={jobForm.title}
+                  onChange={(e) => setJobForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                />
+                <ServiceSelector
+                  value={jobForm.category}
+                  onChange={(val) => setJobForm(prev => ({ ...prev, category: val }))}
+                  placeholder="Category (e.g., Electrician)"
+                  showSuggestions={true}
+                  allowCustom={true}
+                  className="w-full"
+                />
+                <textarea
+                  placeholder="Description"
+                  value={jobForm.description}
+                  onChange={(e) => setJobForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded"
+                  rows={3}
+                />
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    placeholder="Budget Min"
+                    value={jobForm.budgetMin}
+                    onChange={(e) => setJobForm(prev => ({ ...prev, budgetMin: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Budget Max"
+                    value={jobForm.budgetMax}
+                    onChange={(e) => setJobForm(prev => ({ ...prev, budgetMax: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded"
+                  />
+                </div>
+              </div>
+              <div className="mt-5 flex gap-3">
                 <button
-                  onClick={() => setShowJobModal(true)}
-                  className="ml-3 px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap"
+                  onClick={handleCreateJobRequest}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Create Job Request
+                  {sending ? 'Creating...' : 'Create'}
                 </button>
-              )}
+                <button
+                  onClick={() => setShowJobModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Message Count Indicator - Always show for debugging */}
-        <div className={`mb-2 text-xs text-center border rounded p-2 bg-gray-50 ${
-          isMessageLimitReached 
-            ? 'text-red-600 font-medium border-red-300' 
-            : messagesRemaining <= 2 
-              ? 'text-orange-600 border-orange-300' 
-              : 'text-gray-500 border-gray-300'
-        }`}>
-          {isJobActive ? (
-            <span className="text-green-600">✓ Active job - unlimited messaging ({effectiveState || 'active'})</span>
-          ) : activeJob && !isJobActive ? (
-            <span className="text-yellow-600">⚠ Job {effectiveState || 'completed'} - limit applies ({userMessageCount}/{MESSAGE_LIMIT_PER_USER})</span>
-          ) : isMessageLimitReached ? (
-            <span>🚫 Limit reached: {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages sent</span>
-          ) : (
-            <span>📊 {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages • {messagesRemaining} {messagesRemaining === 1 ? 'message' : 'messages'} remaining</span>
-          )}
-        </div>
-        
-        <form onSubmit={handleSendMessage} className="flex items-end gap-2">
-          <div className="flex-1">
-            <textarea
-              value={newMessage}
-              onChange={handleTyping}
-              placeholder={isMessageLimitReached ? "Create a job request to continue messaging..." : "Type a message..."}
-              disabled={isMessageLimitReached}
-              className={`w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 ${
-                isMessageLimitReached 
-                  ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed focus:ring-gray-300' 
-                  : 'border-gray-300 focus:ring-gray-400'
-              }`}
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey && !isMessageLimitReached) {
-                  e.preventDefault();
-                  handleSendMessage(e);
-                }
-              }}
-            />
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Location Button */}
-            <LocationButton
-              onShareLocation={() => setShowLocationModal(true)}
-              onStopSharing={handleStopLocationShare}
-              isSharing={isSharingLocation}
-              isLoading={sending}
-              disabled={!conversation || isMessageLimitReached}
-            />
+        {/* Profile Modal */}
+        <ChatProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={otherParticipant?.user}
+          isProfessional={otherParticipant?.user?.role === 'professional'}
+          onViewFullProfile={() => {
+            setShowProfileModal(false);
+            onViewProfile?.();
+          }}
+        />
 
-            {/* Share Contact Button */}
-            <button
-              type="button"
-              disabled={isMessageLimitReached}
-              className={`p-2 transition-colors ${
-                isMessageLimitReached 
-                  ? 'text-gray-300 cursor-not-allowed' 
-                  : 'text-gray-400 hover:text-gray-600'
-              }`}
-              title={isMessageLimitReached ? 'Create job request to continue' : 'Share contact'}
-              onClick={async () => {
-                if (!conversation || isMessageLimitReached) {
-                  if (isMessageLimitReached && String(user?.role).toLowerCase() !== 'professional') {
-                    setShowJobModal(true);
-                  }
-                  return;
-                }
-                const tempId = `temp-${Date.now()}`;
-                const contactData = { 
-                  name: user?.name, 
-                  phone: user?.phone || 'N/A', 
-                  email: user?.email 
-                };
-                
-                // Optimistic message
-                const optimisticContact = {
-                  _id: tempId,
-                  sender: {
-                    _id: user?.id,
-                    name: user?.name,
-                    profilePicture: user?.profilePicture || user?.avatarUrl
-                  },
-                  content: { contact: contactData },
-                  messageType: 'contact',
-                  isRead: false,
-                  isEdited: false,
-                  isDeleted: false,
-                  createdAt: new Date().toISOString(),
-                  conversation: conversation._id,
-                  isOptimistic: true
-                };
-
-                if (onMessageSent) {
-                  onMessageSent(optimisticContact);
-                }
-
-                try {
-                  const resp = await sendMessage(conversation._id, {
-                    messageType: 'contact',
-                    content: { contact: contactData }
-                  });
-                  
-                  if (resp.success) {
-                    // Replace with real message
-                    const contactMessage = {
-                      _id: resp.data._id || resp.data.messageId,
-                      sender: {
-                        _id: user?.id,
-                        name: user?.name,
-                        profilePicture: user?.profilePicture || user?.avatarUrl
-                      },
-                      content: resp.data.content || { contact: contactData },
-                      messageType: resp.data.messageType || 'contact',
-                      isRead: resp.data.isRead || false,
-                      isEdited: resp.data.isEdited || false,
-                      isDeleted: false,
-                      createdAt: resp.data.createdAt || new Date().toISOString(),
-                      conversation: resp.data.conversation || conversation._id,
-                      isOptimistic: false
-                    };
-
-                    if (onMessageSent) {
-                      onMessageSent(contactMessage, tempId);
-                    }
-
-                    if (socket && isConnected) {
-                      emit('send_message', { ...resp.data, conversationId: conversation._id });
-                    }
-                  }
-                } catch (e) {
-                  console.error('Error sharing contact:', e);
-                  // Handle message limit error for contact sharing too
-                  const statusCode = e.status || e.response?.status;
-                  const errorData = e.data || e.response?.data;
-                  const errorMessage = errorData?.message || e.message || '';
-                  const errorCode = errorData?.code;
-                  
-                  if (errorCode === 'MESSAGE_LIMIT_REACHED' || 
-                      (statusCode === 403 && errorMessage.includes('Message limit'))) {
-                    setShowMessageLimitModal(true);
-                  }
-                  
-                  if (onMessageSent) {
-                    onMessageSent(null, tempId, true);
-                  }
-                }
-              }}
-            >
-              <FaUser className="w-5 h-5" />
-            </button>
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={!newMessage.trim() || sending || isMessageLimitReached}
-              className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-              title={isMessageLimitReached ? 'Create job request to continue messaging' : ''}
-            >
-              {sending ? (
-                <FaSpinner className="w-4 h-4 animate-spin" />
-              ) : (
-                <FaPaperPlane className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Location Modal */}
-      <LocationModal
-        isOpen={showLocationModal}
-        onClose={() => setShowLocationModal(false)}
-        onConfirm={handleShareLocation}
-        onCancel={() => setShowLocationModal(false)}
-        otherUserName={otherParticipant?.user?.name}
-        isLoading={sending}
-      />
-
-      {/* Map View */}
-      <MapView
-        isOpen={showMapView}
-        onClose={() => setShowMapView(false)}
-        locations={sharedLocations}
-        userLocation={userLocation}
-        onStopSharing={handleStopLocationShare}
-        isSharing={isSharingLocation}
-        onStartSharing={() => setShowLocationModal(true)}
-      />
-
-      {/* Review Modal */}
-      <ReviewModal
-        isOpen={showReviewModal}
-        onClose={() => {
-          // Track dismissed review so it doesn't show again
-          if (activeJob?._id) {
-            const dismissKey = 'ff_dismissed_reviews';
-            const dismissed = JSON.parse(localStorage.getItem(dismissKey) || '[]');
-            if (!dismissed.includes(activeJob._id)) {
-              dismissed.push(activeJob._id);
-              localStorage.setItem(dismissKey, JSON.stringify(dismissed));
-            }
-          }
-          setShowReviewModal(false);
-        }}
-        serviceName={otherParticipant?.user?.name || 'Professional'}
-        onSubmit={async ({ review, rating }) => {
-          try {
-            if (!activeJob) return;
-            // Get the other participant's user ID
-            const otherUserId = otherParticipant?.user?._id || otherParticipant?.user?.id;
-            if (!otherUserId) {
-              console.error('Cannot create review: No user ID found for other participant');
-              return;
-            }
-            
-            // Resolve professional ID from user ID
-            let professionalId = otherParticipant?.user?.professionalId;
-            if (!professionalId && otherUserId) {
-              try {
-                const proData = await getProfessional(otherUserId, { byUser: true });
-                professionalId = proData?.data?._id || proData?._id;
-                console.log('🔍 Resolved professional ID for review:', professionalId);
-              } catch (err) {
-                console.error('❌ Failed to resolve professional ID:', err);
-                // Fallback: use user ID (backend will handle it if needed)
-                professionalId = otherUserId;
-              }
-            }
-            
-            if (!professionalId) {
-              console.error('Cannot create review: No professional ID found');
-              return;
-            }
-            
-            console.log('📝 Creating review with professional ID:', professionalId);
-            const response = await createReview({ professional: professionalId, jobId: activeJob._id, rating, comment: review });
-            
-            if (response?.success || response?._id) {
-              // Persist that this job was reviewed to prevent duplicates
-              const key = 'ff_reviewed_jobs';
-              const reviewed = JSON.parse(localStorage.getItem(key) || '[]');
-              if (!reviewed.includes(activeJob._id)) {
-                reviewed.push(activeJob._id);
-                localStorage.setItem(key, JSON.stringify(reviewed));
-                setReviewedJobs(reviewed); // Update state to disable button
-              }
-              
-              // Close modal after successful submission
-              setTimeout(() => {
-                setShowReviewModal(false);
-              }, 2000);
-            } else {
-              throw new Error('Review submission failed');
-            }
-          } catch (e) {
-            console.error('Failed to submit review', e);
-          }
-        }}
-      />
-
-  {/* Create Job Request Modal */}
-  {showJobModal && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Job Request</h3>
-        <div className="space-y-3">
-          <input
-            type="text"
-            placeholder="Title"
-            value={jobForm.title}
-            onChange={(e) => setJobForm(prev => ({ ...prev, title: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-          />
-          <ServiceSelector
-            value={jobForm.category}
-            onChange={(val) => setJobForm(prev => ({ ...prev, category: val }))}
-            placeholder="Category (e.g., Electrician)"
-            showSuggestions={true}
-            allowCustom={true}
-            className="w-full"
-          />
-          <textarea
-            placeholder="Description"
-            value={jobForm.description}
-            onChange={(e) => setJobForm(prev => ({ ...prev, description: e.target.value }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-            rows={3}
-          />
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Budget Min"
-              value={jobForm.budgetMin}
-              onChange={(e) => setJobForm(prev => ({ ...prev, budgetMin: e.target.value }))}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded"
-            />
-            <input
-              type="number"
-              placeholder="Budget Max"
-              value={jobForm.budgetMax}
-              onChange={(e) => setJobForm(prev => ({ ...prev, budgetMax: e.target.value }))}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded"
-            />
-          </div>
-        </div>
-        <div className="mt-5 flex gap-3">
-          <button
-            onClick={handleCreateJobRequest}
-            disabled={sending}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {sending ? 'Creating...' : 'Create'}
-          </button>
-          <button
-            onClick={() => setShowJobModal(false)}
-            className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
-
-      {/* Profile Modal */}
-      <ChatProfileModal
-        isOpen={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        user={otherParticipant?.user}
-        isProfessional={otherParticipant?.user?.role === 'professional'}
-        onViewFullProfile={() => {
-          setShowProfileModal(false);
-          onViewProfile?.();
-        }}
-      />
-
-      {/* Delete All Messages Modal */}
-      {showDeleteAllModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                <FaTrash className="w-5 h-5 text-red-600" />
+        {/* Delete All Messages Modal */}
+        {showDeleteAllModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                  <FaTrash className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Delete All Messages</h3>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Delete All Messages</h3>
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-gray-600 mb-3">
-                Are you sure you want to delete all your messages in this conversation? This action cannot be undone.
-              </p>
-              <p className="text-sm text-gray-500">
-                This will only delete messages you sent. Messages from {otherParticipant?.user?.name || 'the other person'} will remain.
-              </p>
-            </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={handleDeleteAllMessages}
-                disabled={sending}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {sending ? (
-                  <>
-                    <FaSpinner className="w-4 h-4 animate-spin mr-2" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete All My Messages'
-                )}
-              </button>
-              <button
-                onClick={() => setShowDeleteAllModal(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message Limit Reached Modal */}
-      {showMessageLimitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                <span className="text-2xl">🚫</span>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Message Limit Reached</h3>
-            </div>
-            
-            <div className="mb-4">
-              <p className="text-gray-600 mb-2">
-                You've reached the message limit of {MESSAGE_LIMIT_PER_USER} messages in this conversation.
-              </p>
-              <p className="text-sm text-gray-500 mb-3">
-                To continue messaging, please create a job request. This helps ensure clear communication and proper service tracking.
-              </p>
-              <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-3">
-                <p className="text-sm text-orange-800">
-                  <strong>Current count:</strong> {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages sent
+              <div className="mb-4">
+                <p className="text-gray-600 mb-3">
+                  Are you sure you want to delete all your messages in this conversation? This action cannot be undone.
+                </p>
+                <p className="text-sm text-gray-500">
+                  This will only delete messages you sent. Messages from {otherParticipant?.user?.name || 'the other person'} will remain.
                 </p>
               </div>
-            </div>
 
-            <div className="flex gap-3">
-              {String(user?.role).toLowerCase() !== 'professional' && (
+              <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    setShowMessageLimitModal(false);
-                    setShowJobModal(true);
-                  }}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={handleDeleteAllMessages}
+                  disabled={sending}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  Create Job Request
+                  {sending ? (
+                    <>
+                      <FaSpinner className="w-4 h-4 animate-spin mr-2" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete All My Messages'
+                  )}
                 </button>
-              )}
-              <button
-                onClick={() => setShowMessageLimitModal(false)}
-                className={`px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors ${
-                  String(user?.role).toLowerCase() === 'professional' ? 'flex-1' : ''
-                }`}
-              >
-                {String(user?.role).toLowerCase() === 'professional' ? 'Close' : 'Cancel'}
-              </button>
+                <button
+                  onClick={() => setShowDeleteAllModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Cancel Job Modal */}
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Cancel Job</h3>
-            <textarea
-              className="w-full border border-gray-300 rounded p-2 mb-4"
-              rows={3}
-              placeholder="Please enter a reason for cancellation..."
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-            />
-            <div className="flex gap-3">
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-                disabled={!cancelReason.trim() || sending}
-                onClick={async () => {
-                  if (!activeJob) return;
-                  setSending(true);
-                  try {
-                    const resp = await cancelJob(activeJob._id, { reason: cancelReason.trim() });
-                    if (resp?.success) {
-                      setActiveJob(prev => ({ ...prev, status: 'Cancelled', lifecycleState: 'cancelled', cancellationReason: cancelReason.trim() }));
-                      setShowCancelModal(false);
-                      setCancelReason('');
-                    }
-                  } finally {
-                    setSending(false);
-                  }
-                }}
-              >
-                {sending ? 'Cancelling...' : 'Confirm Cancel'}
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded"
-                onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
-              >
-                Back
-              </button>
+        {/* Message Limit Reached Modal */}
+        {showMessageLimitModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center mb-4">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                  <span className="text-2xl">🚫</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Message Limit Reached</h3>
+              </div>
+
+              <div className="mb-4">
+                <p className="text-gray-600 mb-2">
+                  You've reached the message limit of {MESSAGE_LIMIT_PER_USER} messages in this conversation.
+                </p>
+                <p className="text-sm text-gray-500 mb-3">
+                  To continue messaging, please create a job request. This helps ensure clear communication and proper service tracking.
+                </p>
+                <div className="bg-orange-50 border border-orange-200 rounded p-3 mb-3">
+                  <p className="text-sm text-orange-800">
+                    <strong>Current count:</strong> {userMessageCount}/{MESSAGE_LIMIT_PER_USER} messages sent
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                {String(user?.role).toLowerCase() !== 'professional' && (
+                  <button
+                    onClick={() => {
+                      setShowMessageLimitModal(false);
+                      setShowJobModal(true);
+                    }}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Create Job Request
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowMessageLimitModal(false)}
+                  className={`px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors ${String(user?.role).toLowerCase() === 'professional' ? 'flex-1' : ''
+                    }`}
+                >
+                  {String(user?.role).toLowerCase() === 'professional' ? 'Close' : 'Cancel'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Cancel Job Modal */}
+        {showCancelModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-md w-full p-6">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900">Cancel Job</h3>
+              <textarea
+                className="w-full border border-gray-300 rounded p-2 mb-4"
+                rows={3}
+                placeholder="Please enter a reason for cancellation..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+              <div className="flex gap-3">
+                <button
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                  disabled={!cancelReason.trim() || sending}
+                  onClick={async () => {
+                    if (!activeJob) return;
+                    setSending(true);
+                    try {
+                      const resp = await cancelJob(activeJob._id, { reason: cancelReason.trim() });
+                      if (resp?.success) {
+                        setActiveJob(prev => ({ ...prev, status: 'Cancelled', lifecycleState: 'cancelled', cancellationReason: cancelReason.trim() }));
+                        setShowCancelModal(false);
+                        setCancelReason('');
+                      }
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                >
+                  {sending ? 'Cancelling...' : 'Confirm Cancel'}
+                </button>
+                <button
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded"
+                  onClick={() => { setShowCancelModal(false); setCancelReason(''); }}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Location Sharing Modals */}
+        <LocationModal
+          isOpen={showLocationModal}
+          onClose={() => setShowLocationModal(false)}
+          onCancel={() => setShowLocationModal(false)}
+          onConfirm={handleShareLocation}
+          otherUserName={otherParticipant?.user?.name || 'this person'}
+          isLoading={sending}
+        />
+
+        <MapView
+          isOpen={showMapView}
+          onClose={() => setShowMapView(false)}
+          locations={sharedLocations}
+          userLocation={userLocation}
+          isSharing={isSharingLocation}
+          onStopSharing={handleStopLocationShare}
+          onStartSharing={() => setShowLocationModal(true)}
+        />
+      </div>
     </div>
   );
 };

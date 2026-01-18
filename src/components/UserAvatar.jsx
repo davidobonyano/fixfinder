@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { resolveImageUrl } from '../utils/api';
 
 const sizeClasses = {
-  md: 'w-10 h-10 text-lg',
-  lg: 'w-12 h-12 text-xl',
+  sm: 'w-8 h-8 text-[10px]',
+  md: 'w-10 h-10 text-xs',
+  lg: 'w-14 h-14 text-sm',
+  xl: 'w-20 h-20 text-lg',
 };
 
 export default function UserAvatar({ user, size = 'md', onClick, className = '' }) {
@@ -12,11 +15,11 @@ export default function UserAvatar({ user, size = 'md', onClick, className = '' 
     .map((n) => n.charAt(0).toUpperCase())
     .join('');
 
-  const photo = !imgError && (user?.profilePicture || user?.avatarUrl);
+  const photo = !imgError && resolveImageUrl(user?.profilePicture || user?.avatarUrl);
 
   return (
     <div
-      className={`rounded-full bg-purple-200 flex items-center justify-center font-bold overflow-hidden ${sizeClasses[size] || sizeClasses.md} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      className={`rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center font-bold overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm ${sizeClasses[size] || sizeClasses.md} ${onClick ? 'cursor-pointer hover:border-trust transition-all' : ''} ${className}`}
       onClick={onClick ? (e) => { e.stopPropagation(); onClick(e); } : undefined}
       title={user?.name}
       style={{ userSelect: 'none' }}
@@ -25,16 +28,14 @@ export default function UserAvatar({ user, size = 'md', onClick, className = '' 
         <img
           src={photo}
           alt={user?.name || 'Avatar'}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-opacity duration-300"
           onError={() => setImgError(true)}
         />
       ) : (
-        <span className="text-white">
+        <span className="text-stone-400 dark:text-stone-500 font-tight tracking-widest uppercase">
           {initials || '?'}
         </span>
       )}
     </div>
   );
 }
-
-

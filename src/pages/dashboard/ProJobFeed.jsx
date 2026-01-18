@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaSearch, FaSync, FaFilter, FaBriefcase } from 'react-icons/fa';
+import { FiMapPin, FiSearch, FiRefreshCw, FiFilter, FiBriefcase, FiArrowRight, FiLoader, FiX, FiCheckCircle, FiClock, FiMaximize2 } from 'react-icons/fi';
 import { getJobFeed, findNearbyJobs, applyToJob } from '../../utils/api';
 import { useLocation as useLocationHook } from '../../hooks/useLocation';
 import ServiceSelector from '../../components/ServiceSelector';
@@ -51,7 +51,7 @@ const ProJobFeed = () => {
             if (Array.isArray(data)) list = data;
             else if (Array.isArray(data?.data)) list = data.data;
             else if (Array.isArray(data?.data?.jobs)) list = data.data.jobs;
-          } catch {}
+          } catch { }
         }
         const centerLat = detectedLocation?.latitude || user?.location?.latitude;
         const centerLon = detectedLocation?.longitude || user?.location?.longitude;
@@ -68,35 +68,35 @@ const ProJobFeed = () => {
         list = list.filter(j => {
           const statusLc = String(j?.status || '').toLowerCase();
           const lifecycleLc = String(j?.lifecycleState || '').toLowerCase();
-          
+
           // Strictly exclude any completed/cancelled status
           if (statusLc === 'completed' || statusLc === 'cancelled') {
             return false;
           }
-          
+
           // Strictly exclude any closed lifecycle states
           if (['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc)) {
             return false;
           }
-          
+
           // Exclude jobs with completion flags
           if (j?.completed === true || j?.isCompleted === true || !!j?.completedAt) {
             return false;
           }
-          
+
           // Only include jobs with explicitly open status
           if (!['pending', 'open'].includes(statusLc)) {
             return false;
           }
-          
+
           // If job has professional assigned and no conversation, exclude it (already assigned)
           if (j?.professional && !j?.conversation) {
             return false;
           }
-          
+
           return true;
         });
-        
+
         // Client-side filters (state, service, search) for reliability and instant UX
         if (stateFilter) {
           list = list.filter(j => (j.location?.state || j.state || '').toLowerCase() === stateFilter.toLowerCase());
@@ -113,7 +113,7 @@ const ProJobFeed = () => {
           );
         }
         // De-duplicate jobs that are the same posting/thread
-        const day = (d) => new Date(d || 0).toISOString().slice(0,10);
+        const day = (d) => new Date(d || 0).toISOString().slice(0, 10);
         const norm = (s) => String(s || '').trim().toLowerCase();
         const toCurrency = (n) => Number(n || 0);
         const makeSignature = (j) => {
@@ -133,19 +133,19 @@ const ProJobFeed = () => {
           const statusLc = String(job?.status || '').toLowerCase();
           const lifecycleLc = String(job?.lifecycleState || '').toLowerCase();
           return statusLc === 'completed' || statusLc === 'cancelled' ||
-                 ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc) ||
-                 job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+            ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc) ||
+            job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
         };
-        
+
         list.forEach(j => {
           // Extra safety: skip if somehow a completed job made it through
           if (isJobCompleted(j)) {
             return; // Skip this job entirely
           }
-          
+
           const primaryKey = j.conversation ? `conv:${j.conversation}` : makeSignature(j);
           const prev = byKey.get(primaryKey);
-          
+
           if (!prev) {
             byKey.set(primaryKey, j);
           } else {
@@ -156,13 +156,13 @@ const ProJobFeed = () => {
               }
               return;
             }
-            
+
             // Both are not completed - prefer the one with conversation or more recent
             const prevHasConv = !!prev.conversation;
             const currHasConv = !!j.conversation;
             const prevUpdated = new Date(prev.updatedAt || prev.createdAt || 0).getTime();
             const currUpdated = new Date(j.updatedAt || j.createdAt || 0).getTime();
-            
+
             if (currHasConv && !prevHasConv) {
               byKey.set(primaryKey, j);
             } else if (prevHasConv && !currHasConv) {
@@ -184,7 +184,7 @@ const ProJobFeed = () => {
           else if (Array.isArray(data?.data)) list = data.data;
           else if (Array.isArray(data?.data?.jobs)) list = data.data.jobs;
           setJobs(list);
-        } catch {}
+        } catch { }
       } finally {
         setLoading(false);
       }
@@ -224,108 +224,113 @@ const ProJobFeed = () => {
   }, [jobs, userCity, userState]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 -mx-4 lg:mx-0">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 rounded-2xl lg:rounded-3xl p-6 lg:p-8 text-white shadow-xl mb-6">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-400 opacity-10 rounded-full -ml-24 -mb-24"></div>
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-bold mb-2 flex items-center gap-2">
-              <span>Job Feed</span>
-              <FaBriefcase className="w-6 h-6 text-amber-300 animate-pulse" />
-            </h1>
-            <p className="text-indigo-100 text-lg">Discover new opportunities near you</p>
-          </div>
-          <button
-            onClick={() => setRefreshTs(Date.now())}
-            className="px-5 py-2.5 border border-white/60 hover:border-white rounded-xl backdrop-blur-sm transition-all flex items-center gap-2 text-sm font-medium text-white/90 hover:text-white"
-          >
-            <FaSync className="w-4 h-4" /> Refresh
-          </button>
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      {/* Premium Header */}
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="label-caps mb-2">Marketplace</div>
+          <h1 className="text-4xl md:text-5xl font-tight font-bold text-charcoal tracking-tight">
+            Recent Opportunities
+          </h1>
+          <p className="mt-3 text-lg text-graphite max-w-xl">
+            Real-time feed of service requests within your operational vicinity.
+          </p>
         </div>
+        <button
+          onClick={() => setRefreshTs(Date.now())}
+          className="btn-secondary py-3 flex items-center gap-2"
+        >
+          <FiRefreshCw className="w-4 h-4" /> Synchronize Feed
+        </button>
       </div>
 
-      {/* Filters Section - Modern Design */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-white p-6 mb-6">
-        <div className="flex items-center gap-2 mb-6">
-          <FaFilter className="w-5 h-5 text-indigo-500 dark:text-white" />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Search & Filters</h2>
+      {/* Filters Section - Premium Card */}
+      <div className="card-premium p-8 mb-10 bg-white">
+        <div className="flex items-center gap-3 mb-8 pb-4 border-b border-stone-100">
+          <FiFilter className="w-5 h-5 text-trust" />
+          <h2 className="text-xl font-tight font-bold text-charcoal tracking-tight">Refine Discovery</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Search</label>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div className="md:col-span-2 lg:col-span-1">
+            <label className="label-caps mb-2 block">Search</label>
             <div className="relative">
-              <FaSearch className="w-4 h-4 text-gray-400 dark:text-white absolute left-3 top-1/2 -translate-y-1/2" />
+              <FiSearch className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by title or description"
-                className="w-full pl-9 pr-3 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white transition-all dark:bg-gray-800 dark:text-white"
+                placeholder="Keywords..."
+                className="input-field pl-11"
               />
             </div>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Service</label>
-            <ServiceSelector value={service} onChange={setService} placeholder="Any service" />
+            <label className="label-caps mb-2 block">Service Type</label>
+            <ServiceSelector value={service} onChange={setService} placeholder="All Categories" />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">State</label>
+            <label className="label-caps mb-2 block">Jurisdiction</label>
             <select
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
-              className="w-full px-3 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-white focus:border-indigo-500 dark:focus:border-white transition-all dark:bg-gray-800 dark:text-white"
+              className="input-field"
             >
-              <option value="">All states</option>
+              <option value="">All Regions</option>
               {[
-                'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno','Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT','Gombe','Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos','Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto','Taraba','Yobe','Zamfara'
+                'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno', 'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe', 'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
               ].map(s => (<option key={s} value={s}>{s}</option>))}
             </select>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 dark:text-white mb-2 block">Distance: <span className="text-indigo-600 dark:text-white font-bold">{kmRange} km</span></label>
-            <input
-              type="range"
-              min={1}
-              max={70}
-              step={1}
-              value={kmRange}
-              onChange={(e) => setKmRange(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-600 dark:accent-white"
-            />
+            <label className="label-caps mb-2 block">Proximity: <span className="text-trust font-bold">{kmRange}km</span></label>
+            <div className="pt-3">
+              <input
+                type="range"
+                min={1}
+                max={70}
+                step={1}
+                value={kmRange}
+                onChange={(e) => setKmRange(Number(e.target.value))}
+                className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-trust"
+              />
+              <div className="flex justify-between mt-2 text-[10px] text-stone-400 font-bold uppercase tracking-widest">
+                <span>1km</span>
+                <span>70km</span>
+              </div>
+            </div>
           </div>
           <div className="flex items-end">
-            <button className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-gray-200 dark:border-white rounded-xl text-sm font-semibold text-gray-600 dark:text-white hover:border-indigo-300 dark:hover:border-gray-300 hover:text-indigo-600 dark:hover:text-gray-200 transition-all">
-              <FaFilter className="w-4 h-4" /> More
+            <button className="btn-secondary w-full py-3 flex items-center justify-center gap-2">
+              <FiMaximize2 className="w-4 h-4" /> Advanced
             </button>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-200 border-t-indigo-600"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <FaBriefcase className="w-5 h-5 text-indigo-600 animate-pulse" />
-            </div>
-          </div>
+        <div className="flex flex-col items-center justify-center py-32 card-premium bg-white border-dashed">
+          <FiLoader className="w-12 h-12 animate-spin text-trust mb-4" />
+          <p className="font-tight text-graphite text-lg">Synchronizing operational feed...</p>
         </div>
       ) : (displayedJobs.inSameCity.length + displayedJobs.inSameState.length + displayedJobs.inOtherStates.length) === 0 ? (
-        <div className="text-center py-20">
-          <FaBriefcase className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-xl font-semibold text-gray-600 mb-2">No jobs found</p>
-          <p className="text-gray-500">Try adjusting your filters or search criteria</p>
+        <div className="text-center py-32 card-premium bg-white border-dashed">
+          <FiBriefcase className="w-16 h-16 mx-auto mb-6 text-stone-300" />
+          <p className="text-2xl font-tight font-bold text-charcoal mb-2">No opportunities found</p>
+          <p className="text-graphite">Try expanding your search radius or refining your service categories.</p>
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-16">
           {displayedJobs.inSameCity.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Jobs near you in {userCity || 'your city'}</h2>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-8 bg-trust"></div>
+                <div>
+                  <div className="label-caps mb-1">Local Focus</div>
+                  <h2 className="text-3xl font-tight font-bold text-charcoal tracking-tight">
+                    Nearby in {userCity || 'your city'}
+                  </h2>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {displayedJobs.inSameCity.map((job) => (
                   <JobCard key={job._id || job.id} job={job} />
                 ))}
@@ -334,11 +339,16 @@ const ProJobFeed = () => {
           )}
           {displayedJobs.inSameState.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">More jobs in {userState || 'your state'}</h2>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-8 bg-stone-300"></div>
+                <div>
+                  <div className="label-caps mb-1">Regional Feed</div>
+                  <h2 className="text-3xl font-tight font-bold text-charcoal tracking-tight">
+                    Across {userState || 'your state'}
+                  </h2>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {displayedJobs.inSameState.map((job) => (
                   <JobCard key={job._id || job.id} job={job} />
                 ))}
@@ -347,11 +357,16 @@ const ProJobFeed = () => {
           )}
           {displayedJobs.inOtherStates.length > 0 && (
             <div>
-              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white">
-                <FaMapMarkerAlt className="w-5 h-5 text-indigo-500 dark:text-white" />
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Other jobs across Nigeria</h2>
+              <div className="flex items-center gap-3 mb-8">
+                <div className="w-2 h-8 bg-stone-200"></div>
+                <div>
+                  <div className="label-caps mb-1">National Scope</div>
+                  <h2 className="text-3xl font-tight font-bold text-charcoal tracking-tight">
+                    Other jurisdictions
+                  </h2>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {displayedJobs.inOtherStates.map((job) => (
                   <JobCard key={job._id || job.id} job={job} />
                 ))}
@@ -376,148 +391,160 @@ const JobCard = ({ job }) => {
   const { success, error } = useToast();
   const rawStatus = String(job?.status || '').toLowerCase();
   const maybeStateAsStatus = String(job?.state || '').toLowerCase();
-  const knownStatuses = ['pending','open','in progress','completed','cancelled'];
+  const knownStatuses = ['pending', 'open', 'in progress', 'completed', 'cancelled'];
   const statusFromState = knownStatuses.includes(maybeStateAsStatus) ? maybeStateAsStatus : '';
   const statusLc = rawStatus || statusFromState; // Only trust state when it looks like a status
   const lifecycleLc = String(job?.lifecycleState || '').toLowerCase();
-  const isExplicitlyOpen = ['pending','open'].includes(statusLc);
-  const closedByLifecycle = ['in_progress','completed_by_pro','completed_by_user','closed','cancelled'].includes(lifecycleLc);
+  const isExplicitlyOpen = ['pending', 'open'].includes(statusLc);
+  const closedByLifecycle = ['in_progress', 'completed_by_pro', 'completed_by_user', 'closed', 'cancelled'].includes(lifecycleLc);
   const closedByFlags = job?.completed === true || job?.isCompleted === true || !!job?.completedAt || !!job?.cancelledAt;
   const closedByAssignment = !!job?.professional || !!job?.conversation;
   const isClosed = (!isExplicitlyOpen) || closedByLifecycle || closedByFlags || closedByAssignment;
 
   return (
-            <div className="group bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-white shadow-sm hover:shadow-md overflow-hidden transition-all duration-300">
+    <div className="group card-premium bg-white hover:border-stone-400 transition-all duration-500 flex flex-col h-full">
+      {/* Visual Indicator */}
+      <div className="h-1 bg-stone-100 group-hover:bg-trust transition-colors"></div>
+
       {/* Header */}
-      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-white">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 font-semibold">
-              {(job.category || 'J')[0]}
+      <div className="p-8 pb-0">
+        <div className="flex justify-between items-start gap-6">
+          <div className="flex-1 min-w-0">
+            <div className="label-caps mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-trust"></span>
+              {job.category}
             </div>
-            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setDetailsOpen(true)}>
-              <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-1 group-hover:text-indigo-600 dark:group-hover:text-gray-200 transition-colors truncate">{job.title || 'Untitled job'}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                <FaMapMarkerAlt className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{job.location?.city || job.city || 'Unknown'}</span>
-                <span className="text-gray-400 dark:text-gray-500">•</span>
-                <span className="font-medium text-indigo-600 dark:text-white">{job.category}</span>
-              </div>
+            <h3 className="text-2xl font-tight font-bold text-charcoal leading-tight mb-2 group-hover:text-trust transition-colors cursor-pointer" onClick={() => setDetailsOpen(true)}>
+              {job.title || 'Untitled request'}
+            </h3>
+            <div className="flex items-center gap-3 text-graphite text-sm">
+              <FiMapPin className="w-4 h-4 text-stone-400" />
+              <span>{job.location?.city || job.city || 'Unknown'}</span>
+              <span className="text-stone-300">•</span>
+              <FiClock className="w-4 h-4 text-stone-400" />
+              <span>{new Date(job.createdAt).toLocaleDateString()}</span>
             </div>
           </div>
-          <div className="text-right">
-            {isClosed && (
-              <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white border border-gray-200 dark:border-white mb-2">Closed</span>
-            )}
-            <div className="text-gray-900 dark:text-white font-semibold text-lg">
+          <div className="text-right shrink-0">
+            <div className="text-2xl font-tight font-bold text-charcoal">
               {(() => {
                 const b = job.budget;
                 if (b && typeof b === 'object' && (b.min != null || b.max != null)) {
                   const min = Number(b.min || 0);
                   const max = Number(b.max || 0);
-                  return `₦${min.toLocaleString()} - ₦${max.toLocaleString()}`;
+                  return `₦${min.toLocaleString()}`;
                 }
                 const price = Number(job.price || 0);
                 return `₦${price.toLocaleString()}`;
               })()}
             </div>
+            <div className="label-caps text-stone-400 mt-1">Est. Budget</div>
           </div>
         </div>
       </div>
-      {/* Media */}
+
+      {/* Media if exists */}
       {Array.isArray(job.media) && job.media[0]?.url && (
-        <div className="w-full bg-gray-100 overflow-hidden">
-          <img src={job.media[0].url} alt="job" className="w-full max-h-80 object-cover group-hover:scale-[1.01] transition-transform duration-300" />
+        <div className="mt-8 px-8">
+          <div className="aspect-video w-full rounded-xl overflow-hidden bg-stone-100 border border-stone-100">
+            <img src={job.media[0].url} alt="Reference" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          </div>
         </div>
       )}
+
       {/* Body */}
-      <div className="p-6 dark:bg-gray-900">
-        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-3 mb-4">{job.description || 'No description'}</p>
-        {job.requirements && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-700 dark:text-gray-300"><span className="font-semibold text-gray-900 dark:text-white">Requirements:</span> {job.requirements}</p>
-          </div>
-        )}
-        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
-            <FaMapMarkerAlt className="w-4 h-4 text-indigo-500 dark:text-white" />
-            <span className="font-medium">{job.location?.address || job.location?.city || job.city || 'Unknown'}</span>
-          </span>
+      <div className="p-8 flex-1">
+        <p className="text-graphite leading-relaxed line-clamp-3 mb-8">
+          {job.description || 'No description provided by the client.'}
+        </p>
+
+        <div className="flex flex-wrap gap-3">
           {job.distanceFormatted && (
-            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-white font-medium rounded-lg">
-              {job.distanceFormatted} away
-            </span>
+            <div className="px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-graphite uppercase tracking-widest flex items-center gap-2">
+              <FiMaximize2 className="w-3 h-3" /> {job.distanceFormatted} away
+            </div>
           )}
+          <div className="px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-xs font-bold text-graphite uppercase tracking-widest flex items-center gap-2">
+            <FiCheckCircle className="w-3 h-3" /> Identity Verified
+          </div>
         </div>
       </div>
-      {/* Footer */}
-      <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-white flex items-center justify-end gap-3">
-        <button 
-          onClick={() => setDetailsOpen(true)} 
-          className="px-5 py-2 border border-gray-300 dark:border-white rounded-lg text-sm font-medium text-gray-700 dark:text-white hover:border-indigo-300 dark:hover:border-gray-300 hover:text-indigo-600 dark:hover:text-gray-200 transition-all"
+
+      {/* Footer Actions */}
+      <div className="p-8 pt-0 mt-auto grid grid-cols-2 gap-4">
+        <button
+          onClick={() => setDetailsOpen(true)}
+          className="btn-secondary w-full py-4 font-bold flex items-center justify-center gap-2"
         >
-          View details
+          Analysis
         </button>
         {isClosed ? (
-          <span className="px-5 py-2 text-sm font-medium text-gray-600 dark:text-white">Closed</span>
+          <div className="flex items-center justify-center bg-stone-100 rounded-lg text-charcoal label-caps">Engagement Closed</div>
         ) : (
-          <button 
-            onClick={() => setOpen(true)} 
-            className="px-5 py-2 text-sm font-medium text-indigo-600 dark:text-white border border-indigo-200 dark:border-white rounded-lg hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition-colors"
+          <button
+            onClick={() => setOpen(true)}
+            className="btn-primary w-full py-4 font-bold flex items-center justify-center gap-2"
           >
-            Apply Now
+            Apply <FiArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
         )}
       </div>
 
       {open && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg max-w-md w-full p-6 border dark:border-white">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Apply to this job</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              <span className="font-medium">{job.title || 'Untitled job'}</span>
-              {job?.budget && (typeof job.budget === 'object') && (job.budget.min != null || job.budget.max != null) && (
-                <>
-                  {' • Estimated budget: '}
-                  ₦{Number(job.budget.min || 0).toLocaleString()} - ₦{Number(job.budget.max || 0).toLocaleString()}
-                </>
-              )}
+        <div className="fixed inset-0 bg-charcoal/40 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+          <div className="bg-white card-premium max-w-md w-full p-10">
+            <div className="label-caps text-trust mb-2">Proposal Submission</div>
+            <h3 className="text-3xl font-tight font-bold text-charcoal mb-2">Seal the Deal</h3>
+            <p className="text-graphite mb-8">
+              Briefly describe why you are the best fit for <span className="font-bold">{job.title}</span>.
             </p>
-            <div className="space-y-3">
-              <textarea
-                value={proposal}
-                onChange={(e) => setProposal(e.target.value)}
-                placeholder="Proposal"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
-                rows={3}
-              />
-              <div className="flex gap-2">
-                <input
-                  type="number"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="Proposed price"
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
+
+            <div className="space-y-6">
+              <div>
+                <label className="label-caps mb-2 block">Cover Details</label>
+                <textarea
+                  value={proposal}
+                  onChange={(e) => setProposal(e.target.value)}
+                  placeholder="Elaborate on your approach..."
+                  className="input-field min-h-[120px]"
                 />
-                <input
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  placeholder="Estimated duration"
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
-                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label-caps mb-2 block">Proposed Fee</label>
+                  <input
+                    type="number"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="₦0.00"
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="label-caps mb-2 block">Timeline</label>
+                  <input
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    placeholder="e.g. 3 Days"
+                    className="input-field"
+                  />
+                </div>
               </div>
               <div>
-                <label className="text-sm text-gray-600 dark:text-gray-300 mb-1 block">Attach CV (PDF)</label>
-                <input
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setCvFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-white rounded dark:bg-gray-800 dark:text-white"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Optional. PDF only, max 2MB.</p>
+                <label className="label-caps mb-2 block">Documentation</label>
+                <div className="input-field flex items-center justify-between group cursor-pointer relative overflow-hidden">
+                  <span className="text-stone-400 truncate">{cvFile ? cvFile.name : 'Upload PDF Portfolio...'}</span>
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setCvFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
-            <div className="mt-5 flex gap-3">
+
+            <div className="mt-10 flex flex-col gap-3">
               <button
                 onClick={async () => {
                   try {
@@ -532,11 +559,11 @@ const JobCard = ({ job }) => {
                   }
                 }}
                 disabled={loading || !proposal.trim() || isClosed}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="btn-primary w-full py-4 text-lg"
               >
-                {isClosed ? 'Applications closed' : (loading ? 'Submitting...' : 'Submit Application')}
+                {loading ? <FiLoader className="animate-spin mx-auto" /> : 'Confirm Submission'}
               </button>
-              <button onClick={() => setOpen(false)} className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setOpen(false)} className="btn-secondary w-full py-4">Discard</button>
             </div>
           </div>
         </div>
@@ -544,90 +571,108 @@ const JobCard = ({ job }) => {
 
       {detailsOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-charcoal/40 backdrop-blur-sm flex items-center justify-center z-50 p-6"
           onClick={() => setDetailsOpen(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden"
+            className="bg-white card-premium max-w-4xl w-full overflow-hidden flex flex-col md:flex-row h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-5 border-b border-gray-200 dark:border-white flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-indigo-500 dark:text-white font-semibold mb-1">Job opportunity</p>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{job.title || 'Untitled job'}</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1 flex items-center gap-2">
-                  <FaMapMarkerAlt className="w-4 h-4 text-indigo-500 dark:text-white" />
-                  <span>{job.location?.address || job.location?.city || 'Unknown'} • {job.category}</span>
-                </p>
+            {/* Left Column: Media & Context */}
+            <div className="w-full md:w-1/2 bg-stone-50 border-r border-stone-100 flex flex-col">
+              <div className="p-10 pb-0">
+                <div className="label-caps text-trust mb-3">Operational Context</div>
+                <h2 className="text-4xl font-tight font-bold text-charcoal leading-tight mb-4">{job.title}</h2>
+                <div className="flex items-center gap-4 text-graphite mb-10">
+                  <div className="flex items-center gap-2">
+                    <FiMapPin className="text-stone-400" /> {job.location?.city}
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-stone-300"></div>
+                  <div className="flex items-center gap-2">
+                    <FiBriefcase className="text-stone-400" /> {job.category}
+                  </div>
+                </div>
               </div>
-              <button
-                onClick={() => setDetailsOpen(false)}
-                className="px-3 py-1 text-sm text-gray-500 dark:text-white hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-              >
-                Close
-              </button>
+
+              <div className="flex-1 px-10 pb-10 overflow-y-auto invisible-scrollbar">
+                {Array.isArray(job.media) && job.media[0]?.url ? (
+                  <img src={job.media[0].url} alt="Reference" className="w-full rounded-2xl border border-stone-100 shadow-sm mb-10" />
+                ) : (
+                  <div className="w-full aspect-video bg-stone-100 rounded-2xl border-2 border-dashed border-stone-200 flex items-center justify-center mb-10">
+                    <FiBriefcase className="w-12 h-12 text-stone-300" />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-8 mb-10">
+                  <DetailItem label="Allocated Budget">
+                    <span className="text-2xl font-tight font-bold text-charcoal">
+                      {(() => {
+                        const b = job.budget || {};
+                        const min = Number(b.min || 0);
+                        return `₦${min.toLocaleString()}+`;
+                      })()}
+                    </span>
+                  </DetailItem>
+                  <DetailItem label="Priority Status">
+                    <span className="text-2xl font-tight font-bold text-clay uppercase tracking-tight">{job.urgency || 'Standard'}</span>
+                  </DetailItem>
+                </div>
+              </div>
             </div>
 
-            {Array.isArray(job.media) && job.media[0]?.url && (
-              <div className="px-6 pt-6">
-                <img
-                  src={job.media[0].url}
-                  alt="job"
-                  className="w-full max-h-96 object-cover rounded-xl border border-gray-200"
-                />
-              </div>
-            )}
-
-            <div className="px-6 py-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <DetailItem label="Budget">
-                  {(() => {
-                    const b = job.budget || {};
-                    const min = Number(b.min || 0);
-                    const max = Number(b.max || 0);
-                    return `₦${min.toLocaleString()} - ₦${max.toLocaleString()}`;
-                  })()}
-                </DetailItem>
-                <DetailItem label="Urgency">{job.urgency || 'Not specified'}</DetailItem>
-                <DetailItem label="Preferred date">
-                  {job.preferredDate ? new Date(job.preferredDate).toLocaleDateString() : 'Not specified'}
-                </DetailItem>
-                <DetailItem label="Preferred time">{job.preferredTime || 'Not specified'}</DetailItem>
+            {/* Right Column: Narrative & Actions */}
+            <div className="w-full md:w-1/2 flex flex-col">
+              <div className="p-10 border-b border-stone-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div className="label-caps">Details & Narrative</div>
+                <button onClick={() => setDetailsOpen(false)} className="p-2 hover:bg-stone-50 rounded-full transition-colors"><FiX className="w-6 h-6" /></button>
               </div>
 
-              <DetailItem label="Description" fullWidth>
-                {job.description || 'No description provided.'}
-              </DetailItem>
+              <div className="p-10 flex-1 overflow-y-auto invisible-scrollbar">
+                <div className="space-y-12">
+                  <section>
+                    <div className="label-caps text-stone-400 mb-4">Request Objective</div>
+                    <p className="text-graphite text-lg leading-relaxed">{job.description}</p>
+                  </section>
 
-              {job.requirements && (
-                <DetailItem label="Requirements" fullWidth>
-                  {job.requirements}
-                </DetailItem>
-              )}
+                  {job.requirements && (
+                    <section>
+                      <div className="label-caps text-stone-400 mb-4">Specific Requirements</div>
+                      <div className="p-6 bg-stone-50 border border-stone-100 rounded-xl text-graphite italic leading-relaxed">
+                        "{job.requirements}"
+                      </div>
+                    </section>
+                  )}
 
-              <DetailItem label="Location" fullWidth>
-                {job.location?.address || job.location?.city || 'Not specified'}
-              </DetailItem>
-            </div>
+                  <section>
+                    <div className="label-caps text-stone-400 mb-4">Schedule</div>
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-3 text-charcoal font-bold">
+                        <FiClock className="text-trust" />
+                        {job.preferredDate ? new Date(job.preferredDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }) : 'Flexible'}
+                      </div>
+                      <div className="text-stone-300">|</div>
+                      <div className="flex items-center gap-3 text-graphite">
+                        {job.preferredTime || 'Business Hours'}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-white flex justify-end gap-2">
-              <button
-                onClick={() => setDetailsOpen(false)}
-                className="px-4 py-2 border border-gray-300 dark:border-white rounded-lg text-sm text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-400 dark:hover:border-gray-300 transition"
-              >
-                Close
-              </button>
-              {!isClosed && (
-                <button
-                  onClick={() => {
-                    setDetailsOpen(false);
-                    setOpen(true);
-                  }}
-                  className="px-4 py-2 text-sm text-indigo-600 dark:text-white border border-indigo-200 dark:border-white rounded-lg hover:border-indigo-400 dark:hover:border-gray-300 hover:text-indigo-700 dark:hover:text-gray-200 transition"
-                >
-                  Apply Now
-                </button>
-              )}
+              <div className="p-10 border-t border-stone-100 bg-white sticky bottom-0 z-10 grid grid-cols-2 gap-4">
+                <button onClick={() => setDetailsOpen(false)} className="btn-secondary w-full py-4 uppercase tracking-widest text-xs font-bold">Dismiss</button>
+                {!isClosed && (
+                  <button
+                    onClick={() => {
+                      setDetailsOpen(false);
+                      setOpen(true);
+                    }}
+                    className="btn-primary w-full py-4 uppercase tracking-widest text-xs font-bold"
+                  >
+                    Initiate Application
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -636,10 +681,10 @@ const JobCard = ({ job }) => {
   );
 };
 
-const DetailItem = ({ label, children, fullWidth = false }) => (
-  <div className={fullWidth ? 'col-span-1 md:col-span-2' : ''}>
-    <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">{label}</div>
-    <div className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{children}</div>
+const DetailItem = ({ label, children }) => (
+  <div>
+    <div className="label-caps text-stone-400 mb-2">{label}</div>
+    <div className="text-charcoal font-bold leading-relaxed">{children}</div>
   </div>
 );
 

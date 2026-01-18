@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { 
-  FaMapMarkerAlt, 
-  FaExternalLinkAlt, 
-  FaEdit, 
-  FaTrash, 
-  FaReply,
-  FaCheck,
-  FaCheckDouble,
-  FaClock,
-  FaTimes,
-  FaUser,
-  FaMap
-} from 'react-icons/fa';
+import {
+  FiMapPin,
+  FiExternalLink,
+  FiEdit3,
+  FiTrash2,
+  FiCornerUpLeft,
+  FiCheck,
+  FiCheckCircle,
+  FiClock,
+  FiX,
+  FiUser,
+  FiMap
+} from 'react-icons/fi';
 
-const MessageBubble = ({ 
-  message, 
-  isOwn, 
-  onEdit, 
-  onDelete, 
+const MessageBubble = ({
+  message,
+  isOwn,
+  onEdit,
+  onDelete,
   onReply,
   onViewMap,
   onOpenInMaps,
@@ -67,122 +67,59 @@ const MessageBubble = ({
     }
   };
 
-  const getMessageStatus = () => {
-    if (message.isDeleted) return 'deleted';
-    if (message.isEdited) return 'edited';
-    return 'sent';
-  };
-
   const renderLocationMessage = () => {
-    // Only render location message if location data actually exists
     if (!message.content?.location) return null;
-    
-    // Check if location has actual coordinates
-    const { lat, lng, accuracy } = message.content.location || {};
-    if (lat === undefined && lng === undefined) return null;
+    const { lat, lng } = message.content.location || {};
+    if (lat === undefined || lng === undefined) return null;
 
-    // Only render if both lat and lng are valid numbers
-    if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-    
     return (
-      <div className="text-sm text-current">
-                <div className="flex items-center gap-2 mb-2">
-                  <FaMapMarkerAlt className="w-4 h-4 text-blue-500 dark:text-blue-300" />
-                  <span className="font-semibold">
-                    {message.messageType === 'location_share'
-                      ? (isOwn ? '🗺️ You are now sharing your location' : `📍 ${message.sender?.name || 'User'} is sharing their location with you`)
-                      : '📍 Shared location'
-                    }
-                  </span>
-                </div>
-        
-        <div className="flex gap-2 mb-2">
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl ${isOwn ? 'bg-white/20' : 'bg-trust/10 text-trust'}`}>
+            <FiMapPin className="w-5 h-5" />
+          </div>
+          <span className="font-tight font-bold text-sm tracking-tight">
+            {message.messageType === 'location_share' ? 'Real-time entry point shared' : 'Pinned location'}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => onViewMap && onViewMap(message.content.location)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-              isOwn 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white dark:bg-indigo-500 dark:hover:bg-indigo-400' 
-                : 'bg-blue-100 hover:bg-blue-200 text-blue-900 dark:bg-blue-500/10 dark:text-blue-200 dark:hover:bg-blue-500/20'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${isOwn
+              ? 'bg-white/20 hover:bg-white/30 text-white'
+              : 'bg-stone-200/50 hover:bg-stone-200 text-charcoal dark:bg-stone-800 dark:text-stone-300'
+              }`}
           >
-            <FaMap className="w-3 h-3" />
-            View on Map
+            <FiMap className="w-3 h-3" />
+            VIRTUAL VIEW
           </button>
-          
+
           <button
             onClick={() => onOpenInMaps && onOpenInMaps(lat, lng)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-              isOwn 
-                ? 'bg-green-600 hover:bg-green-700 text-white dark:bg-emerald-500 dark:hover:bg-emerald-400' 
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${isOwn
+              ? 'bg-trust/80 hover:bg-trust text-white shadow-sm'
+              : 'bg-charcoal text-white hover:bg-charcoal/90 dark:bg-stone-700'
+              }`}
           >
-            <FaExternalLinkAlt className="w-3 h-3" />
-            Get Directions
+            <FiExternalLink className="w-3 h-3" />
+            OPEN MAPS
           </button>
         </div>
-        
-        <div className="text-xs opacity-75 text-current">
-          Accuracy: {accuracy ? Math.round(accuracy) : 'N/A'}m
-        </div>
-      </div>
-    );
-  };
-
-  const renderContactMessage = () => {
-    if (!message.content?.contact) return null;
-
-    return (
-      <div className="text-sm text-current">
-        <div className="font-semibold mb-1 text-gray-900 dark:text-gray-100">Shared contact</div>
-        <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.name}</div>
-        <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.phone}</div>
-        {message.content.contact.email && (
-          <div className="opacity-90 text-gray-800 dark:text-gray-200">{message.content.contact.email}</div>
-        )}
-      </div>
-    );
-  };
-
-  const renderMediaMessage = () => {
-    if (!message.content?.media || message.content.media.length === 0) return null;
-
-    return (
-      <div className="mt-2 space-y-2">
-        {message.content.media.map((media, index) => (
-          <div key={index}>
-            {media.type === 'image' ? (
-              <img
-                src={media.url}
-                alt={media.filename}
-                className="max-w-full h-auto rounded cursor-pointer"
-                onClick={() => window.open(media.url, '_blank')}
-              />
-            ) : (
-              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded dark:bg-gray-800">
-                <FaFile className="w-4 h-4" />
-                <span className="text-sm text-gray-700 dark:text-gray-200">{media.filename}</span>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
     );
   };
 
   const renderReplyPreview = () => {
     if (!message.replyTo) return null;
-
     return (
-      <div className={`text-xs mb-2 p-2 rounded ${
-        isOwn ? 'bg-blue-600 text-white dark:bg-indigo-500' : 'bg-gray-300 text-gray-900 dark:bg-slate-700 dark:text-gray-100'
-      }`}>
-        <div className="font-medium">Replying to:</div>
-        <div className="truncate">
-          {message.replyTo.content?.text || 
-           message.replyTo.content?.location ? '📍 Location' :
-           message.replyTo.content?.contact ? '👤 Contact' :
-           'Message'}
+      <div className={`text-xs mb-3 p-3 rounded-2xl border ${isOwn
+        ? 'bg-white/10 border-white/20 text-white/80'
+        : 'bg-stone-50 border-stone-100 text-stone-400 dark:bg-stone-900/40 dark:border-stone-800'
+        }`}>
+        <div className="font-bold uppercase tracking-[0.1em] text-[9px] mb-1">Replying to</div>
+        <div className="truncate italic">
+          {message.replyTo.content?.text || 'Multimedia entry...'}
         </div>
       </div>
     );
@@ -190,149 +127,117 @@ const MessageBubble = ({
 
   if (message.isDeleted) {
     return (
-      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-        <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
-          <div className={`p-3 rounded-lg ${
-            isOwn ? 'bg-gray-300 text-gray-600' : 'bg-gray-200 text-gray-500'
-          }`}>
-            <p className="text-sm italic">This message was deleted</p>
-          </div>
+      <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} py-2`}>
+        <div className={`px-5 py-2.5 rounded-2xl border border-stone-100 dark:border-stone-800 text-stone-300 dark:text-stone-600 text-xs italic font-medium`}>
+          Message redacted from the grid
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isSelected ? 'bg-blue-50 dark:bg-slate-800/40 rounded-lg p-2 transition-colors' : ''}`}>
-      {/* Selection checkbox for bulk actions */}
-      {showBulkActions && onSelect && (
-        <div className="flex items-center mr-2">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => onSelect(message._id)}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-        </div>
+    <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} py-3 px-2 transition-all ${isSelected ? 'bg-stone-100/50 dark:bg-stone-800/30 rounded-3xl' : ''}`}>
+      {!isOwn && (
+        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-4">
+          {message.sender?.name || 'Anonymous'}
+        </span>
       )}
-      
-      <div className={`max-w-xs lg:max-w-md ${isOwn ? 'order-2' : 'order-1'}`}>
-        {!isOwn && (
-          <p className="text-xs text-gray-500 mb-1 dark:text-gray-400">
-            {message.sender?.name || 'Unknown User'}
-          </p>
-        )}
-        
+
+      <div className="relative group w-full">
         <div
-          className={`p-3 rounded-lg relative group transition-colors ${
-            isOwn
-              ? 'bg-blue-500 text-white dark:bg-indigo-500'
-              : 'bg-gray-200 text-gray-900 dark:bg-slate-800 dark:text-gray-100'
-          }`}
+          className={`p-4 sm:p-6 transition-all relative ${isOwn
+            ? 'bg-stone-50/50 dark:bg-stone-800/20 border-r-4 border-trust text-charcoal dark:text-stone-100'
+            : 'bg-white dark:bg-charcoal border-l-4 border-stone-200 dark:border-stone-700 text-charcoal dark:text-stone-300'
+            }`}
           onMouseEnter={() => setShowActions(true)}
           onMouseLeave={() => setShowActions(false)}
           onContextMenu={(e) => {
-            if (onActivateBulkActions && onSelect) {
+            if (canDelete) {
               e.preventDefault();
-              onActivateBulkActions();
-              onSelect(message._id);
+              if (window.confirm('Delete this message?')) {
+                onDelete?.(message._id);
+              }
             }
           }}
           onTouchStart={beginLongPress}
           onTouchEnd={cancelLongPress}
-          onTouchCancel={cancelLongPress}
         >
           {renderReplyPreview()}
-          
+
           {isEditing ? (
-            <div className="space-y-2">
+            <div className="space-y-4">
               <textarea
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 onKeyDown={handleKeyPress}
-                className="w-full p-2 border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={2}
+                className="w-full p-4 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl text-sm font-medium focus:outline-none focus:border-trust resize-none"
+                rows={3}
                 autoFocus
               />
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={handleEdit}
-                  className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                  className="px-4 py-2 bg-trust text-white rounded-xl text-[10px] font-bold uppercase tracking-widest"
                 >
-                  Save
+                  SAVE CHANGES
                 </button>
                 <button
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditText(message.content?.text || '');
-                  }}
-                  className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-charcoal dark:text-stone-300 rounded-xl text-[10px] font-bold uppercase tracking-widest"
                 >
-                  Cancel
+                  ABORT
                 </button>
               </div>
             </div>
           ) : (
-            <>
-          {message.content?.text && (
-            <p className="text-sm whitespace-pre-wrap text-current">{message.content.text}</p>
+            <div className="space-y-3">
+              {message.content?.text && (
+                <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{message.content.text}</p>
               )}
-
               {message.content?.location && renderLocationMessage()}
-              {message.content?.contact && renderContactMessage()}
-              {message.content?.media && renderMediaMessage()}
 
-              {/* Action buttons */}
-              {showActions && (canEdit || canDelete || onReply) && (
-                <div className={`absolute top-2 right-2 flex gap-1 ${
-                  isOwn ? 'bg-blue-600 dark:bg-indigo-500' : 'bg-gray-300 dark:bg-slate-700'
-                } rounded-lg p-1`}>
-                  {onReply && (
-                    <button
-                      onClick={() => onReply(message)}
-                      className="p-1 hover:bg-blue-700 rounded transition-colors"
-                      title="Reply"
-                    >
-                      <FaReply className="w-3 h-3" />
-                    </button>
-                  )}
-                  {canEdit && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="p-1 hover:bg-blue-700 rounded transition-colors"
-                      title="Edit"
-                    >
-                      <FaEdit className="w-3 h-3" />
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button
-                      onClick={() => onDelete && onDelete(message._id)}
-                      className="p-1 hover:bg-red-600 rounded transition-colors"
-                      title="Delete"
-                    >
-                      <FaTrash className="w-3 h-3" />
-                    </button>
-                  )}
+              {/* Media rendering (simplified for aesthetics) */}
+              {message.content?.media?.map((m, i) => (
+                <div key={i} className="rounded-2xl overflow-hidden border border-paper/10 shadow-sm mt-3">
+                  <img src={m.url} alt="" className="w-full h-auto object-cover max-h-96" />
                 </div>
+              ))}
+            </div>
+          )}
+
+          {/* Inline Action Bar */}
+          {showActions && !isEditing && (
+            <div className={`absolute top-0 ${isOwn ? '-left-12' : '-right-12'} translate-y-1/2 flex flex-col gap-2 p-1`}>
+              {onReply && (
+                <button onClick={() => onReply(message)} className="p-2.5 bg-white dark:bg-stone-800 shadow-sm border border-stone-100 dark:border-stone-700 rounded-xl text-stone-400 hover:text-trust transition-colors">
+                  <FiCornerUpLeft className="w-4 h-4" />
+                </button>
               )}
-            </>
+              {canEdit && (
+                <button onClick={() => setIsEditing(true)} className="p-2.5 bg-white dark:bg-stone-800 shadow-sm border border-stone-100 dark:border-stone-700 rounded-xl text-stone-400 hover:text-trust transition-colors">
+                  <FiEdit3 className="w-4 h-4" />
+                </button>
+              )}
+              {canDelete && (
+                <button onClick={() => onDelete?.(message._id)} className="p-2.5 bg-white dark:bg-stone-800 shadow-sm border border-stone-100 dark:border-stone-700 rounded-xl text-stone-400 hover:text-clay transition-colors">
+                  <FiTrash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           )}
         </div>
-        
-        <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+
+        <div className={`flex items-center gap-3 mt-2 px-3 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] font-bold text-stone-300 dark:text-stone-600 uppercase tracking-widest">
             {formatTime(message.createdAt)}
           </span>
-          {message.isEdited && (
-            <span className="text-xs text-gray-400 dark:text-gray-500">(edited)</span>
-          )}
+          {message.isEdited && <span className="text-[10px] font-bold text-trust uppercase tracking-widest">Edited</span>}
           {isOwn && (
             <div className="flex items-center gap-1">
               {message.isRead ? (
-                <FaCheckDouble className="w-3 h-3 text-blue-500" />
+                <FiCheckCircle className="w-3 h-3 text-trust" />
               ) : (
-                <FaCheck className="w-3 h-3 text-gray-400" />
+                <FiCheck className="w-3 h-3 text-stone-300" />
               )}
             </div>
           )}

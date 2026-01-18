@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaSearch, FaSortAmountDown, FaSortAmountUp, FaCheck, FaSpinner, FaUser, FaMoneyBill, FaClock } from 'react-icons/fa';
-import { getJobDetails, sendConnectionRequest, getProfessionalProfile, getConnections, getConnectionRequests, getApplicationCvUrl, deleteJobApplication, createOrGetConversation, createJobRequestInChat } from '../../utils/api';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  FiArrowLeft, FiSearch, FiArrowUp, FiArrowDown,
+  FiCheck, FiLoader, FiUser, FiDollarSign,
+  FiClock, FiTrash2, FiFileText, FiMessageSquare,
+  FiExternalLink, FiBarChart2, FiMapPin
+} from 'react-icons/fi';
+import {
+  getJobDetails, sendConnectionRequest, getProfessionalProfile,
+  getConnections, getConnectionRequests, getApplicationCvUrl,
+  deleteJobApplication, createOrGetConversation, createJobRequestInChat
+} from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 
 const JobApplications = () => {
@@ -18,12 +27,25 @@ const JobApplications = () => {
   const [dmSentAppIds, setDmSentAppIds] = useState(new Set());
   const { success, error } = useToast();
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com';
+
+  const resolveImageUrl = (url) => {
+    if (!url) return '/images/placeholder.jpeg';
+    const trimmed = typeof url === 'string' ? url.trim() : url;
+    if (!trimmed) return '/images/placeholder.jpeg';
+    if (trimmed.startsWith('http') || trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('//')) {
+      return trimmed;
+    }
+    const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${API_BASE}${normalized}`;
+  };
+
   const loadJobData = async () => {
     setLoading(true);
     try {
       const resp = await getJobDetails(jobId);
       if (resp?.success) setJob(resp.data);
-      // Load connections and pending requests to reflect button state
+
       try {
         const cons = await getConnections();
         const connected = new Set();
@@ -31,7 +53,8 @@ const JobApplications = () => {
           if (c?.professional?._id) connected.add(String(c.professional._id));
         });
         setConnectedProIds(connected);
-      } catch (_) {}
+      } catch (_) { }
+
       try {
         const reqs = await getConnectionRequests();
         const pending = new Set();
@@ -39,7 +62,7 @@ const JobApplications = () => {
           if (r?.professional?._id) pending.add(String(r.professional._id));
         });
         setPendingProIds(pending);
-      } catch (_) {}
+      } catch (_) { }
     } finally {
       setLoading(false);
     }
@@ -49,19 +72,19 @@ const JobApplications = () => {
     loadJobData();
   }, [jobId]);
 
-  const deriveJobStatus = (jobObj) => {
-    if (!jobObj) return 'Pending';
-    const raw = String(jobObj?.status || '').toLowerCase();
-    const lifecycle = String(jobObj?.lifecycleState || '').toLowerCase();
-    const hasCompletedFlag = jobObj?.completed === true || jobObj?.isCompleted === true || !!jobObj?.completedAt;
-    const hasCancelledFlag = jobObj?.cancelled === true || !!jobObj?.cancelledAt;
-    const isAssigned = !!jobObj?.professional || !!jobObj?.assignedProfessional || !!jobObj?.conversation || (Array.isArray(jobObj?.applications) && jobObj.applications.some(a => String(a?.status).toLowerCase() === 'accepted'));
+  const jobStatus = useMemo(() => {
+    if (!job) return 'Pending';
+    const raw = String(job?.status || '').toLowerCase();
+    const lifecycle = String(job?.lifecycleState || '').toLowerCase();
+    const hasCompletedFlag = job?.completed === true || job?.isCompleted === true || !!job?.completedAt;
+    const hasCancelledFlag = job?.cancelled === true || !!job?.cancelledAt;
+    const isAssigned = !!job?.professional || !!job?.assignedProfessional || !!job?.conversation || (Array.isArray(job?.applications) && job.applications.some(a => String(a?.status).toLowerCase() === 'accepted'));
 
     if (hasCancelledFlag || lifecycle === 'cancelled' || raw === 'cancelled') return 'Cancelled';
     if (hasCompletedFlag || lifecycle === 'completed_by_pro' || lifecycle === 'completed_by_user' || lifecycle === 'closed' || raw === 'completed') return 'Completed';
     if (lifecycle === 'in_progress' || raw === 'in progress' || raw === 'in_progress' || isAssigned) return 'In Progress';
     return 'Pending';
-  };
+  }, [job]);
 
   const deriveApplicationStatus = (application) => {
     if (!application) return 'Pending';
@@ -75,20 +98,13 @@ const JobApplications = () => {
   };
 
   const canSendJobToDM = (application) => {
-    // Don't allow if job is completed or cancelled
     if (jobStatus === 'Completed' || jobStatus === 'Cancelled') return false;
-    // Don't allow if this application is already accepted
     if (isApplicationAccepted(application)) return false;
-    // Don't allow if job is in progress (another application was accepted)
     if (jobStatus === 'In Progress') return false;
-    // Don't allow if already sent
     if (dmSentAppIds.has(String(application._id))) return false;
     return true;
   };
 
-  const jobStatus = deriveJobStatus(job);
-
-  // Hydrate missing professional names if not present
   useEffect(() => {
     (async () => {
       if (!job?.applications) return;
@@ -101,7 +117,7 @@ const JobApplications = () => {
             if (prof?.data) {
               updates.push({ idx: i, prof: prof.data });
             }
-          } catch (_) {}
+          } catch (_) { }
         }
       }
       if (updates.length) {
@@ -138,7 +154,7 @@ const JobApplications = () => {
       const professionalId = application.professional?._id;
       if (!professionalId) return;
       await sendConnectionRequest(professionalId);
-      success('Connection request sent');
+      success('Network connection request dispatched.');
       setPendingProIds(prev => new Set([...Array.from(prev), String(professionalId)]));
     } finally {
       setActionLoading(null);
@@ -149,26 +165,23 @@ const JobApplications = () => {
     try {
       setActionLoading(`send_${application._id}`);
       const pro = application.professional || {};
-      // Resolve professional's user id
       let otherUserId = pro.user?._id || pro.user || null;
       if (!otherUserId && pro._id) {
         try {
           const prof = await getProfessionalProfile(pro._id);
           otherUserId = prof?.data?.user?._id || prof?.data?.user || otherUserId;
-        } catch (_) {}
+        } catch (_) { }
       }
       if (!otherUserId) {
-        error('Could not resolve professional user.');
+        error('Identity resolution failure.');
         return;
       }
-      // Create/get conversation
       const convResp = await createOrGetConversation({ otherUserId });
       const conversationId = convResp?.data?._id || convResp?._id;
       if (!conversationId) {
-        error('Failed to open conversation.');
+        error('Encrypted channel establishment failed.');
         return;
       }
-      // Build payload including required fields expected by backend
       const location = job?.location || {};
       const payload = {
         jobId,
@@ -184,26 +197,25 @@ const JobApplications = () => {
           address: location?.address,
         },
       };
-      // Validate required fields before sending
+
       const missing = [];
       if (!payload.category) missing.push('category');
-      if (!payload.preferredDate) missing.push('preferredDate');
-      if (!payload.preferredTime) missing.push('preferredTime');
-      if (!payload.location?.state) missing.push('location.state');
-      if (!payload.location?.city) missing.push('location.city');
-      if (!payload.location?.address) missing.push('location.address');
+      if (!payload.preferredDate) missing.push('date');
+      if (!payload.preferredTime) missing.push('time');
+      if (!payload.location?.state) missing.push('state');
+      if (!payload.location?.city) missing.push('city');
+      if (!payload.location?.address) missing.push('address');
+
       if (missing.length) {
-        error(`Please complete job fields before sending: ${missing.join(', ')}`);
+        error(`Protocol incomplete. Missing fields: ${missing.join(', ')}`);
         return;
       }
       await createJobRequestInChat(conversationId, payload);
-      success('Job sent to DM as a request');
-      // Mark this application as DM-sent locally to update UI state immediately
+      success('Job manifest transmitted to DM.');
       setDmSentAppIds(prev => new Set([...Array.from(prev), String(application._id)]));
-      // Navigate to the conversation
       navigate(`/dashboard/messages/${conversationId}`);
     } catch (e) {
-      error(e?.data?.message || e?.message || 'Failed to send job to DM');
+      error(e?.data?.message || e?.message || 'Transmission failure.');
     } finally {
       setActionLoading(null);
     }
@@ -211,231 +223,258 @@ const JobApplications = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <FaSpinner className="w-8 h-8 animate-spin text-gray-600" />
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <FiLoader className="w-12 h-12 animate-spin text-trust mb-4" />
+        <p className="font-tight text-stone-400 uppercase tracking-widest text-xs font-bold">Retrieving Manifest...</p>
       </div>
     );
   }
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Completed': return 'bg-trust/10 text-trust border-trust/20';
+      case 'In Progress': return 'bg-charcoal text-white border-charcoal';
+      case 'Cancelled': return 'bg-clay/10 text-clay border-clay/20';
+      default: return 'bg-stone-100 text-stone-500 border-stone-200';
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 text-gray-500 hover:text-gray-800">
-            <FaArrowLeft />
+    <div className="max-w-6xl mx-auto px-6 py-10">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div className="space-y-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="group flex items-center gap-2 text-stone-400 hover:text-charcoal transition-colors font-bold text-[10px] uppercase tracking-widest"
+          >
+            <FiArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Registry
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Applications</h1>
-            <div className="flex items-center gap-2">
-              <p className="text-gray-600">{job?.title}</p>
-              <span className={`px-2 py-0.5 text-xs rounded-full ${jobStatus === 'Completed' ? 'bg-gray-100 text-gray-800' : jobStatus === 'In Progress' ? 'bg-gray-200 text-gray-900' : jobStatus === 'Cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-50 text-gray-700'}`}>
+            <div className="label-caps mb-2 text-trust">Application Registry</div>
+            <h1 className="text-4xl md:text-5xl font-tight font-bold text-charcoal tracking-tight">
+              {job?.title}
+            </h1>
+            <div className="flex items-center gap-3 mt-4">
+              <span className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full border ${getStatusColor(jobStatus)}`}>
                 {jobStatus}
               </span>
+              <div className="h-1 w-1 rounded-full bg-stone-300" />
+              <span className="text-xs font-medium text-stone-400 flex items-center gap-2">
+                <FiMapPin className="w-3 h-3" />
+                {job?.location?.address || 'Location Unspecified'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="card-premium bg-white p-4 flex items-center gap-4">
+            <div className="p-3 bg-stone-50 rounded-xl">
+              <FiBarChart2 className="w-5 h-5 text-trust" />
+            </div>
+            <div>
+              <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Total Yield</div>
+              <div className="text-xl font-tight font-bold text-charcoal">{applications.length} Bids</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="relative">
-            <FaSearch className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Filter Matrix */}
+      <div className="card-premium bg-white p-6 mb-10 border-stone-200">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="md:col-span-5 relative group">
+            <FiSearch className="w-4 h-4 text-stone-300 absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-trust transition-colors" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search proposal or pro name"
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg"
+              placeholder="Search by professional name or proposal keyword..."
+              className="input-field pl-12 h-14 bg-stone-50/50 border-stone-100"
             />
           </div>
-          <div>
-            <select value={sortKey} onChange={(e) => setSortKey(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-              <option value="price">Sort by Price</option>
-              <option value="rating">Sort by Rating</option>
-              <option value="time">Sort by Estimated Time</option>
-            </select>
-          </div>
-          <div className="flex items-center">
+          <div className="md:col-span-4 flex items-center gap-3">
+            <div className="flex-1 relative">
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                className="input-field h-14 appearance-none pl-5 pr-10 bg-white border-stone-100 font-bold text-[10px] uppercase tracking-widest"
+              >
+                <option value="price">Sort by Price</option>
+                <option value="rating">Sort by Rating</option>
+                <option value="time">Sort by Duration</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
+                <FiArrowDown className="w-3 h-3" />
+              </div>
+            </div>
             <button
               onClick={() => setSortDir(d => (d === 'asc' ? 'desc' : 'asc'))}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50"
+              className="h-14 w-14 flex items-center justify-center rounded-2xl border border-stone-100 hover:bg-stone-50 transition-all text-stone-400 hover:text-charcoal"
             >
-              {sortDir === 'asc' ? <FaSortAmountDown /> : <FaSortAmountUp />} {sortDir === 'asc' ? 'Asc' : 'Desc'}
+              {sortDir === 'asc' ? <FiArrowDown className="w-5 h-5" /> : <FiArrowUp className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3">
+      {/* Applications Grid */}
+      <div className="grid grid-cols-1 gap-8">
         {applications.length === 0 ? (
-          <div className="p-10 text-center text-gray-500 bg-white border border-gray-200 rounded-xl">No applications yet</div>
+          <div className="card-premium bg-white p-20 text-center border-dashed border-stone-200">
+            <FiFileText className="w-16 h-16 text-stone-100 mx-auto mb-6" />
+            <div className="label-caps text-stone-300 mb-2">No Active Bids</div>
+            <p className="text-stone-400 font-medium">Wait for professionals to transmit proposals.</p>
+          </div>
         ) : applications.map(app => (
-          <div key={app._id} className="bg-white border border-gray-200 rounded-xl p-4">
-            {/* Header: Pro info and quick stats */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="pr-3">
-                <div className="flex items-center gap-2">
-                  <FaUser className="w-4 h-4 text-gray-500" />
-                  <span className="font-semibold text-gray-900">{app.professional?.name || app.professional?.user?.name || 'Unknown Professional'}</span>
-                  {app.professional?.rating != null && (
-                    <span className="text-xs text-gray-500">• {app.professional.rating}★</span>
-                  )}
-                  {(() => {
-                    const appStatus = deriveApplicationStatus(app);
-                    if (appStatus === 'Accepted') {
-                      return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-50 text-green-700 border border-green-200">Accepted</span>;
-                    }
-                    if (dmSentAppIds.has(String(app._id))) {
-                      return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">Sent to DM</span>;
-                    }
-                    return <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200">Pending</span>;
-                  })()}
+          <div key={app._id} className="card-premium bg-white overflow-hidden group hover:border-trust transition-all duration-500">
+            <div className="p-8">
+              {/* Profile Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-stone-50 overflow-hidden border border-stone-100 p-0.5">
+                    <img
+                      src={resolveImageUrl(app.professional?.profilePicture || app.professional?.user?.profilePicture)}
+                      alt=""
+                      className="w-full h-full object-cover rounded-[14px]"
+                      onError={(e) => { e.target.src = '/images/placeholder.jpeg'; }}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-xl font-tight font-bold text-charcoal">
+                        {app.professional?.name || app.professional?.user?.name || 'Anonymous Partner'}
+                      </h3>
+                      {app.professional?.rating != null && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded-lg text-[10px] font-bold">
+                          ★ {app.professional.rating}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      {(() => {
+                        const appStatus = deriveApplicationStatus(app);
+                        if (appStatus === 'Accepted') return <span className="text-trust flex items-center gap-1.5"><FiCheck className="w-3 h-3" /> Accepted</span>;
+                        if (dmSentAppIds.has(String(app._id))) return <span className="text-charcoal flex items-center gap-1.5"><FiMessageSquare className="w-3 h-3" /> Manifest Sent</span>;
+                        return <span>Initial Proposal</span>;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-10">
+                  <div className="text-right">
+                    <div className="label-caps text-stone-400 mb-1">Bid Quote</div>
+                    <div className="text-2xl font-tight font-bold text-charcoal">₦{Number(app.proposedPrice || 0).toLocaleString()}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="label-caps text-stone-400 mb-1">Duration</div>
+                    <div className="text-lg font-tight font-medium text-stone-600">{app.estimatedDuration || 'N/A'}</div>
+                  </div>
                 </div>
               </div>
-              <div className="text-right space-y-1">
-                <div className="text-xs uppercase tracking-wide text-gray-500">Proposed Price</div>
-                <div className="text-sm font-semibold text-gray-900">₦{Number(app.proposedPrice || 0).toLocaleString()}</div>
-                <div className="text-xs uppercase tracking-wide text-gray-500 mt-2">Estimated Time</div>
-                <div className="text-sm text-gray-900">{app.estimatedDuration || 'N/A'}</div>
+
+              {/* Proposal Text */}
+              <div className="bg-stone-50/50 rounded-2xl p-6 mb-8 border border-stone-100">
+                <div className="label-caps text-stone-400 mb-4 inline-flex items-center gap-2">
+                  <FiFileText className="w-3 h-3" /> Professional Statement
+                </div>
+                <p className="text-graphite text-sm leading-relaxed whitespace-pre-line font-medium italic">
+                  "{app.proposal || 'No additional statement provided.'}"
+                </p>
               </div>
-            </div>
 
-            {/* Proposal */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proposal</label>
-              <textarea
-                readOnly
-                value={app.proposal || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-800 resize-y"
-                rows={3}
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 justify-between">
-              <div className="flex items-center gap-2">
-                <Link to={app.professional?._id ? `/dashboard/professional/${app.professional._id}` : '#'} className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm">View Profile</Link>
-                {app.cvUrl && (
+              {/* Action Suite */}
+              <div className="flex flex-wrap items-center justify-between gap-6 pt-8 border-t border-stone-50">
+                <div className="flex items-center gap-3">
+                  <Link
+                    to={app.professional?._id ? `/dashboard/professional/${app.professional._id}` : '#'}
+                    className="btn-secondary px-6 py-3 text-[10px] uppercase tracking-widest flex items-center gap-2"
+                  >
+                    <FiUser className="w-4 h-4" /> Identity Profile
+                  </Link>
+                  {app.cvUrl && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const r = await getApplicationCvUrl(jobId, app._id);
+                          const url = r?.url || r?.data?.url || app.cvUrl;
+                          if (url) window.open(url, '_blank', 'noopener');
+                        } catch (e) {
+                          if (app.cvUrl) window.open(app.cvUrl, '_blank', 'noopener');
+                          else error('Could not resolve credential link.');
+                        }
+                      }}
+                      className="btn-secondary px-6 py-3 text-[10px] uppercase tracking-widest flex items-center gap-2"
+                    >
+                      <FiExternalLink className="w-4 h-4" /> Credentials
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={async () => {
-                      try {
-                        const r = await getApplicationCvUrl(jobId, app._id);
-                        const url = r?.url || r?.data?.url;
-                        if (url) {
-                          window.open(url, '_blank', 'noopener');
-                        } else {
-                          if (app.cvUrl) {
-                            window.open(app.cvUrl, '_blank', 'noopener');
-                          } else {
-                            error('Could not get CV link');
-                          }
-                        }
-                      } catch (e) {
-                        if (app.cvUrl) {
-                          window.open(app.cvUrl, '_blank', 'noopener');
-                        } else {
-                          error(e?.data?.message || e?.message || 'Failed to open CV');
+                      if (window.confirm('Are you sure you want to purge this application?')) {
+                        try {
+                          await deleteJobApplication(jobId, app._id);
+                          success('Application purged.');
+                          setJob(prev => {
+                            const copy = JSON.parse(JSON.stringify(prev));
+                            copy.applications = (copy.applications || []).filter(a => a._id !== app._id);
+                            return copy;
+                          });
+                        } catch (e) {
+                          error('Purge failure.');
                         }
                       }
                     }}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-800 rounded hover:bg-gray-200 text-sm"
+                    disabled={isApplicationAccepted(app) || jobStatus === 'Completed' || jobStatus === 'In Progress'}
+                    className="p-3 text-stone-300 hover:text-clay transition-colors disabled:opacity-20"
+                    title="Delete application"
                   >
-                    View CV
+                    <FiTrash2 className="w-5 h-5" />
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await deleteJobApplication(jobId, app._id);
-                      success('Application deleted');
-                      setJob(prev => {
-                        const copy = JSON.parse(JSON.stringify(prev));
-                        copy.applications = (copy.applications || []).filter(a => a._id !== app._id);
-                        return copy;
-                      });
-                    } catch (e) {
-                      error(e?.data?.message || e?.message || 'Failed to delete application');
-                    }
-                  }}
-                  disabled={isApplicationAccepted(app) || jobStatus === 'Completed' || jobStatus === 'In Progress'}
-                  className={`px-3 py-1.5 rounded border text-sm ${
-                    isApplicationAccepted(app) || jobStatus === 'Completed' || jobStatus === 'In Progress'
-                      ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                      : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                  }`}
-                  title={
-                    isApplicationAccepted(app) 
-                      ? 'Cannot delete accepted application' 
-                      : jobStatus === 'Completed' || jobStatus === 'In Progress'
-                        ? 'Cannot delete application for active/completed job'
-                        : 'Delete this application'
-                  }
-                >
-                  Delete
-                </button>
-              </div>
+                </div>
 
-              <div className="flex items-center gap-2">
-                {isApplicationAccepted(app) && (
-                  <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded border border-green-200 text-sm">✓ Accepted</span>
-                )}
-
-                {connectedProIds.has(String(app.professional?._id)) ? (
-                  <>
-                    <span className="px-3 py-1.5 bg-green-50 text-green-700 rounded border border-green-200 text-sm">Connected</span>
+                <div className="flex items-center gap-3">
+                  {connectedProIds.has(String(app.professional?._id)) ? (
                     <button
                       type="button"
                       onClick={() => handleSendJobToDm(app)}
                       disabled={!canSendJobToDM(app) || actionLoading === `send_${app._id}`}
-                      className={`px-3 py-1.5 rounded text-sm transition-colors ${
-                        !canSendJobToDM(app) || actionLoading === `send_${app._id}`
-                          ? 'bg-gray-200 text-gray-600 cursor-not-allowed opacity-60' 
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
-                      }`}
-                      title={
-                        jobStatus === 'Completed' 
-                          ? 'Job is completed' 
-                          : isApplicationAccepted(app)
-                            ? 'Application already accepted'
-                            : jobStatus === 'In Progress'
-                              ? 'Job is in progress'
-                              : dmSentAppIds.has(String(app._id))
-                                ? 'Already sent to DM'
-                                : 'Send job request to DM'
-                      }
+                      className={`btn-primary px-8 py-4 bg-charcoal text-[10px] flex items-center gap-2 disabled:opacity-30`}
                     >
-                      {actionLoading === `send_${app._id}` 
-                        ? 'Sending...' 
-                        : jobStatus === 'Completed' 
-                          ? 'Completed' 
-                          : isApplicationAccepted(app)
-                            ? 'Accepted'
-                            : jobStatus === 'In Progress' 
-                              ? 'In Progress' 
-                              : dmSentAppIds.has(String(app._id)) 
-                                ? 'Sent to DM' 
-                                : 'Send job to DM'
-                      }
+                      {actionLoading === `send_${app._id}` ? (
+                        <>
+                          <FiLoader className="w-4 h-4 animate-spin" /> DISPATCHING...
+                        </>
+                      ) : (
+                        <>
+                          <FiMessageSquare className="w-4 h-4" />
+                          {dmSentAppIds.has(String(app._id)) ? 'DISPATCHED TO DM' : 'TRANSMIT JOB TO DM'}
+                        </>
+                      )}
                     </button>
-                  </>
-                ) : pendingProIds.has(String(app.professional?._id)) ? (
-                  <span className="px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded border border-yellow-200 text-sm">Request Sent</span>
-                ) : !isApplicationAccepted(app) && (
-                  <button type="button"
-                    onClick={async () => {
-                      try {
-                        await handleConnect(app);
-                      } catch (e) {
-                        error(e?.data?.message || e?.message || 'Failed to send request');
-                      }
-                    }}
-                    disabled={actionLoading === app._id}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                  >
-                    {actionLoading === app._id ? 'Requesting...' : 'Connect'}
-                  </button>
-                )}
+                  ) : pendingProIds.has(String(app.professional?._id)) ? (
+                    <div className="px-8 py-4 rounded-2xl border border-stone-200 text-stone-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                      <FiClock className="w-4 h-4" /> Connection Pending
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleConnect(app)}
+                      disabled={actionLoading === app._id || isApplicationAccepted(app)}
+                      className="btn-primary space-x-2 px-8 py-4 text-[10px]"
+                    >
+                      {actionLoading === app._id ? (
+                        <FiLoader className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <span>INITIATE CONNECTION</span>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -446,3 +485,4 @@ const JobApplications = () => {
 };
 
 export default JobApplications;
+

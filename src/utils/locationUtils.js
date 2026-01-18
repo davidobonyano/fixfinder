@@ -1,5 +1,5 @@
 /**
- * Location Utilities for FixFinder
+ * Location Utilities for FindYourFixer
  * Handles geolocation, distance calculations, and formatting
  */
 
@@ -31,7 +31,7 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
  */
 export const formatDistance = (distanceKm) => {
   if (!distanceKm && distanceKm !== 0) return 'Unknown';
-  
+
   if (distanceKm < 1) {
     return `${Math.round(distanceKm * 1000)} m away`;
   }
@@ -162,7 +162,7 @@ export const isValidCoordinates = (latitude, longitude) => {
  */
 export const formatLocation = (location) => {
   if (!location) return 'Location not set';
-  
+
   if (location.city && location.state) {
     return `${location.city}, ${location.state}`;
   }

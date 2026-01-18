@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { resetPassword } from "../utils/api";
-import { FaLock, FaEye, FaEyeSlash, FaCheckCircle, FaArrowLeft } from "react-icons/fa";
+import { FiLock, FiEye, FiEyeOff, FiCheckCircle, FiArrowLeft, FiShield } from "react-icons/fi";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -18,13 +18,13 @@ export default function ResetPassword() {
 
   useEffect(() => {
     if (!token) {
-      setError("Invalid reset link. Please request a new password reset.");
+      setError("The recovery token is invalid or has expired. Please initiate a new recovery request.");
     }
   }, [token]);
 
   const validatePassword = (pwd) => {
     if (pwd.length < 6) {
-      return "Password must be at least 6 characters long";
+      return "Security protocol requires a minimum of 6 characters.";
     }
     return null;
   };
@@ -33,7 +33,6 @@ export default function ResetPassword() {
     e.preventDefault();
     setError("");
 
-    // Validation
     const passwordError = validatePassword(password);
     if (passwordError) {
       setError(passwordError);
@@ -41,12 +40,12 @@ export default function ResetPassword() {
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Password confirmation does not match. Please verify.");
       return;
     }
 
     if (!token) {
-      setError("Invalid reset link");
+      setError("Authorization token missing. Request denied.");
       return;
     }
 
@@ -56,174 +55,161 @@ export default function ResetPassword() {
       const res = await resetPassword(token, password);
       if (res.success) {
         setSuccess(true);
-        // Redirect to login after 3 seconds
         setTimeout(() => {
           navigate("/login");
         }, 3000);
       } else {
-        setError(res.message || "Failed to reset password");
+        setError(res.message || "Credential update failed. Please try again.");
       }
     } catch (e) {
-      setError(e.message || "Failed to reset password. The link may have expired. Please request a new one.");
+      setError("An unexpected error occurred during password synchronization. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center relative bg-gray-900">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-30 z-0"
-          style={{
-            backgroundImage:
-              'url("https://images.unsplash.com/photo-1508780709619-79562169bc64")',
-          }}
-        ></div>
-        <div className="absolute inset-0 bg-black bg-opacity-50 z-0"></div>
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+      {/* Brand Side */}
+      <div className="hidden md:flex w-1/2 bg-stone-50 flex-col justify-between p-16 lg:p-24 border-r border-stone-100">
+        <div>
+          <Link to="/" className="text-2xl font-tight font-bold text-charcoal tracking-tighter">
+            FindYourFixer.
+          </Link>
+        </div>
 
-        <div className="relative z-10 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-[90%] max-w-md text-center">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-            <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-extrabold text-green-800 mb-2">
-              Password Reset Successful!
-            </h2>
-            <p className="text-sm text-green-700 mb-4">
-              Your password has been reset successfully. You can now login with your new password.
-            </p>
-            <p className="text-xs text-green-600 mb-4">
-              Redirecting to login page in 3 seconds...
-            </p>
-            <Link
-              to="/login"
-              className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
-            >
-              Go to Login
-            </Link>
-          </div>
+        <div className="max-w-md">
+          <label className="label-caps mb-6 block text-trust">Account Synchronization</label>
+          <h1 className="text-5xl lg:text-6xl font-tight font-bold text-charcoal leading-[1.1] mb-8">
+            Define your new access credentials.
+          </h1>
+          <p className="text-xl text-graphite leading-relaxed">
+            Ensure your new password meets our security requirements to maintain the integrity of your account.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 text-stone-400">
+          <FiShield className="w-5 h-5" />
+          <span className="text-xs font-bold uppercase tracking-widest">Enterprise Grade Security Protocols</span>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center relative bg-gray-900">
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-30 z-0"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1508780709619-79562169bc64")',
-        }}
-      ></div>
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-0"></div>
+      {/* Form Side */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-paper">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="md:hidden mb-12 text-center">
+            <Link to="/" className="text-2xl font-tight font-bold text-charcoal">FindYourFixer.</Link>
+          </div>
 
-      <div className="relative z-10 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
-        <Link 
-          to="/login" 
-          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mb-4"
-        >
-          <FaArrowLeft className="mr-2" />
-          Back to Login
-        </Link>
+          <div className="card-premium p-10 lg:p-12 bg-white">
+            <Link
+              to="/login"
+              className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-charcoal mb-8 transition-colors"
+            >
+              <FiArrowLeft className="mr-2 w-3 h-3" />
+              Return to Login
+            </Link>
 
-        <div className="text-center mb-6">
-          <FaLock className="w-12 h-12 text-indigo-500 mx-auto mb-3" />
-          <h2 className="text-2xl font-extrabold text-gray-800 dark:text-white mb-2">
-            Reset Your Password
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Enter your new password below
+            <h2 className="text-3xl font-tight font-bold text-charcoal mb-4">
+              {success ? "Success." : "Reset Credentials."}
+            </h2>
+            <p className="text-graphite mb-8 leading-relaxed">
+              {success
+                ? "Your credentials have been updated. Redirecting to access portal..."
+                : "Enter and confirm your new account password below."}
+            </p>
+
+            {success ? (
+              <div className="text-center py-8">
+                <div className="inline-flex p-4 rounded-full bg-trust/5 text-trust mb-6">
+                  <FiCheckCircle className="w-12 h-12" />
+                </div>
+                <h3 className="text-xl font-bold text-charcoal mb-2">Update Complete</h3>
+                <p className="text-sm text-graphite">Redirecting to login in 3 seconds...</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="password" className="label-caps mb-3 block">New Password</label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password"
+                      placeholder="Minimum 6 characters"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input-field pl-12 pr-12"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-charcoal transition-colors"
+                    >
+                      {showPassword ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="confirmPassword" className="label-caps mb-3 block">Confirm Password</label>
+                  <div className="relative">
+                    <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      id="confirmPassword"
+                      placeholder="Re-enter password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="input-field pl-12 pr-12"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-charcoal transition-colors"
+                    >
+                      {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-4 bg-clay/5 border border-clay/20">
+                    <p className="text-xs font-bold text-clay uppercase tracking-tight leading-relaxed">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !password.trim() || !confirmPassword.trim() || !token}
+                  className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white animate-spin" />
+                  ) : (
+                    "UPDATE CREDENTIALS"
+                  )}
+                </button>
+              </form>
+            )}
+
+            {!success && (
+              <p className="mt-8 text-center text-xs text-graphite font-medium">
+                Need a new reset link?{" "}
+                <Link to="/forgot-password" className="text-trust font-bold hover:underline">
+                  REQUEST RECOVERY
+                </Link>
+              </p>
+            )}
+          </div>
+
+          <p className="mt-8 text-center text-[10px] text-stone-400 font-bold uppercase tracking-widest">
+            Privacy Policy &bull; Security Standards &bull; Support
           </p>
         </div>
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-              New Password
-            </label>
-            <div className="relative mt-1">
-              <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                placeholder="Enter new password (min 6 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-              Confirm Password
-            </label>
-            <div className="relative mt-1">
-              <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
-                required
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading || !password.trim() || !confirmPassword.trim() || !token}
-            className={`w-full py-2 px-4 rounded text-white font-semibold transition-colors ${
-              password.trim() && confirmPassword.trim() && token && !loading
-                ? "bg-indigo-600 hover:bg-indigo-700"
-                : "bg-indigo-300 cursor-not-allowed"
-            }`}
-          >
-            {loading ? "Resetting Password..." : "Reset Password"}
-          </button>
-
-          <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
-            Remember your password?{" "}
-            <Link to="/login" className="text-indigo-500 font-medium hover:underline cursor-pointer">
-              Sign in
-            </Link>
-          </p>
-
-          {!token && (
-            <p className="mt-2 text-center text-sm text-red-600">
-              Need a new reset link?{" "}
-              <Link to="/forgot-password" className="text-indigo-500 font-medium hover:underline">
-                Request one
-              </Link>
-            </p>
-          )}
-        </form>
       </div>
     </div>
   );

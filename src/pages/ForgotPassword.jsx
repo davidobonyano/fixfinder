@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { forgotPassword } from "../utils/api";
-import { FaEnvelope, FaArrowLeft } from "react-icons/fa";
+import { FiMail, FiArrowLeft, FiShield, FiSend } from "react-icons/fi";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -26,107 +26,143 @@ export default function ForgotPassword() {
       if (res.success) {
         setSuccess(true);
       } else {
-        setError(res.message || "Failed to send reset email");
+        setError(res.message || "Email address not recognized. Please verify and try again.");
       }
     } catch (e) {
-      setError(e.message || "Failed to send reset email. Please try again.");
+      setError("System failure. Our security protocols were unable to process your request. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative bg-gray-900">
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-30 z-0"
-        style={{
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1508780709619-79562169bc64")',
-        }}
-      ></div>
-      <div className="absolute inset-0 bg-black bg-opacity-50 z-0"></div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+      {/* Brand Side */}
+      <div className="hidden md:flex w-1/2 bg-stone-50 flex-col justify-between p-16 lg:p-24 border-r border-stone-100">
+        <div>
+          <Link to="/" className="text-2xl font-tight font-bold text-charcoal tracking-tighter">
+            FindYourFixer.
+          </Link>
+        </div>
 
-      <div className="relative z-10 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl w-[90%] max-w-md">
-        <Link 
-          to="/login" 
-          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-500 mb-4"
-        >
-          <FaArrowLeft className="mr-2" />
-          Back to Login
-        </Link>
+        <div className="max-w-md">
+          <label className="label-caps mb-6 block text-trust">Account Recovery</label>
+          <h1 className="text-5xl lg:text-6xl font-tight font-bold text-charcoal leading-[1.1] mb-8">
+            Securing access to your ecosystem.
+          </h1>
+          <p className="text-xl text-graphite leading-relaxed">
+            Protecting your account is our highest priority. Follow the recovery steps to restore access securely.
+          </p>
+        </div>
 
-        <h2 className="text-2xl font-extrabold text-center mb-2 text-gray-800 dark:text-white">
-          Forgot Password?
-        </h2>
-        <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-6">
-          Enter your email address and we'll send you a link to reset your password.
-        </p>
+        <div className="flex items-center gap-4 text-stone-400">
+          <FiShield className="w-5 h-5" />
+          <span className="text-xs font-bold uppercase tracking-widest">Enterprise Grade Security Protocols</span>
+        </div>
+      </div>
 
-        {success ? (
-          <div className="text-center">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <FaEnvelope className="w-12 h-12 text-green-500 mx-auto mb-3" />
-              <h3 className="font-semibold text-green-800 mb-2">Check your email!</h3>
-              <p className="text-sm text-green-700">
-                We've sent a password reset link to <strong>{email}</strong>
-              </p>
-              <p className="text-xs text-green-600 mt-2">
-                The link will expire in 1 hour. Please check your spam folder if you don't see it.
-              </p>
-            </div>
+      {/* Form Side */}
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-paper">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="md:hidden mb-12 text-center">
+            <Link to="/" className="text-2xl font-tight font-bold text-charcoal">FindYourFixer.</Link>
+          </div>
+
+          <div className="card-premium p-10 lg:p-12 bg-white">
             <Link
               to="/login"
-              className="text-indigo-500 font-medium hover:underline"
+              className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-charcoal mb-8 transition-colors"
             >
+              <FiArrowLeft className="mr-2 w-3 h-3" />
               Return to Login
             </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-                Email Address
-              </label>
-              <div className="relative mt-1">
-                <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  id="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
-                  required
-                />
-              </div>
-            </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+            <h2 className="text-3xl font-tight font-bold text-charcoal mb-4">
+              {success ? "Recovery Initiated." : "Restore Access."}
+            </h2>
+            <p className="text-graphite mb-8 leading-relaxed">
+              {success
+                ? "If an account is associated with this address, you will receive instructions shortly."
+                : "Enter your registered email address to receive a secure recovery link."}
+            </p>
+
+            {success ? (
+              <div className="space-y-8">
+                <div className="p-6 bg-stone-50 border border-stone-200">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-white border border-stone-200">
+                      <FiSend className="w-4 h-4 text-trust" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-charcoal mb-1">Check your inbox</p>
+                      <p className="text-xs text-graphite leading-relaxed">
+                        A verification link has been sent to <span className="text-charcoal font-bold">{email}</span>.
+                        It will remain valid for the next 60 minutes.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSuccess(false)}
+                  className="w-full btn-secondary py-4"
+                >
+                  RETRY DIFFERENT EMAIL
+                </button>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label htmlFor="email" className="label-caps mb-3 block">Official Email Address</label>
+                  <div className="relative">
+                    <FiMail className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+                    <input
+                      type="email"
+                      id="email"
+                      placeholder="corporate@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="input-field pl-12"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-4 bg-clay/5 border border-clay/20">
+                    <p className="text-xs font-bold text-clay uppercase tracking-tight leading-relaxed">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !email.trim()}
+                  className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white animate-spin" />
+                  ) : (
+                    "INITIALIZE RECOVERY"
+                  )}
+                </button>
+              </form>
             )}
 
-            <button
-              type="submit"
-              disabled={loading || !email.trim()}
-              className={`w-full py-2 px-4 rounded text-white font-semibold transition-colors ${
-                email.trim() && !loading
-                  ? "bg-indigo-600 hover:bg-indigo-700"
-                  : "bg-indigo-300 cursor-not-allowed"
-              }`}
-            >
-              {loading ? "Sending..." : "Send Reset Link"}
-            </button>
+            {!success && (
+              <p className="mt-8 text-center text-xs text-graphite font-medium">
+                Remembered your credentials?{" "}
+                <Link to="/login" className="text-trust font-bold hover:underline">
+                  SIGN IN
+                </Link>
+              </p>
+            )}
+          </div>
 
-            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
-              Remember your password?{" "}
-              <Link to="/login" className="text-indigo-500 font-medium hover:underline cursor-pointer">
-                Sign in
-              </Link>
-            </p>
-          </form>
-        )}
+          <p className="mt-8 text-center text-[10px] text-stone-400 font-bold uppercase tracking-widest">
+            Privacy Policy &bull; Security Standards &bull; Support
+          </p>
+        </div>
       </div>
     </div>
   );

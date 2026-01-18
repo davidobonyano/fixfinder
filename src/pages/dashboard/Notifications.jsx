@@ -1,23 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  FaBell, 
-  FaCheckCircle, 
-  FaComments, 
-  FaBriefcase, 
-  FaUser, 
-  FaHeart,
-  FaExclamationTriangle,
-  FaInfoCircle,
-  FaTimes,
-  FaEye,
-  FaTrash,
-  FaFilter,
-  FaSearch,
-  FaCheck,
-  FaTimes as FaX,
-  FaSpinner
-} from 'react-icons/fa';
+import {
+  FiBell, FiCheckCircle, FiMessageSquare, FiBriefcase, FiUser,
+  FiHeart, FiAlertTriangle, FiInfo, FiX, FiEye, FiTrash2,
+  FiFilter, FiSearch, FiCheck, FiLoader
+} from 'react-icons/fi';
 import { getNotifications, markNotificationAsRead, deleteNotification, acceptConnectionRequest, rejectConnectionRequest, clearAllNotifications, getConnections } from '../../utils/api';
 import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/ToastContext';
@@ -31,7 +18,7 @@ const Notifications = () => {
   const basePath = isProDashboard ? '/dashboard/professional' : '/dashboard';
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, unread, read
+  const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [processingRequest, setProcessingRequest] = useState(null);
   const [totalActive, setTotalActive] = useState(0);
@@ -46,7 +33,6 @@ const Notifications = () => {
       setLoading(true);
       const [response, connectionsResp] = await Promise.all([
         getNotifications({ limit: INBOX_CAP }),
-        // Fetch accepted connections to reconcile stale connection_request notifications
         getConnections().catch(() => ({ success: false, data: [] }))
       ]);
       if (response.success) {
@@ -56,7 +42,6 @@ const Notifications = () => {
             ? connectionsResp.data.map(c => String(c?._id || c?.id)).filter(Boolean)
             : []
         );
-        // Normalize connection request states across duplicates
         const normalized = (() => {
           const rank = { connection_accepted: 2, connection_rejected: 1, connection_request: 0 };
           const reqState = new Map();
@@ -72,7 +57,6 @@ const Notifications = () => {
             if (!reqId) return n;
             const r = reqState.get(String(reqId));
             if (r === 2 && n.type !== 'connection_accepted') return { ...n, type: 'connection_accepted', isRead: true };
-            // If this request has become an accepted connection, promote to accepted and mark read
             if (acceptedConnectionIds.has(String(reqId)) && n.type === 'connection_request') {
               return { ...n, type: 'connection_accepted', isRead: true };
             }
@@ -82,13 +66,10 @@ const Notifications = () => {
         })();
         setNotifications(normalized);
         setTotalActive(response.data.pagination?.total || 0);
-        return;
-      } else {
-        throw new Error(response.message || 'Failed to load notifications');
       }
     } catch (apiError) {
-      console.error('❌ API Error loading notifications:', apiError);
-      error('Failed to load notifications. Please try again.');
+      console.error('Error loading notifications:', apiError);
+      error('Failed to load notifications.');
     } finally {
       setLoading(false);
     }
@@ -97,15 +78,9 @@ const Notifications = () => {
   const handleMarkAsRead = async (notificationId) => {
     try {
       await markNotificationAsRead(notificationId);
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif._id === notificationId 
-            ? { ...notif, isRead: true }
-            : notif
-        )
-      );
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
+      setNotifications(prev => prev.map(notif => notif._id === notificationId ? { ...notif, isRead: true } : notif));
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
     }
   };
 
@@ -114,8 +89,8 @@ const Notifications = () => {
       await deleteNotification(notificationId);
       setNotifications(prev => prev.filter(notif => notif._id !== notificationId));
       setTotalActive(prev => Math.max(prev - 1, 0));
-    } catch (error) {
-      console.error('Error deleting notification:', error);
+    } catch (err) {
+      console.error('Error deleting notification:', err);
     }
   };
 
@@ -125,27 +100,18 @@ const Notifications = () => {
       for (const notif of unreadNotifications) {
         await markNotificationAsRead(notif._id);
       }
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, isRead: true }))
-      );
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
     }
   };
 
   const handleAcceptConnection = async (notification) => {
     try {
       setProcessingRequest(notification._id);
-      const requestId = notification.data?.connectionRequestId?._id || 
-                       notification.data?.connectionRequestId || 
-                       notification.data?.requestId || 
-                       notification.data?.metadata?.connectionRequestId ||
-                       notification.data?.metadata?.requestId;
-      if (!requestId) {
-        throw new Error('This connection request is no longer valid.');
-      }
+      const requestId = notification.data?.connectionRequestId?._id || notification.data?.connectionRequestId || notification.data?.requestId || notification.data?.metadata?.connectionRequestId || notification.data?.metadata?.requestId;
+      if (!requestId) throw new Error('Invalid connection request.');
       await acceptConnectionRequest(requestId);
-      // Update ALL notifications for this request id to accepted
       setNotifications(prev => prev.map(notif => {
         const nReqId = notif.data?.connectionRequestId?._id || notif.data?.connectionRequestId || notif.data?.requestId || notif.data?.metadata?.connectionRequestId || notif.data?.metadata?.requestId;
         if (nReqId && String(nReqId) === String(requestId)) {
@@ -155,13 +121,11 @@ const Notifications = () => {
       }));
       success('Connection accepted!');
       if (isProDashboard) {
-        // Give backend a brief moment to persist before fetching on next page
-        try { await new Promise(resolve => setTimeout(resolve, 600)); } catch (e) {}
+        await new Promise(resolve => setTimeout(resolve, 600));
         navigate('/dashboard/professional/connected-users');
       }
     } catch (err) {
       error('Failed to accept connection request');
-      console.error('Error accepting connection:', err);
     } finally {
       setProcessingRequest(null);
     }
@@ -170,16 +134,9 @@ const Notifications = () => {
   const handleRejectConnection = async (notification) => {
     try {
       setProcessingRequest(notification._id);
-      const requestId = notification.data?.connectionRequestId?._id || 
-                       notification.data?.connectionRequestId || 
-                       notification.data?.requestId || 
-                       notification.data?.metadata?.connectionRequestId ||
-                       notification.data?.metadata?.requestId;
-      if (!requestId) {
-        throw new Error('This connection request is no longer valid.');
-      }
+      const requestId = notification.data?.connectionRequestId?._id || notification.data?.connectionRequestId || notification.data?.requestId || notification.data?.metadata?.connectionRequestId || notification.data?.metadata?.requestId;
+      if (!requestId) throw new Error('Invalid connection request.');
       await rejectConnectionRequest(requestId);
-      // Update ALL notifications for this request id to rejected
       setNotifications(prev => prev.map(notif => {
         const nReqId = notif.data?.connectionRequestId?._id || notif.data?.connectionRequestId || notif.data?.requestId || notif.data?.metadata?.connectionRequestId || notif.data?.metadata?.requestId;
         if (nReqId && String(nReqId) === String(requestId)) {
@@ -190,7 +147,6 @@ const Notifications = () => {
       success('Connection request rejected');
     } catch (err) {
       error('Failed to reject connection request');
-      console.error('Error rejecting connection:', err);
     } finally {
       setProcessingRequest(null);
     }
@@ -200,40 +156,19 @@ const Notifications = () => {
     switch (type) {
       case 'connection_request':
       case 'connection_accepted':
-        return <FaUser className="w-5 h-5 text-indigo-500" />;
+        return <FiUser className="w-5 h-5 text-trust" />;
       case 'job_application':
       case 'job_update':
       case 'job_completed':
-        return <FaBriefcase className="w-5 h-5 text-emerald-500" />;
+        return <FiBriefcase className="w-5 h-5 text-clay" />;
       case 'message':
-        return <FaComments className="w-5 h-5 text-purple-500" />;
+        return <FiMessageSquare className="w-5 h-5 text-charcoal dark:text-stone-300" />;
       case 'review':
-        return <FaHeart className="w-5 h-5 text-rose-500" />;
+        return <FiHeart className="w-5 h-5 text-trust" />;
       case 'system':
-        return <FaInfoCircle className="w-5 h-5 text-gray-500" />;
+        return <FiInfo className="w-5 h-5 text-graphite" />;
       default:
-        return <FaBell className="w-5 h-5 text-gray-500" />;
-    }
-  };
-
-  const getNotificationColor = (type) => {
-    switch (type) {
-      case 'connection_request':
-        return 'border-l-indigo-500 bg-indigo-50';
-      case 'connection_accepted':
-        return 'border-l-emerald-500 bg-emerald-50';
-      case 'job_application':
-        return 'border-l-amber-500 bg-amber-50';
-      case 'job_update':
-        return 'border-l-orange-500 bg-orange-50';
-      case 'message':
-        return 'border-l-purple-500 bg-purple-50';
-      case 'review':
-        return 'border-l-rose-500 bg-rose-50';
-      case 'system':
-        return 'border-l-gray-500 bg-gray-50';
-      default:
-        return 'border-l-gray-300 bg-gray-50';
+        return <FiBell className="w-5 h-5 text-graphite" />;
     }
   };
 
@@ -250,12 +185,8 @@ const Notifications = () => {
   };
 
   const filteredNotifications = notifications.filter(notif => {
-    const matchesFilter = filter === 'all' || 
-      (filter === 'unread' && !notif.isRead) || 
-      (filter === 'read' && notif.isRead);
-    const matchesSearch = !searchQuery || 
-      notif.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notif.message.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = filter === 'all' || (filter === 'unread' && !notif.isRead) || (filter === 'read' && notif.isRead);
+    const matchesSearch = !searchQuery || notif.title.toLowerCase().includes(searchQuery.toLowerCase()) || notif.message.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -263,224 +194,168 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading notifications...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-32">
+        <FiLoader className="w-12 h-12 animate-spin text-trust mb-4" />
+        <p className="font-tight text-graphite text-lg">Syncing notification feed...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                Notifications
-                <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                  {Math.min(totalActive, INBOX_CAP)}/{INBOX_CAP}
-                </span>
-              </h1>
-              <p className="text-gray-600">
-                {unreadCount > 0 ? `${unreadCount} unread notifications` : 'All caught up!'}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
-                <button
-                  onClick={handleMarkAllAsRead}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-medium"
-                >
-                  Mark all as read
-                </button>
-              )}
-              {notifications.length > 0 && (
-                <button
-                  onClick={async () => { try { await clearAllNotifications(); await loadNotifications(); } catch (e) {} }}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm font-medium"
-                >
-                  Clear all
-                </button>
-              )}
-            </div>
+    <div className="max-w-5xl mx-auto px-6 py-10">
+      {/* Premium Header */}
+      <div className="mb-12">
+        <div className="label-caps mb-2 text-stone-400 dark:text-stone-500">System Alerts</div>
+        <div className="flex items-end justify-between">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-tight font-bold text-charcoal dark:text-stone-50 tracking-tight flex items-center gap-4">
+              Notifications
+              <span className="px-3 py-1 text-xs rounded-xl bg-stone-100 dark:bg-stone-800 text-graphite dark:text-stone-400 border border-stone-200 dark:border-stone-700 font-bold uppercase tracking-widest">
+                {Math.min(totalActive, INBOX_CAP)}/{INBOX_CAP}
+              </span>
+            </h1>
+            <p className="mt-3 text-lg text-graphite dark:text-stone-400 max-w-xl leading-relaxed">
+              {unreadCount > 0 ? `${unreadCount} unread transmission${unreadCount > 1 ? 's' : ''} awaiting review` : 'All transmissions acknowledged'}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button onClick={handleMarkAllAsRead} className="btn-secondary text-xs uppercase tracking-widest">
+                Mark All Read
+              </button>
+            )}
+            {notifications.length > 0 && (
+              <button onClick={async () => { await clearAllNotifications(); await loadNotifications(); }} className="btn-secondary text-xs uppercase tracking-widest">
+                Clear All
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search notifications..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
+      {/* Filters */}
+      <div className="card-premium p-6 mb-8">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1 relative">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300 dark:text-stone-600" />
+            <input
+              type="text"
+              placeholder="Search transmissions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input-field pl-12 text-sm"
+            />
+          </div>
+          <div className="flex gap-2">
+            {['all', 'unread', 'read'].map(f => (
               <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'all' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${filter === f
+                    ? 'bg-trust text-white shadow-sm'
+                    : 'bg-stone-50 dark:bg-stone-800 text-graphite dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700'
+                  }`}
               >
-                All
+                {f}
               </button>
-              <button
-                onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'unread' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Unread
-              </button>
-              <button
-                onClick={() => setFilter('read')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === 'read' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                Read
-              </button>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Notifications List */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {filteredNotifications.length === 0 ? (
-          <div className="text-center py-12">
-            <FaBell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery ? 'No notifications found' : 'No notifications yet'}
-            </h3>
-            <p className="text-gray-500">
-              {searchQuery 
-                ? 'Try adjusting your search terms'
-                : 'You\'ll see notifications here when you connect with professionals or receive updates'
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredNotifications.map((notification) => {
-              const requestStatusRaw =
-                notification?.data?.status ||
-                notification?.data?.state ||
-                notification?.data?.requestStatus ||
-                notification?.data?.metadata?.status ||
-                '';
-              const requestStatus = String(requestStatusRaw).toLowerCase();
-              const requestHandled =
-                notification.type === 'connection_request' &&
-                ['processed', 'accepted', 'approved', 'rejected', 'declined', 'cancelled', 'canceled']
-                  .includes(requestStatus);
+      {filteredNotifications.length === 0 ? (
+        <div className="card-premium p-20 text-center">
+          <FiBell className="w-16 h-16 text-stone-200 dark:text-stone-700 mx-auto mb-6" />
+          <h3 className="text-xl font-tight font-bold text-charcoal dark:text-stone-100 mb-2">
+            {searchQuery ? 'No matches found' : 'Notification feed empty'}
+          </h3>
+          <p className="text-graphite dark:text-stone-400">
+            {searchQuery ? 'Refine search parameters' : 'New alerts will appear here as they arrive'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredNotifications.map((notification) => {
+            const requestStatusRaw = notification?.data?.status || notification?.data?.state || notification?.data?.requestStatus || notification?.data?.metadata?.status || '';
+            const requestStatus = String(requestStatusRaw).toLowerCase();
+            const requestHandled = notification.type === 'connection_request' && ['processed', 'accepted', 'approved', 'rejected', 'declined', 'cancelled', 'canceled'].includes(requestStatus);
 
-              return (
-                <div
-                  key={notification._id}
-                  className={`bg-white rounded-lg shadow-sm border-l-4 p-4 ${
-                    notification.isRead ? 'opacity-75' : ''
-                  } ${getNotificationColor(notification.type)}`}
-                >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 mt-1">
+            return (
+              <div
+                key={notification._id}
+                className={`card-premium p-6 transition-all ${notification.isRead ? 'opacity-60' : 'border-l-4 border-l-trust'}`}
+              >
+                <div className="flex items-start gap-5">
+                  <div className="flex-shrink-0 mt-1 p-3 rounded-2xl bg-stone-50 dark:bg-stone-800 border border-stone-100 dark:border-stone-700">
                     {getNotificationIcon(notification.type)}
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h3 className="text-sm font-medium text-gray-900">
+                        <h3 className="text-sm font-tight font-bold text-charcoal dark:text-stone-50 mb-1">
                           {notification.title}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-graphite dark:text-stone-400 leading-relaxed">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className="text-[10px] font-bold text-stone-300 dark:text-stone-600 uppercase tracking-widest mt-2">
                           {formatTimeAgo(notification.createdAt)}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 ml-4">
                         {!notification.isRead && (
                           <button
                             onClick={() => handleMarkAsRead(notification._id)}
-                            className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+                            className="p-2 text-stone-300 dark:text-stone-600 hover:text-trust transition-colors"
                             title="Mark as read"
                           >
-                            <FaEye className="w-4 h-4" />
+                            <FiEye className="w-4 h-4" />
                           </button>
                         )}
-                        
                         <button
                           onClick={() => handleDelete(notification._id)}
-                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                          title="Delete notification"
+                          className="p-2 text-stone-300 dark:text-stone-600 hover:text-clay transition-colors"
+                          title="Delete"
                         >
-                          <FaTrash className="w-4 h-4" />
+                          <FiTrash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                    
-                    {/* Action buttons based on notification type */}
+
+                    {/* Action Buttons */}
                     {notification.type === 'connection_request' && notification.data?.connectionRequestId && (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         {notification.data?.professionalId && (
-                        <Link
-                          to={`${basePath}/professional/${notification.data.professionalId}`}
-                          className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors"
-                        >
-                          View Profile
-                        </Link>
+                          <Link
+                            to={`${basePath}/professional/${notification.data.professionalId}`}
+                            className="px-4 py-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-charcoal dark:text-stone-300 text-xs font-bold uppercase tracking-widest rounded-xl hover:border-trust transition-all"
+                          >
+                            View Profile
+                          </Link>
                         )}
                         {requestHandled ? (
-                          <span className="inline-block rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 capitalize">
-                            {requestStatus && requestStatus.length <= 14
-                              ? requestStatus
-                              : 'Processed'}
+                          <span className="px-4 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-xs font-bold text-graphite dark:text-stone-400 uppercase tracking-widest">
+                            {requestStatus && requestStatus.length <= 14 ? requestStatus : 'Processed'}
                           </span>
                         ) : (
                           <>
                             <button
                               onClick={() => handleAcceptConnection(notification)}
                               disabled={processingRequest === notification._id}
-                              className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                              className="px-4 py-2 bg-trust text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-trust/90 disabled:opacity-50 flex items-center gap-2 transition-all"
                             >
-                              {processingRequest === notification._id ? (
-                                <FaSpinner className="animate-spin w-3 h-3" />
-                              ) : (
-                                <FaCheck className="w-3 h-3" />
-                              )}
+                              {processingRequest === notification._id ? <FiLoader className="animate-spin w-3 h-3" /> : <FiCheck className="w-3 h-3" />}
                               Accept
                             </button>
                             <button
                               onClick={() => handleRejectConnection(notification)}
                               disabled={processingRequest === notification._id}
-                              className="px-3 py-1.5 bg-gray-600 text-white text-xs font-medium rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-1.5 transition-colors"
+                              className="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-charcoal dark:text-stone-300 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-stone-200 dark:hover:bg-stone-700 disabled:opacity-50 flex items-center gap-2 transition-all"
                             >
-                              {processingRequest === notification._id ? (
-                                <FaSpinner className="animate-spin w-3 h-3" />
-                              ) : (
-                                <FaX className="w-3 h-3" />
-                              )}
+                              {processingRequest === notification._id ? <FiLoader className="animate-spin w-3 h-3" /> : <FiX className="w-3 h-3" />}
                               Reject
                             </button>
                           </>
@@ -489,42 +364,37 @@ const Notifications = () => {
                     )}
 
                     {(notification.type === 'connection_accepted' || notification.type === 'connection_rejected') && (
-                      <div className="mt-3">
-                        <span className={`inline-block px-3 py-1.5 text-xs font-medium rounded-lg border ${notification.type === 'connection_accepted' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                      <div className="mt-4">
+                        <span className={`px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-xl border ${notification.type === 'connection_accepted' ? 'bg-trust/10 text-trust border-trust/20' : 'bg-stone-50 dark:bg-stone-800 text-graphite dark:text-stone-400 border-stone-200 dark:border-stone-700'}`}>
                           {notification.type === 'connection_accepted' ? 'Accepted' : 'Rejected'}
                         </span>
                       </div>
                     )}
-                    
+
                     {notification.type === 'job_application' && (
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-4">
                         <button
                           onClick={async () => {
-                            try { await handleMarkAsRead(notification._id); } catch {}
-                            const jobId = (
-                              notification.data?.jobId?._id ||
-                              notification.data?.jobId ||
-                              notification.data?.job?._id ||
-                              null
-                            );
+                            await handleMarkAsRead(notification._id);
+                            const jobId = notification.data?.jobId?._id || notification.data?.jobId || notification.data?.job?._id || null;
                             if (jobId && typeof jobId === 'string') {
                               navigate(`/dashboard/my-jobs/${jobId}/applications`);
                             } else {
                               navigate(`/dashboard/my-jobs`);
                             }
                           }}
-                          className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+                          className="btn-primary text-xs uppercase tracking-widest"
                         >
-                          {`View applications for ${(notification.data?.jobTitle || notification.message || '').split(':').slice(1).join(':').trim() || 'this job'}`}
+                          View Applications
                         </button>
                       </div>
                     )}
-                    
+
                     {notification.type === 'message' && notification.data?.conversationId && (
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <Link
                           to={`${basePath}/messages/${notification.data.conversationId}`}
-                          className="px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                          className="btn-primary text-xs uppercase tracking-widest inline-block"
                         >
                           View Message
                         </Link>
@@ -533,11 +403,10 @@ const Notifications = () => {
                   </div>
                 </div>
               </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

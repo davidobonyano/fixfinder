@@ -1,199 +1,78 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  FaHome, 
-  FaUser, 
-  FaBell, 
-  FaComments, 
-  FaBriefcase,
-  FaUsers,
-  FaSearch,
-  FaPlus,
-  FaChartLine,
-  FaStar,
-  FaList
-} from 'react-icons/fa';
+import {
+  FiSearch,
+  FiUser,
+  FiMessageSquare,
+  FiBriefcase,
+  FiPlusSquare,
+  FiTrendingUp,
+  FiUsers
+} from 'react-icons/fi';
 import { useAuth } from '../context/useAuth';
 import { useSocket } from '../context/SocketContext';
 import { useState, useEffect } from 'react';
 
 const BottomNavigation = ({ userType = 'user' }) => {
   const location = useLocation();
-  const { user } = useAuth();
   const { socket, isConnected } = useSocket();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Fetch unread notification count
   useEffect(() => {
-    const fetchUnreadCount = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://fixfinder-backend-8yjj.onrender.com'}/api/notifications?limit=1`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await response.json();
-        if (data.success) {
-          setUnreadCount(data.data.unreadCount || 0);
-        }
-      } catch (err) {
-        console.error('Error fetching unread count:', err);
-      }
-    };
-
-    fetchUnreadCount();
-
-    // Listen for real-time notifications
     if (socket && isConnected) {
-      const handleNewNotification = () => {
-        setUnreadCount(prev => prev + 1);
-      };
-
-      socket.on('notification:new', handleNewNotification);
-
-      return () => {
-        socket.off('notification:new');
-      };
+      socket.on('notification:new', () => setUnreadCount(prev => prev + 1));
+      return () => socket.off('notification:new');
     }
   }, [socket, isConnected]);
 
-  // User Dashboard Navigation Items
   const userNavItems = [
-    { 
-      path: '/dashboard', 
-      icon: FaHome, 
-      label: 'Home',
-      exact: true
-    },
-    { 
-      path: '/dashboard/professionals', 
-      icon: FaSearch, 
-      label: 'Discover' 
-    },
-    { 
-      path: '/dashboard/post-job', 
-      icon: FaPlus, 
-      label: 'Post',
-      highlight: true
-    },
-    { 
-      path: '/dashboard/messages', 
-      icon: FaComments, 
-      label: 'Messages' 
-    },
-    { 
-      path: '/dashboard/profile', 
-      icon: FaUser, 
-      label: 'Profile' 
-    }
+    { path: '/dashboard', icon: FiSearch, label: 'Discover' },
+    { path: '/dashboard/overview', icon: FiTrendingUp, label: 'Stats' },
+    { path: '/dashboard/post-job', icon: FiPlusSquare, label: 'Post' },
+    { path: '/dashboard/messages', icon: FiMessageSquare, label: 'Chat' },
+    { path: '/dashboard/profile', icon: FiUser, label: 'Profile' }
   ];
 
-  // Professional Dashboard Navigation Items
   const proNavItems = [
-    { 
-      path: '/dashboard/professional', 
-      icon: FaBriefcase, 
-      label: 'Jobs',
-      exact: true
-    },
-    { 
-      path: '/dashboard/professional/connected-users', 
-      icon: FaUsers, 
-      label: 'Network' 
-    },
-    { 
-      path: '/dashboard/professional/my-jobs', 
-      icon: FaList, 
-      label: 'My Jobs' 
-    },
-    { 
-      path: '/dashboard/professional/messages', 
-      icon: FaComments, 
-      label: 'Messages' 
-    },
-    { 
-      path: '/dashboard/professional/profile', 
-      icon: FaUser, 
-      label: 'Profile' 
-    }
+    { path: '/dashboard/professional', icon: FiSearch, label: 'Jobs' },
+    { path: '/dashboard/professional/connected-users', icon: FiUsers, label: 'Network' },
+    { path: '/dashboard/professional/messages', icon: FiMessageSquare, label: 'Chat' },
+    { path: '/dashboard/professional/profile', icon: FiUser, label: 'Profile' },
+    { path: '/dashboard/professional/analytics', icon: FiTrendingUp, label: 'Stats' }
   ];
 
   const navItems = userType === 'professional' ? proNavItems : userNavItems;
 
-  const isActive = (item) => {
-    if (item.exact) {
-      return location.pathname === item.path;
+  const isActive = (path) => {
+    if (path === '/dashboard' || path === '/dashboard/professional') {
+      return location.pathname === path;
     }
-    return location.pathname.startsWith(item.path);
+    return location.pathname.startsWith(path);
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden dark:bg-gray-900 dark:border-gray-800">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-stone-50 border-t border-stone-200 lg:hidden pb-safe-area">
+      <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item);
-          
+          const active = isActive(item.path);
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive: navActive }) => {
-                const isItemActive = item.exact 
-                  ? location.pathname === item.path 
-                  : location.pathname.startsWith(item.path);
-                
-                return `
-                  flex flex-col items-center justify-center 
-                  flex-1 h-full 
-                  transition-all duration-200
-                  ${isItemActive 
-                    ? 'text-indigo-600 dark:text-indigo-400' 
-                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                  }
-                `;
-              }}
-            >
-              <div className="relative">
-                {item.highlight ? (
-                  <div
-                    className={`
-                    w-12 h-12 rounded-full flex items-center justify-center
-                    transition-all duration-200
-                    ${
-                      isActive(item)
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
-                    }
-                  `}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                ) : (
-                  <Icon
-                    className={`w-6 h-6 transition-transform ${
-                      isActive(item) ? 'scale-110 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
-                    }`}
-                  />
-                )}
-              </div>
-              <span
-                className={`text-xs mt-1 font-medium ${
-                  isActive(item) ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+              className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${active ? 'text-trust' : 'text-stone-400'
                 }`}
-              >
-                {item.label}
-              </span>
+            >
+              <item.icon className={`w-5 h-5 mb-1 ${active ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+              {active && <div className="mt-1 w-1 h-1 bg-trust"></div>}
             </NavLink>
           );
         })}
       </div>
-      
-      {/* Safe area for devices with home indicator */}
-      <div className="h-safe-area-inset-bottom bg-white dark:bg-gray-900" style={{ height: 'env(safe-area-inset-bottom, 0.5rem)' }} />
+      <div className="h-[env(safe-area-inset-bottom)] bg-stone-50" />
     </nav>
   );
 };
 
 export default BottomNavigation;
+
 

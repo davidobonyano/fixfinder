@@ -17,7 +17,7 @@ L.Icon.Default.mergeOptions({
 
 const PROFESSIONAL_CATEGORIES = [
   "plumber",
-  "electrician", 
+  "electrician",
   "mechanic",
   "hairdresser",
   "carpenter",
@@ -86,21 +86,21 @@ export default function NearbyProfessionalsMap() {
     if (!userLocation) return;
 
     setLoading(true);
-    
+
     try {
       // First, try to get professionals from your backend API
       const response = await getProfessionals({ category: selectedCategory });
       let backendProfessionals = response.professionals || [];
-      
+
       // If we have backend professionals, use them
       if (backendProfessionals.length > 0) {
         const [userLat, userLon] = userLocation;
-        
+
         const professionalsWithCoords = backendProfessionals.map((professional, index) => {
           // Generate nearby coordinates (within ~5km radius)
           const offsetLat = (Math.random() - 0.5) * 0.05; // ~2.5km radius
           const offsetLon = (Math.random() - 0.5) * 0.05;
-          
+
           return {
             id: professional._id || professional.id,
             name: professional.name,
@@ -133,11 +133,11 @@ export default function NearbyProfessionalsMap() {
 
   const fetchFromOpenStreetMap = async () => {
     const [userLat, userLon] = userLocation;
-    
+
     // Map categories to OpenStreetMap tags
     const osmCategoryMap = {
       'plumber': 'craft=plumber',
-      'electrician': 'craft=electrician', 
+      'electrician': 'craft=electrician',
       'mechanic': 'shop=car_repair',
       'hairdresser': 'shop=hairdresser',
       'carpenter': 'craft=carpenter',
@@ -157,9 +157,9 @@ export default function NearbyProfessionalsMap() {
       'driver-hire': 'office=taxi', // Map to taxi for demo
       'locksmith': 'craft=key_cutter' // Map to key cutter for demo
     };
-    
+
     const osmTag = osmCategoryMap[selectedCategory] || 'craft=plumber';
-    
+
     // Overpass API query to find professionals within 10km (wider radius for demo)
     const query = `
       [out:json];
@@ -176,22 +176,22 @@ export default function NearbyProfessionalsMap() {
         `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
       );
       const data = await response.json();
-      
+
       const osmProfessionals = data.elements
         .filter((item) => {
-          const coords = item.lat && item.lon 
+          const coords = item.lat && item.lon
             ? [item.lat, item.lon]
-            : item.center 
-            ? [item.center.lat, item.center.lon]
-            : null;
-          
+            : item.center
+              ? [item.center.lat, item.center.lon]
+              : null;
+
           return coords && item.tags && item.tags.name;
         })
         .map((item) => {
-          const coords = item.lat && item.lon 
+          const coords = item.lat && item.lon
             ? [item.lat, item.lon]
             : [item.center.lat, item.center.lon];
-          
+
           return {
             id: `osm_${item.id}`,
             name: item.tags.name || "Unnamed Professional",
@@ -270,7 +270,7 @@ export default function NearbyProfessionalsMap() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          
+
           {/* User Location Marker */}
           <Marker position={userLocation}>
             <Popup>
@@ -300,27 +300,27 @@ export default function NearbyProfessionalsMap() {
                       )}
                     </div>
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 mb-2">
                     <strong>Category:</strong> {professional.category.replace(/-/g, ' ')}
                   </p>
-                  
+
                   <p className="text-sm text-gray-600 mb-2">
                     <strong>Location:</strong> {professional.city}
                   </p>
-                  
+
                   {professional.bio && (
                     <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                       <strong>About:</strong> {professional.bio}
                     </p>
                   )}
-                  
+
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center">
                       <span className="text-yellow-400">★</span>
                       <span className="text-sm text-gray-600 ml-1">
-                        {typeof professional.ratingAvg === 'number' 
-                          ? professional.ratingAvg.toFixed(1) 
+                        {typeof professional.ratingAvg === 'number'
+                          ? professional.ratingAvg.toFixed(1)
                           : professional.ratingAvg} ({professional.ratingCount} reviews)
                       </span>
                     </div>
@@ -330,20 +330,20 @@ export default function NearbyProfessionalsMap() {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Show contact info for OpenStreetMap professionals */}
                   {professional.source === 'openstreetmap' && professional.phone && (
                     <p className="text-sm text-gray-600 mb-2">
                       <strong>Phone:</strong> {professional.phone}
                     </p>
                   )}
-                  
+
                   {professional.source === 'openstreetmap' && professional.openingHours && (
                     <p className="text-sm text-gray-600 mb-2">
                       <strong>Hours:</strong> {professional.openingHours}
                     </p>
                   )}
-                  
+
                   <div className="flex gap-2 mt-3">
                     {professional.source === 'backend' ? (
                       <>
@@ -397,7 +397,7 @@ export default function NearbyProfessionalsMap() {
             )}
             {professionals[0]?.source === 'backend' && (
               <span className="ml-2 text-xs text-green-600">
-                (from FixFinder database)
+                (from FindYourFixer database)
               </span>
             )}
           </p>

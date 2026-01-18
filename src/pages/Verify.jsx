@@ -183,7 +183,7 @@ export default function Verify() {
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          await videoRef.current.play().catch(() => {});
+          await videoRef.current.play().catch(() => { });
         }
         setCameraReady(true);
       } catch (err) {
@@ -243,7 +243,7 @@ export default function Verify() {
       // Load image with CORS support
       const img = new Image();
       img.crossOrigin = "anonymous";
-      
+
       const imageElement = await new Promise((resolve, reject) => {
         img.onload = () => resolve(img);
         img.onerror = (err) => {
@@ -391,7 +391,7 @@ export default function Verify() {
   };
 
   const stepItems = [
-    { id: 1, label: "Create a FixFinder Pro account", completed: Boolean(user) },
+    { id: 1, label: "Create a FindYourFixer Pro account", completed: Boolean(user) },
     { id: 2, label: "Verify your email address", completed: emailVerified },
     { id: 3, label: "Scan face inside Pro Dashboard", completed: faceVerified },
     { id: 4, label: "Earn the Verified Pro badge", completed: showVerifiedBadge },
@@ -412,7 +412,7 @@ export default function Verify() {
           <p className="uppercase text-xs tracking-wide text-indigo-500 font-semibold">Pro Identity</p>
           <h1 className="text-3xl font-bold text-slate-900">Face Verification</h1>
           <p className="text-slate-600 mt-2">
-            FixFinder uses face-api.js to capture an encrypted face descriptor after you verify your email. Complete both steps to
+            FindYourFixer uses face-api.js to capture an encrypted face descriptor after you verify your email. Complete both steps to
             unlock the Verified Pro badge and rank higher in search results.
           </p>
         </div>
@@ -536,9 +536,9 @@ export default function Verify() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-500">Face verification</p>
-                <p className={`text-lg font-semibold ${statusColor[faceStatus] || "text-slate-600"}`}>
-                  {faceStatusLabel}
-                </p>
+                  <p className={`text-lg font-semibold ${statusColor[faceStatus] || "text-slate-600"}`}>
+                    {faceStatusLabel}
+                  </p>
                 </div>
                 {faceStatus === "verified" && <FaCheckCircle className="text-emerald-500" />}
               </div>
@@ -555,9 +555,8 @@ export default function Verify() {
               {stepItems.map((step) => (
                 <li key={step.id} className="flex items-start gap-3">
                   <span
-                    className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${
-                      step.completed ? "bg-emerald-500 text-white border-emerald-500" : "border-slate-300 text-slate-500"
-                    }`}
+                    className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border text-xs font-semibold ${step.completed ? "bg-emerald-500 text-white border-emerald-500" : "border-slate-300 text-slate-500"
+                      }`}
                   >
                     {step.completed ? <FaCheckCircle className="w-4 h-4" /> : step.id}
                   </span>
@@ -618,11 +617,10 @@ export default function Verify() {
                       type="button"
                       onClick={() => handleReferenceSelection(option)}
                       disabled={isLoading}
-                      className={`relative flex flex-col gap-2 rounded-2xl border p-3 text-left transition ${
-                        isActive
+                      className={`relative flex flex-col gap-2 rounded-2xl border p-3 text-left transition ${isActive
                           ? "border-emerald-500 bg-emerald-50/60"
                           : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                      }`}
+                        }`}
                     >
                       <img src={option.url} alt={option.label} className="w-full h-28 object-cover rounded-xl" />
                       <div>

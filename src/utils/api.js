@@ -13,6 +13,16 @@ export const setAuthToken = (token) => {
   if (token) localStorage.setItem("token", token);
 };
 export const clearAuthToken = () => localStorage.removeItem("token");
+export const resolveImageUrl = (url) => {
+  if (!url) return null;
+  const trimmed = typeof url === 'string' ? url.trim() : url;
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http') || trimmed.startsWith('data:') || trimmed.startsWith('blink:') || trimmed.startsWith('//')) {
+    return trimmed;
+  }
+  const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${API_BASE}${normalized}`;
+};
 
 async function request(path, { method = "GET", body, auth = false, headers: extraHeaders } = {}) {
   const headers = { ...(extraHeaders || {}) };
@@ -23,8 +33,8 @@ async function request(path, { method = "GET", body, auth = false, headers: extr
 
   const payload = body
     ? (body instanceof FormData
-        ? body
-        : (typeof body === 'string' ? body : JSON.stringify(body)))
+      ? body
+      : (typeof body === 'string' ? body : JSON.stringify(body)))
     : undefined;
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -32,13 +42,13 @@ async function request(path, { method = "GET", body, auth = false, headers: extr
     headers,
     body: payload,
   });
-  
+
   console.log(`🌐 API Request: ${method} ${API_BASE}${path}`, {
     status: res.status,
     statusText: res.statusText,
     headers: Object.fromEntries(res.headers.entries())
   });
-  
+
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     console.error(`❌ API Error: ${method} ${API_BASE}${path}`, {
@@ -77,21 +87,21 @@ export const getProfessional = (userIdOrProId, { byUser = true } = {}) => {
   return request(path, { auth: true });
 };
 
-export const createProfessional = (data) => request("/api/professionals", { 
-  method: "POST", 
-  body: data, 
-  auth: true 
+export const createProfessional = (data) => request("/api/professionals", {
+  method: "POST",
+  body: data,
+  auth: true
 });
 
-export const updateProfessional = (id, data) => request(`/api/professionals/${id}`, { 
-  method: "PUT", 
-  body: data, 
-  auth: true 
+export const updateProfessional = (id, data) => request(`/api/professionals/${id}`, {
+  method: "PUT",
+  body: data,
+  auth: true
 });
 
-export const deleteProfessional = (id) => request(`/api/professionals/${id}`, { 
-  method: "DELETE", 
-  auth: true 
+export const deleteProfessional = (id) => request(`/api/professionals/${id}`, {
+  method: "DELETE",
+  auth: true
 });
 
 
@@ -183,7 +193,7 @@ export const sendMessage = (conversationId, formData) => {
   } else {
     headers["Content-Type"] = "application/json";
   }
-  
+
   return request(`/api/messages/conversations/${conversationId}`, {
     method: "POST",
     body: formData instanceof FormData ? formData : JSON.stringify(formData),
@@ -329,7 +339,7 @@ export const updateUserProfile = (data) => request("/api/users/profile", {
 export const uploadProfilePicture = (file) => {
   const formData = new FormData();
   formData.append('profilePicture', file);
-  
+
   return fetch(`${API_BASE}/api/users/profile-picture`, {
     method: 'POST',
     headers: {
@@ -348,11 +358,11 @@ export const uploadProfessionalMedia = (professionalId, file, mediaType = 'image
     size: file.size
   });
   console.log("🎬 Media type:", mediaType);
-  
+
   const formData = new FormData();
   formData.append('media', file);
   formData.append('mediaType', mediaType);
-  
+
   return fetch(`${API_BASE}/api/professionals/${professionalId}/media`, {
     method: 'POST',
     headers: {

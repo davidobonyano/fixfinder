@@ -13,7 +13,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     const token = searchParams.get('token');
-    
+
     if (!token) {
       setStatus('error');
       setMessage('Invalid verification link');
@@ -24,10 +24,10 @@ export default function VerifyEmail() {
       try {
         setStatus('verifying');
         const response = await verifyEmail(token);
-        
+
         if (response.success) {
           setStatus('success');
-          setMessage('Email verified successfully! You can now use all features of FixFinder.');
+          setMessage('Email verified successfully! You can now use all features of FindYourFixer.');
           // Send to dedicated success page
           navigate('/verify-email/success', { replace: true });
         } else {

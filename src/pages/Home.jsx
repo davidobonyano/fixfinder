@@ -7,6 +7,7 @@ import servicesData from '../data/services.json';
 // hero image retained in assets for potential future fallback
 import GlobeHero from '../components/GlobeHero';
 import ServiceSelector from '../components/ServiceSelector';
+import { useAuth } from '../context/useAuth';
 import {
   isValidString,
   isValidLocation
@@ -68,10 +69,10 @@ const useCounter = (end, duration = 2000) => {
     const animate = (currentTime) => {
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       const currentCount = Math.floor(startValue + (endValue - startValue) * easeOutQuart);
-      
+
       setCount(currentCount);
 
       if (progress < 1) {
@@ -86,6 +87,7 @@ const useCounter = (end, duration = 2000) => {
 };
 
 const Home = () => {
+  const { isAuthenticated, user, logout } = useAuth();
   const [allServices, setAllServices] = useState([]);
   const [services, setServices] = useState([]);
   const [userCity, setUserCity] = useState('');
@@ -369,10 +371,10 @@ const Home = () => {
                   ))}
                 </div>
                 <Link
-                  to="/services"
+                  to={isAuthenticated ? (user?.role === 'professional' ? '/dashboard/professional' : '/dashboard') : "/services"}
                   className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 shadow"
                 >
-                  Start Finding Services
+                  {isAuthenticated ? 'Go to Dashboard' : 'Start Finding Services'}
                   <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
                 </Link>
               </div>
@@ -410,13 +412,23 @@ const Home = () => {
                     </div>
                   ))}
                 </div>
-                <Link
-                  to="/join"
-                  className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-500 shadow"
-                >
-                  Join as Professional
-                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-                </Link>
+                {isAuthenticated ? (
+                  <button
+                    onClick={logout}
+                    className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-500 shadow"
+                  >
+                    Sign Out Account
+                    <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <Link
+                    to="/join"
+                    className="mt-6 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-500 shadow"
+                  >
+                    Join as Professional
+                    <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+                  </Link>
+                )}
               </div>
             </div>
           </div>
