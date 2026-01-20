@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-8">
       <div className="container mx-auto px-4 py-10 grid gap-8 sm:grid-cols-2 text-sm">
-        
+
         <div>
           <Logo className="" textClassName="text-xl font-bold text-indigo-600 dark:text-indigo-400" />
           <p className="mt-2 text-gray-600 dark:text-gray-300">
@@ -15,7 +15,7 @@ export default function Footer() {
           </p>
         </div>
 
-        
+
         <div className="flex flex-col sm:items-end">
           <nav className="flex flex-col gap-2 text-gray-600 dark:text-gray-300">
             <NavLink to="/" className="hover:text-indigo-500">Home</NavLink>
@@ -24,7 +24,7 @@ export default function Footer() {
             <NavLink to="/help/terms" className="hover:text-indigo-500">Terms & Conditions</NavLink>
           </nav>
 
-        
+
           <div className="flex gap-4 mt-4 text-gray-500 dark:text-gray-400">
             <a href="#"><Facebook className="h-5 w-5 hover:text-indigo-500" /></a>
             <a href="#"><Twitter className="h-5 w-5 hover:text-indigo-500" /></a>
@@ -33,9 +33,9 @@ export default function Footer() {
         </div>
       </div>
 
-    
+
       <div className="text-center text-xs py-4 text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
-        &copy; {new Date().getFullYear()} FindYourFixer.
+        &copy; {new Date().getFullYear()} FYF.
       </div>
     </footer>
   );

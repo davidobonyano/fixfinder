@@ -1,39 +1,38 @@
 import { useState } from "react";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const faqs = [
   {
-    question: "How do I find a verified professional on FindYourFixer?",
+    question: "How do I find a service provider?",
     answer:
       "Simply go to the home page, use the search bar, select a category (e.g., plumber, electrician), and filter by your location to see verified professionals.",
   },
   {
-    question: "Is FindYourFixer free to use?",
+    question: "Is FYF free to use?",
     answer:
       "Yes! Browsing and connecting with professionals is completely free for users. Service providers may choose to pay for premium listing options.",
   },
   {
-    question: "How can I become a verified service provider?",
+    question: "How do I become a service provider?",
     answer:
-      "To get verified, sign up and complete your profile. Then upload your valid ID and a recent utility bill. Our team will review and approve your verification within 48 hours.",
+      "You can sign up as a professional by clicking the 'Join as Pro' button in the navigation bar. You'll need to provide details about your skills and experience.",
   },
   {
-    question: "Can I leave reviews for professionals?",
+    question: "Are the professionals verified?",
     answer:
-      "Absolutely! After hiring a professional, you’ll be prompted to rate and review them. This helps others make informed decisions.",
+      "We encourage all professionals to undergo our verification process, which includes identity checks and skill assessments. Look for the 'Verified' badge on their profiles.",
   },
   {
-    question: "What should I do if I have a complaint?",
+    question: "How do I pay for services?",
     answer:
-      "Please visit our Contact Support page and provide detailed information. We’ll investigate the issue and take necessary actions.",
+      "You can negotiate and pay for services directly with the professional. We're currently working on an integrated payment system for added security.",
   },
 ];
 
-const FAQ = () => {
+export default function Faq() {
   const [openIndex, setOpenIndex] = useState(null);
 
-  const toggle = (index) => {
+  const toggleFaq = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
@@ -41,27 +40,23 @@ const FAQ = () => {
     <div>
       <h1 className="text-3xl font-bold mb-6 text-indigo-700">Frequently Asked Questions</h1>
       <p className="text-gray-700 mb-8">
-        Here are answers to some of the most common questions about FindYourFixer. If you need more help, feel free to{" "}
+        Here are answers to some of the most common questions about FYF. If you need more help, feel free to{" "}
         <Link to="/help/contact" className="text-indigo-600 underline">contact us</Link>.
       </p>
 
       <div className="space-y-4">
-        {faqs.map((item, index) => (
-          <div key={index} className="border rounded-lg shadow-sm bg-white overflow-hidden">
+        {faqs.map((faq, index) => (
+          <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
             <button
-              onClick={() => toggle(index)}
-              className="w-full flex justify-between items-center px-5 py-4 text-left text-gray-800 font-medium focus:outline-none hover:bg-gray-50"
+              className="w-full text-left px-6 py-4 bg-gray-50 hover:bg-gray-100 font-semibold flex justify-between items-center transition-colors"
+              onClick={() => toggleFaq(index)}
             >
-              <span>{item.question}</span>
-              {openIndex === index ? (
-                <FaChevronUp className="text-indigo-600" />
-              ) : (
-                <FaChevronDown className="text-indigo-600" />
-              )}
+              <span>{faq.question}</span>
+              <span>{openIndex === index ? "−" : "+"}</span>
             </button>
             {openIndex === index && (
-              <div className="px-5 py-3 text-gray-600 border-t bg-gray-50 animate-fade-in">
-                {item.answer}
+              <div className="px-6 py-4 bg-white text-gray-700 border-t border-gray-200">
+                {faq.answer}
               </div>
             )}
           </div>
@@ -69,6 +64,4 @@ const FAQ = () => {
       </div>
     </div>
   );
-};
-
-export default FAQ;
+}

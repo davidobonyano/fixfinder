@@ -20,11 +20,11 @@ const JoinAsPro = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, login } = useAuth();
   const ALL_CATEGORIES = useMemo(() => [
-    'plumber','electrician','carpenter','painter','mechanic','ac-technician','generator-repair',
-    'tailor','hairdresser','barber','house-cleaning','photography','videographer','caterer',
-    'driver-hire','laptop-repair','smartphone-repair','cctv-installation','solar-panel-installation',
-    'locksmith','refrigerator-repair','washing-machine-repair','makeup-artist','nail-technician',
-    'website-design','graphic-design','event-planning','dj','mc-host','massage-therapy'
+    'plumber', 'electrician', 'carpenter', 'painter', 'mechanic', 'ac-technician', 'generator-repair',
+    'tailor', 'hairdresser', 'barber', 'house-cleaning', 'photography', 'videographer', 'caterer',
+    'driver-hire', 'laptop-repair', 'smartphone-repair', 'cctv-installation', 'solar-panel-installation',
+    'locksmith', 'refrigerator-repair', 'washing-machine-repair', 'makeup-artist', 'nail-technician',
+    'website-design', 'graphic-design', 'event-planning', 'dj', 'mc-host', 'massage-therapy'
   ], []);
   const [catalog, setCatalog] = useState(ALL_CATEGORIES);
   const [formData, setFormData] = useState({
@@ -104,7 +104,7 @@ const JoinAsPro = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      
+
       img.onload = () => {
         let { width, height } = img;
         if (width > maxWidth) {
@@ -250,7 +250,7 @@ const JoinAsPro = () => {
           const fd = new FormData();
           fd.append('files', formData.profilePhoto);
           await uploadProfessionalMedia(proId, fd);
-        } catch (_) {}
+        } catch (_) { }
       }
 
       navigate('/dashboard/professional');
@@ -297,7 +297,7 @@ const JoinAsPro = () => {
       {/* Why Join - Benefits */}
       <div className="mx-auto max-w-6xl px-6 -mt-10 md:-mt-14">
         <div className="grid gap-4 md:gap-6 md:grid-cols-3">
-          {[{title:'Verified Leads',desc:'We connect you with customers ready to hire now.'},{title:'Build Reputation',desc:'Collect reviews and stand out in your city.'},{title:'Simple Tools',desc:'Manage requests, chat, and bookings easily.'}].map((b, i)=> (
+          {[{ title: 'Verified Leads', desc: 'We connect you with customers ready to hire now.' }, { title: 'Build Reputation', desc: 'Collect reviews and stand out in your city.' }, { title: 'Simple Tools', desc: 'Manage requests, chat, and bookings easily.' }].map((b, i) => (
             <div
               key={b.title}
               className="rounded-2xl border border-white/50 bg-white/80 backdrop-blur shadow-sm p-5 dark:bg-gray-900/80 dark:border-gray-800 dark:shadow-lg dark:shadow-black/40"
@@ -317,7 +317,7 @@ const JoinAsPro = () => {
         <div className="rounded-2xl border border-white/50 bg-white/90 shadow-sm p-6 dark:bg-gray-900/80 dark:border-gray-800 dark:shadow-lg dark:shadow-black/40">
           <h3 className="text-xl font-bold text-gray-900 text-center dark:text-gray-100">How it works</h3>
           <div className="mt-5 grid md:grid-cols-3 gap-6">
-            {[{t:'Create your profile',d:'Tell customers what you do and where you work.'},{t:'Get requests',d:'Receive leads matched to your skills and location.'},{t:'Do great work',d:'Deliver quality and grow with reviews and repeat jobs.'}].map((s, i)=> (
+            {[{ t: 'Create your profile', d: 'Tell customers what you do and where you work.' }, { t: 'Get requests', d: 'Receive leads matched to your skills and location.' }, { t: 'Do great work', d: 'Deliver quality and grow with reviews and repeat jobs.' }].map((s, i) => (
               <div key={s.t} className="relative">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold dark:bg-indigo-500/20 dark:text-indigo-300">
@@ -338,198 +338,198 @@ const JoinAsPro = () => {
       <div className="mt-10 md:mt-12 p-8 md:p-12 bg-white shadow-2xl rounded-3xl relative overflow-hidden mx-4 md:mx-auto md:max-w-5xl dark:bg-gray-900 dark:shadow-2xl dark:shadow-black/60">
         <div className="absolute inset-0 bg-[url('/images/join-bg.jpeg')] bg-cover bg-center opacity-5 z-0 dark:opacity-10" />
         <div className="relative z-10">
-        <h2 className="text-4xl font-extrabold text-center text-gray-800 leading-tight mb-3 dark:text-gray-100">Become a Verified Pro on FindYourFixer</h2>
-        <p className="text-center text-gray-600 mb-8 dark:text-gray-400">Join thousands of professionals growing their businesses by connecting with local customers.</p>
+          <h2 className="text-4xl font-extrabold text-center text-gray-800 leading-tight mb-3 dark:text-gray-100">Become a Verified Pro on FYF</h2>
+          <p className="text-center text-gray-600 mb-8 dark:text-gray-400">Join thousands of professionals growing their businesses by connecting with local customers.</p>
 
-        {/* Progress */}
-        <div className="mx-auto max-w-3xl mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((label, i) => (
-              <div key={label} className="flex-1 flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i <= currentStep ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{i+1}</div>
-                {i < steps.length - 1 && (
-                  <div className={`h-1 flex-1 mx-2 rounded ${i < currentStep ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-700'}`} />
-                )}
-              </div>
-            ))}
+          {/* Progress */}
+          <div className="mx-auto max-w-3xl mb-8">
+            <div className="flex items-center justify-between">
+              {steps.map((label, i) => (
+                <div key={label} className="flex-1 flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${i <= currentStep ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}>{i + 1}</div>
+                  {i < steps.length - 1 && (
+                    <div className={`h-1 flex-1 mx-2 rounded ${i < currentStep ? 'bg-emerald-400' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">Step {currentStep + 1} of {steps.length}: {steps[currentStep]}</div>
           </div>
-          <div className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">Step {currentStep + 1} of {steps.length}: {steps[currentStep]}</div>
-        </div>
 
-        {detectingLoc && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200">
-            Detecting your State and LGA...
-          </div>
-        )}
-        {!detectingLoc && detectError && (
-          <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200">
-            {detectError}
-          </div>
-        )}
-        {isInternational && (
-          <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200">
-            We currently serve Nigeria only. Please set a Nigerian state/city.
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300">
-            {error}
-          </div>
-        )}
+          {detectingLoc && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200">
+              Detecting your State and LGA...
+            </div>
+          )}
+          {!detectingLoc && detectError && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200">
+              {detectError}
+            </div>
+          )}
+          {isInternational && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200">
+              We currently serve Nigeria only. Please set a Nigerian state/city.
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300">
+              {error}
+            </div>
+          )}
 
-        {/* Wizard content */}
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
-          <div className="min-h-[320px]">
-            {currentStep === 0 && (
-              <div className="space-y-4">
-                {!isAuthenticated && (
-                  <div className="flex flex-col">
-                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Email</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="you@example.com" />
-                  </div>
-                )}
-                {!isAuthenticated && (
-                  <div className="flex flex-col">
-                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Password</label>
-                    <div className="relative">
-                      <input type={showPassword ? 'text' : 'password'} name="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="Create a password" />
-                      <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">This creates your pro account so you can log in later.</p>
-                  </div>
-                )}
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Full Name</label>
-                  <div className="flex items-center gap-3">
-                    <FaUser className="text-[#003366]" />
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="David Efe" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 1 && (
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Short Bio</label>
-                  <textarea name="bio" rows="4" value={formData.bio} onChange={handleChange} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="Tell us about your experience, location, and passion." />
-                </div>
-              </div>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Category / Specialty</label>
-                  <ServiceSelector value={formData.category} onChange={(value) => setFormData({ ...formData, category: value })} placeholder="Search for your specialty (e.g. plumber, electrician, hairstylist)" allowCustom={true} className="w-full" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Additional Services (optional)</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {formData.services.map((svc) => (
-                      <span key={svc} className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm dark:bg-gray-800 dark:text-gray-200">
-                        {svc}
-                        <button type="button" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400" onClick={() => removeService(svc)}>×</button>
-                      </span>
-                    ))}
-                  </div>
-                  <ServiceSelector value={serviceQuery} onChange={(value) => { if (value && !formData.services.includes(value)) { addService(value); } setServiceQuery(''); }} placeholder="Add more services you offer" allowCustom={true} className="w-full" />
-                </div>
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Location (Nigeria only)</label>
-                  <LocationSelector value={{ state: formData.state, city: formData.city }} autoDetected={autoDetectedPlace} enforceNigeria showNeighborhood onChange={(loc) => setFormData(prev => ({ ...prev, state: loc.state || '', city: loc.lga || loc.city || '', neighborhood: loc.neighborhood || '' }))} />
-                </div>
-                {formData.state && formData.city && (
-                  <div className="flex flex-col bg-blue-50 p-3 rounded-lg dark:bg-blue-500/10">
-                    <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
-                      <FaMapMarkerAlt className="text-blue-600 dark:text-blue-300" /><span className="font-medium">Location Set</span>
-                    </div>
-                    <p className="text-sm text-blue-700 dark:text-blue-200">{formData.neighborhood ? `${formData.neighborhood}, ` : ''}{formData.city}, {formData.state}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Years of Experience</label>
-                  <input type="number" name="yearsOfExperience" value={formData.yearsOfExperience} onChange={handleChange} min="0" required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="0" />
-                </div>
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Price (₦)</label>
-                  <input type="number" name="price" value={formData.price} onChange={handleChange} min="0" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="e.g. 10000" />
-                </div>
-              </div>
-            )}
-
-            {currentStep === 5 && (
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Upload Profile Picture (optional)</label>
-                  {imagePreview && (
-                    <div className="mb-2">
-                      <img src={imagePreview} alt="Profile preview" className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700" />
-                      <p className="text-xs text-green-600 mt-1 dark:text-green-400">✓ Image compressed and ready</p>
+          {/* Wizard content */}
+          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
+            <div className="min-h-[320px]">
+              {currentStep === 0 && (
+                <div className="space-y-4">
+                  {!isAuthenticated && (
+                    <div className="flex flex-col">
+                      <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Email</label>
+                      <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="you@example.com" />
                     </div>
                   )}
-                  <div className="flex items-center gap-3">
-                    <FaCamera className="text-[#003366]" />
-                    <input type="file" name="profilePhoto" accept="image/*" onChange={handleChange} className="w-full text-gray-700 dark:text-gray-300" disabled={compressing} />
-                  </div>
-                  {compressing && (
-                    <div className="flex items-center gap-2 text-blue-600 dark:text-blue-300"><FaSpinner className="animate-spin" /><span className="text-sm">Compressing image...</span></div>
+                  {!isAuthenticated && (
+                    <div className="flex flex-col">
+                      <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Password</label>
+                      <div className="relative">
+                        <input type={showPassword ? 'text' : 'password'} name="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="Create a password" />
+                        <button type="button" onClick={() => setShowPassword((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 dark:text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">This creates your pro account so you can log in later.</p>
+                    </div>
                   )}
-                  <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">Images are automatically compressed for faster uploads. You can add certificates and ID later in your dashboard during verification.</p>
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Full Name</label>
+                    <div className="flex items-center gap-3">
+                      <FaUser className="text-[#003366]" />
+                      <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="David Efe" />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {currentStep === 6 && (
-              <div className="space-y-4">
-                <div className="rounded-xl border p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-                  <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">Review your details</h4>
-                  <ul className="text-sm text-gray-700 space-y-1 dark:text-gray-300">
-                    <li><strong>Name:</strong> {formData.name}</li>
-                    {!isAuthenticated && <li><strong>Email:</strong> {formData.email}</li>}
-                    <li><strong>Category:</strong> {formData.category || '—'}</li>
-                    <li><strong>Services:</strong> {(formData.services || []).join(', ') || '—'}</li>
-                    <li><strong>Location:</strong> {[formData.neighborhood, formData.city, formData.state].filter(Boolean).join(', ') || '—'}</li>
-                    <li><strong>Experience:</strong> {formData.yearsOfExperience || 0} years</li>
-                    <li><strong>Price:</strong> {formData.price ? `₦${formData.price}` : '—'}</li>
-                  </ul>
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Short Bio</label>
+                    <textarea name="bio" rows="4" value={formData.bio} onChange={handleChange} className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="Tell us about your experience, location, and passion." />
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {/* Navigation */}
-          <div className="mt-8 flex items-center justify-between">
-            <button type="button" onClick={goBack} disabled={currentStep === 0 || loading} className="px-4 py-2 rounded-lg border text-gray-700 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300">Back</button>
-            {isLastStep ? (
-              <button type="submit" disabled={loading} className="px-5 py-2 rounded-lg bg-[#003366] hover:bg-[#002244] text-white font-semibold flex items-center gap-2 disabled:opacity-50">
-                {loading ? <FaSpinner className="animate-spin" /> : <FaBriefcase />} {loading ? 'Creating Profile...' : 'Finish & Join'}
-              </button>
-            ) : (
-              <button type="button" onClick={() => {
-                // minimal per-step validation
-                if (currentStep === 0 && ((!isAuthenticated && (!formData.email || !password)) || !formData.name)) { setError('Please fill name, email and password'); return; }
-                if (currentStep === 2 && !formData.category) { setError('Please select your main category'); return; }
-                if (currentStep === 3 && (!formData.state || !formData.city)) { setError('Please set your state and city'); return; }
-                if (currentStep === 4 && (formData.yearsOfExperience === '' || formData.yearsOfExperience === null)) { setError('Please enter your years of experience'); return; }
-                setError('');
-                goNext();
-              }} className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">Next</button>
-            )}
-          </div>
+              {currentStep === 2 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Category / Specialty</label>
+                    <ServiceSelector value={formData.category} onChange={(value) => setFormData({ ...formData, category: value })} placeholder="Search for your specialty (e.g. plumber, electrician, hairstylist)" allowCustom={true} className="w-full" />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Additional Services (optional)</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formData.services.map((svc) => (
+                        <span key={svc} className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm dark:bg-gray-800 dark:text-gray-200">
+                          {svc}
+                          <button type="button" className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400" onClick={() => removeService(svc)}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <ServiceSelector value={serviceQuery} onChange={(value) => { if (value && !formData.services.includes(value)) { addService(value); } setServiceQuery(''); }} placeholder="Add more services you offer" allowCustom={true} className="w-full" />
+                  </div>
+                </div>
+              )}
 
-          <p className="text-sm text-center text-gray-500 mt-6 dark:text-gray-400">By joining, you agree to FindYourFixer's <Link to="/help/terms" state={{ from: '/join' }} className="underline text-[#003366] cursor-pointer dark:text-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400">Terms & Privacy</Link>.</p>
-        </form>
+              {currentStep === 3 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Location (Nigeria only)</label>
+                    <LocationSelector value={{ state: formData.state, city: formData.city }} autoDetected={autoDetectedPlace} enforceNigeria showNeighborhood onChange={(loc) => setFormData(prev => ({ ...prev, state: loc.state || '', city: loc.lga || loc.city || '', neighborhood: loc.neighborhood || '' }))} />
+                  </div>
+                  {formData.state && formData.city && (
+                    <div className="flex flex-col bg-blue-50 p-3 rounded-lg dark:bg-blue-500/10">
+                      <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                        <FaMapMarkerAlt className="text-blue-600 dark:text-blue-300" /><span className="font-medium">Location Set</span>
+                      </div>
+                      <p className="text-sm text-blue-700 dark:text-blue-200">{formData.neighborhood ? `${formData.neighborhood}, ` : ''}{formData.city}, {formData.state}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {currentStep === 4 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Years of Experience</label>
+                    <input type="number" name="yearsOfExperience" value={formData.yearsOfExperience} onChange={handleChange} min="0" required className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="0" />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Price (₦)</label>
+                    <input type="number" name="price" value={formData.price} onChange={handleChange} min="0" className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#003366] dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder:text-gray-500" placeholder="e.g. 10000" />
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 5 && (
+                <div className="space-y-4">
+                  <div className="flex flex-col">
+                    <label className="font-medium mb-1 text-gray-800 dark:text-gray-200">Upload Profile Picture (optional)</label>
+                    {imagePreview && (
+                      <div className="mb-2">
+                        <img src={imagePreview} alt="Profile preview" className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700" />
+                        <p className="text-xs text-green-600 mt-1 dark:text-green-400">✓ Image compressed and ready</p>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3">
+                      <FaCamera className="text-[#003366]" />
+                      <input type="file" name="profilePhoto" accept="image/*" onChange={handleChange} className="w-full text-gray-700 dark:text-gray-300" disabled={compressing} />
+                    </div>
+                    {compressing && (
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-300"><FaSpinner className="animate-spin" /><span className="text-sm">Compressing image...</span></div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1 dark:text-gray-400">Images are automatically compressed for faster uploads. You can add certificates and ID later in your dashboard during verification.</p>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 6 && (
+                <div className="space-y-4">
+                  <div className="rounded-xl border p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                    <h4 className="font-semibold mb-2 text-gray-800 dark:text-gray-100">Review your details</h4>
+                    <ul className="text-sm text-gray-700 space-y-1 dark:text-gray-300">
+                      <li><strong>Name:</strong> {formData.name}</li>
+                      {!isAuthenticated && <li><strong>Email:</strong> {formData.email}</li>}
+                      <li><strong>Category:</strong> {formData.category || '—'}</li>
+                      <li><strong>Services:</strong> {(formData.services || []).join(', ') || '—'}</li>
+                      <li><strong>Location:</strong> {[formData.neighborhood, formData.city, formData.state].filter(Boolean).join(', ') || '—'}</li>
+                      <li><strong>Experience:</strong> {formData.yearsOfExperience || 0} years</li>
+                      <li><strong>Price:</strong> {formData.price ? `₦${formData.price}` : '—'}</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Navigation */}
+            <div className="mt-8 flex items-center justify-between">
+              <button type="button" onClick={goBack} disabled={currentStep === 0 || loading} className="px-4 py-2 rounded-lg border text-gray-700 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300">Back</button>
+              {isLastStep ? (
+                <button type="submit" disabled={loading} className="px-5 py-2 rounded-lg bg-[#003366] hover:bg-[#002244] text-white font-semibold flex items-center gap-2 disabled:opacity-50">
+                  {loading ? <FaSpinner className="animate-spin" /> : <FaBriefcase />} {loading ? 'Creating Profile...' : 'Finish & Join'}
+                </button>
+              ) : (
+                <button type="button" onClick={() => {
+                  // minimal per-step validation
+                  if (currentStep === 0 && ((!isAuthenticated && (!formData.email || !password)) || !formData.name)) { setError('Please fill name, email and password'); return; }
+                  if (currentStep === 2 && !formData.category) { setError('Please select your main category'); return; }
+                  if (currentStep === 3 && (!formData.state || !formData.city)) { setError('Please set your state and city'); return; }
+                  if (currentStep === 4 && (formData.yearsOfExperience === '' || formData.yearsOfExperience === null)) { setError('Please enter your years of experience'); return; }
+                  setError('');
+                  goNext();
+                }} className="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold">Next</button>
+              )}
+            </div>
+
+            <p className="text-sm text-center text-gray-500 mt-6 dark:text-gray-400">By joining, you agree to FYF's <Link to="/help/terms" state={{ from: '/join' }} className="underline text-[#003366] cursor-pointer dark:text-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400">Terms & Privacy</Link>.</p>
+          </form>
         </div>
       </div>
     </section>

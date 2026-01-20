@@ -93,20 +93,18 @@ export default function Header() {
 
   return (
     <header
-      className={`${isHome && !isScrolled ? "absolute" : "sticky"} top-0 z-40 w-full transition-all ${
-        isSolid
+      className={`${isHome && !isScrolled ? "absolute" : "sticky"} top-0 z-40 w-full transition-all ${isSolid
           ? "bg-white/90 shadow-md border-b border-gray-200 backdrop-blur dark:bg-gray-900/90 dark:border-gray-800 dark:shadow-[0_15px_40px_-20px_rgba(0,0,0,0.6)]"
           : "bg-transparent"
-      }`}
+        }`}
     >
       {/* Top Bar (Logo + Auth) */}
       <div className="lg:hidden container mx-auto px-4 py-3 flex justify-between items-center text-gray-800 dark:text-gray-100">
         <NavLink to="/">
           <Logo
             className="select-none"
-            textClassName={`text-2xl ${
-              isSolid ? "text-indigo-600 dark:text-indigo-400" : "text-indigo-300"
-            }`}
+            textClassName={`text-2xl ${isSolid ? "text-charcoal dark:text-stone-50" : "text-white"
+              }`}
             iconClassName="w-7 h-7"
           />
         </NavLink>
@@ -116,11 +114,10 @@ export default function Header() {
           <button
             onClick={() => setShowPalette(true)}
             aria-label="Search"
-            className={`${
-              isSolid
+            className={`${isSolid
                 ? "text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                 : "text-white/90 hover:text-white"
-            } p-2 rounded-full`}
+              } p-2 rounded-full`}
           >
             <IconSearch className="w-5 h-5" />
           </button>
@@ -137,9 +134,8 @@ export default function Header() {
             <button
               onClick={toggleDropdown}
               aria-label="Account"
-              className={`${
-                isSolid ? "text-gray-700 dark:text-gray-200" : "text-white"
-              } text-xl focus:outline-none flex items-center gap-2`}
+              className={`${isSolid ? "text-gray-700 dark:text-gray-200" : "text-white"
+                } text-xl focus:outline-none flex items-center gap-2`}
             >
               {isAuthenticated && (user?.profilePicture || user?.avatarUrl) ? (
                 <img
@@ -196,9 +192,8 @@ export default function Header() {
       {/* Mobile Nav (Horizontal scrollable row) */}
       <nav className="lg:hidden px-2 py-2 overflow-x-auto">
         <div
-          className={`flex space-x-6 pl-2 text-base font-medium ${
-            isSolid ? "text-gray-700 dark:text-gray-200" : "text-white"
-          } w-max`}
+          className={`flex space-x-6 pl-2 text-base font-medium ${isSolid ? "text-gray-700 dark:text-gray-200" : "text-white"
+            } w-max`}
         >
           <NavLink to="/" className={linkClasses}>Home</NavLink>
           <NavLink to="/services" className={linkClasses}>Services</NavLink>
@@ -206,41 +201,39 @@ export default function Header() {
           {isAuthenticated && (
             <NavLink to={dashboardPath} className={linkClasses}>Dashboard</NavLink>
           )}
-         
+
         </div>
       </nav>
 
       {/* Desktop Nav - Centered glass pill that becomes solid on scroll/other pages */}
       <div className="hidden lg:flex items-center justify-center px-6 py-4">
         <div
-          className={`${
-            isSolid
+          className={`${isSolid
               ? "bg-white text-gray-900 border border-gray-200 shadow-sm dark:bg-gray-900 dark:text-gray-100 dark:border-gray-800 dark:shadow-lg"
               : "backdrop-blur-md bg-white/10 text-white border border-white/15 dark:bg-gray-900/40 dark:border-gray-700/60"
-          } rounded-full px-6 py-2.5 flex items-center gap-6 transition-colors w-[min(92vw,1100px)] justify-between`}
+            } rounded-full px-6 py-2.5 flex items-center gap-6 transition-colors w-[min(92vw,1100px)] justify-between`}
         >
           <NavLink to="/" className="flex items-center">
-            <Logo className="select-none" textClassName={`${isSolid ? "text-indigo-600" : "text-indigo-300"} text-lg font-extrabold tracking-tight`} iconClassName="w-6 h-6" />
+            <Logo className="select-none" textClassName={`${isSolid ? "text-charcoal dark:text-stone-50" : "text-white"} text-lg font-extrabold tracking-tight`} iconClassName="w-6 h-6" />
           </NavLink>
           <div className="flex items-center gap-4 text-sm">
             <div className="relative">
               <button
                 ref={servicesButtonRef}
                 onClick={() => setShowServices((s) => !s)}
-                className={`inline-flex items-center gap-1 ${
-                  isSolid
+                className={`inline-flex items-center gap-1 ${isSolid
                     ? "text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                     : "text-white/90 hover:text-white"
-                } transition`}
+                  } transition`}
               >
-                Services <IconChevronDown className="w-4 h-4"/>
+                Services <IconChevronDown className="w-4 h-4" />
               </button>
               {showServices && (
                 <div
                   ref={servicesMenuRef}
                   className="absolute left-1/2 -translate-x-1/2 mt-3 w-[560px] rounded-2xl border border-white/10 bg-white/90 text-gray-900 backdrop-blur-md p-6 grid grid-cols-2 gap-4 shadow-xl dark:border-gray-700/60 dark:bg-gray-900/95 dark:text-gray-100"
                 >
-                  {['Electrician','Plumber','Tailor','AC Technician','Generator Repair','Hair Stylist'].map((item)=> (
+                  {['Electrician', 'Plumber', 'Tailor', 'AC Technician', 'Generator Repair', 'Hair Stylist'].map((item) => (
                     <NavLink
                       key={item}
                       to={`/services/${slugifyService(item)}`}
@@ -263,39 +256,37 @@ export default function Header() {
             </div>
             <NavLink
               to="/join"
-              className={`${
-                isSolid
+              className={`${isSolid
                   ? "text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                   : "text-white/90 hover:text-white"
-              } transition`}
+                } transition`}
             >
               Join as Pro
             </NavLink>
           </div>
           <div className="ml-2 flex items-center gap-2">
-          <div className="hidden xl:block w-64">
-            <ServiceSelector
-              value={serviceSearchValue}
-              onChange={setServiceSearchValue}
-              onSelect={(serviceName) => {
-                handleServiceNavigate(serviceName);
-                setServiceSearchValue("");
-              }}
-              onClear={() => setServiceSearchValue("")}
-              placeholder="Search for services..."
-              className="w-full"
-            />
-          </div>
-          <button
-            onClick={() => setShowPalette(true)}
-            className={`xl:hidden flex items-center gap-2 px-4 h-9 rounded-full justify-start ${
-              isSolid
-                ? "bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
-                : "bg-white/15 hover:bg-white/20 text-white"
-            }`}
-          >
-            <IconSearch className="w-4 h-4"/> <span className="text-sm">Search</span>
-          </button>
+            <div className="hidden xl:block w-64">
+              <ServiceSelector
+                value={serviceSearchValue}
+                onChange={setServiceSearchValue}
+                onSelect={(serviceName) => {
+                  handleServiceNavigate(serviceName);
+                  setServiceSearchValue("");
+                }}
+                onClear={() => setServiceSearchValue("")}
+                placeholder="Search for services..."
+                className="w-full"
+              />
+            </div>
+            <button
+              onClick={() => setShowPalette(true)}
+              className={`xl:hidden flex items-center gap-2 px-4 h-9 rounded-full justify-start ${isSolid
+                  ? "bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
+                  : "bg-white/15 hover:bg-white/20 text-white"
+                }`}
+            >
+              <IconSearch className="w-4 h-4" /> <span className="text-sm">Search</span>
+            </button>
             <ThemeToggle
               className={
                 isSolid
@@ -304,9 +295,8 @@ export default function Header() {
               }
             />
             <button
-              className={`p-2 rounded-full ${
-                isSolid ? "hover:bg-gray-100 dark:hover:bg-gray-800" : "hover:bg-white/15"
-              }`}
+              className={`p-2 rounded-full ${isSolid ? "hover:bg-gray-100 dark:hover:bg-gray-800" : "hover:bg-white/15"
+                }`}
             >
               <IconBell className={`w-5 h-5 ${isSolid ? "text-gray-800 dark:text-gray-200" : "text-white"}`} />
             </button>
@@ -314,21 +304,19 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <NavLink
                   to={dashboardPath}
-                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
-                    isSolid
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${isSolid
                       ? "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
                       : "bg-white/15 text-white hover:bg-white/25"
-                  }`}
+                    }`}
                 >
                   Dashboard
                 </NavLink>
                 <button
                   onClick={handleLogout}
-                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
-                    isSolid
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${isSolid
                       ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
                       : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                    }`}
                 >
                   Sign out
                 </button>
@@ -337,11 +325,10 @@ export default function Header() {
               <div className="flex items-center gap-2">
                 <NavLink
                   to="/login"
-                  className={`${
-                    isSolid
+                  className={`${isSolid
                       ? "text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                       : "text-white/90 hover:text-white"
-                  }`}
+                    }`}
                 >
                   Log in
                 </NavLink>
@@ -378,10 +365,10 @@ export default function Header() {
                   inputProps={{ autoFocus: true }}
                 />
               </div>
-              <button onClick={() => setShowPalette(false)} className="p-2 text-gray-500 hover:text-gray-700"><IconX className="w-4 h-4"/></button>
+              <button onClick={() => setShowPalette(false)} className="p-2 text-gray-500 hover:text-gray-700"><IconX className="w-4 h-4" /></button>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              {[{label:'Services',to:'/services'},{label:'Join as Pro',to:'/join'}].map(i=> (
+              {[{ label: 'Services', to: '/services' }, { label: 'Join as Pro', to: '/join' }].map(i => (
                 <NavLink
                   key={i.label}
                   to={i.to}

@@ -8,7 +8,7 @@ const Terms = () => {
         Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
       </p>
       <p className="text-gray-700 dark:text-gray-300 mb-8">
-        Welcome to FindYourFixer. By accessing or using our platform, you agree to be bound by these Terms and Conditions. 
+        Welcome to FYF. By accessing or using our platform, you agree to be bound by these Terms and Conditions.
         Please read them carefully before using our services.
       </p>
 
@@ -16,7 +16,7 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">1. Acceptance of Terms</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            By accessing and using FindYourFixer, you accept and agree to be bound by the terms and provision of this agreement. 
+            By accessing and using FYF, you accept and agree to be bound by the terms and provision of this agreement.
             If you do not agree to abide by the above, please do not use this service.
           </p>
         </section>
@@ -24,8 +24,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">2. Description of Service</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            FindYourFixer is a platform that connects users with verified service providers. We facilitate connections between 
-            users seeking services and professionals offering those services. We do not provide the services ourselves, 
+            FYF is a platform that connects users with verified service providers. We facilitate connections between
+            users seeking services and professionals offering those services. We do not provide the services ourselves,
             but rather act as an intermediary platform.
           </p>
         </section>
@@ -47,8 +47,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">4. Service Provider Verification</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            Service providers on our platform may undergo a verification process. However, FindYourFixer does not guarantee 
-            the quality, safety, or legality of services provided by verified professionals. Users are responsible for 
+            Service providers on our platform may undergo a verification process. However, FYF does not guarantee
+            the quality, safety, or legality of services provided by verified professionals. Users are responsible for
             conducting their own due diligence before engaging with any service provider.
           </p>
         </section>
@@ -71,8 +71,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">6. Reviews and Ratings</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            Users may post reviews and ratings of service providers. Reviews must be truthful and based on actual 
-            experiences. FindYourFixer reserves the right to remove reviews that violate our policies or are deemed 
+            Users may post reviews and ratings of service providers. Reviews must be truthful and based on actual
+            experiences. FYF reserves the right to remove reviews that violate our policies or are deemed
             inappropriate, fraudulent, or defamatory.
           </p>
         </section>
@@ -80,8 +80,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">7. Payments and Transactions</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            Any payments made through the platform are subject to our payment terms. FindYourFixer may charge fees for 
-            certain services. All fees are clearly disclosed before you complete a transaction. Refunds, if applicable, 
+            Any payments made through the platform are subject to our payment terms. FYF may charge fees for
+            certain services. All fees are clearly disclosed before you complete a transaction. Refunds, if applicable,
             will be processed according to our refund policy.
           </p>
         </section>
@@ -89,7 +89,7 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">8. Privacy Policy</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            Your use of FindYourFixer is also governed by our Privacy Policy. Please review our Privacy Policy to understand 
+            Your use of FYF is also governed by our Privacy Policy. Please review our Privacy Policy to understand
             how we collect, use, and protect your personal information.
           </p>
         </section>
@@ -97,8 +97,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">9. Limitation of Liability</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            FindYourFixer acts as an intermediary platform and is not responsible for the quality, safety, or legality of 
-            services provided by third-party service providers. We are not liable for any damages, losses, or injuries 
+            FYF acts as an intermediary platform and is not responsible for the quality, safety, or legality of
+            services provided by third-party service providers. We are not liable for any damages, losses, or injuries
             resulting from your use of the platform or services obtained through the platform.
           </p>
         </section>
@@ -106,8 +106,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">10. Intellectual Property</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            All content on FindYourFixer, including text, graphics, logos, and software, is the property of FindYourFixer or 
-            its content suppliers and is protected by copyright and other intellectual property laws. You may not 
+            All content on FYF, including text, graphics, logos, and software, is the property of FYF or
+            its content suppliers and is protected by copyright and other intellectual property laws. You may not
             reproduce, distribute, or create derivative works without our express written permission.
           </p>
         </section>
@@ -115,8 +115,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">11. Termination</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            We reserve the right to terminate or suspend your account and access to the platform at our sole discretion, 
-            without prior notice, for conduct that we believe violates these Terms or is harmful to other users, us, or 
+            We reserve the right to terminate or suspend your account and access to the platform at our sole discretion,
+            without prior notice, for conduct that we believe violates these Terms or is harmful to other users, us, or
             third parties, or for any other reason.
           </p>
         </section>
@@ -124,8 +124,8 @@ const Terms = () => {
         <section>
           <h2 className="text-2xl font-semibold mb-3 text-indigo-600 dark:text-indigo-400">12. Changes to Terms</h2>
           <p className="text-gray-700 dark:text-gray-300 mb-3">
-            We reserve the right to modify these Terms at any time. We will notify users of any material changes by 
-            posting the new Terms on this page and updating the "Last updated" date. Your continued use of the platform 
+            We reserve the right to modify these Terms at any time. We will notify users of any material changes by
+            posting the new Terms on this page and updating the "Last updated" date. Your continued use of the platform
             after such modifications constitutes acceptance of the updated Terms.
           </p>
         </section>

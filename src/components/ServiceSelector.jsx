@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaTimes, FaChevronDown } from 'react-icons/fa';
 import { searchServices, normalizeService, ALL_SERVICES } from '../data/services';
 
-const ServiceSelector = ({ 
-  value = '', 
+const ServiceSelector = ({
+  value = '',
   onChange,
   onSelect,
   onClear,
@@ -55,7 +55,7 @@ const ServiceSelector = ({
   const handleInputChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
+
     if (query.length === 0) {
       setSelectedService(null);
       onChange?.('');
@@ -104,7 +104,7 @@ const ServiceSelector = ({
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-gray-900 dark:text-stone-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
           {...inputProps}
         />
         {searchQuery && (
@@ -123,7 +123,7 @@ const ServiceSelector = ({
       </div>
 
       {isOpen && showSuggestions && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-stone-900 border border-gray-300 dark:border-stone-700 rounded-lg shadow-lg max-h-60 overflow-y-auto transition-colors">
           {console.log('Rendering dropdown with suggestions:', suggestions.length)}
           {suggestions.length > 0 ? (
             <>
@@ -131,43 +131,43 @@ const ServiceSelector = ({
                 <button
                   key={index}
                   onClick={() => handleServiceSelect(suggestion)}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors focus:outline-none"
                 >
                   <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">{suggestion.service}</span>
-                    <span className="text-sm text-gray-500">{suggestion.category}</span>
+                    <span className="font-medium text-gray-900 dark:text-stone-100">{suggestion.service}</span>
+                    <span className="text-sm text-gray-500 dark:text-stone-400">{suggestion.category}</span>
                     {suggestion.matchType === 'synonym' && (
-                      <span className="text-xs text-blue-600">Related to: {searchQuery}</span>
+                      <span className="text-xs text-blue-600 dark:text-blue-400">Related to: {searchQuery}</span>
                     )}
                   </div>
                 </button>
               ))}
-              
+
               {allowCustom && searchQuery && !suggestions.find(s => s.service.toLowerCase() === searchQuery.toLowerCase()) && (
                 <button
                   onClick={handleCustomService}
-                  className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-t border-gray-200"
+                  className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-stone-800 transition-colors focus:outline-none border-t border-gray-200 dark:border-stone-800"
                 >
                   <div className="flex items-center">
-                    <span className="text-blue-600 font-medium">Add "{searchQuery}" as custom service</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">Add "{searchQuery}" as custom service</span>
                   </div>
                 </button>
               )}
             </>
           ) : searchQuery.length > 0 ? (
-            <div className="px-4 py-2 text-gray-500">
+            <div className="px-4 py-2 text-gray-500 dark:text-stone-400">
               No services found for "{searchQuery}"
               {allowCustom && (
                 <button
                   onClick={handleCustomService}
-                  className="block w-full mt-2 text-blue-600 hover:text-blue-800"
+                  className="block w-full mt-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   Add as custom service
                 </button>
               )}
             </div>
           ) : (
-            <div className="px-4 py-2 text-gray-500">
+            <div className="px-4 py-2 text-gray-500 dark:text-stone-400">
               Start typing to search services...
             </div>
           )}

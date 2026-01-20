@@ -61,20 +61,20 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-stone-50 font-sans selection:bg-trust/10">
+    <div className="flex min-h-screen bg-stone-50 dark:bg-charcoal font-sans selection:bg-trust/10 transition-colors">
       {/* Left Panel - Brand Promise */}
-      <div className="hidden lg:flex w-1/2 bg-stone-100 flex-col justify-between p-16 border-r border-stone-200">
+      <div className="hidden lg:flex w-1/2 bg-stone-100 dark:bg-stone-900/20 flex-col justify-between p-16 border-r border-stone-200 dark:border-stone-800 transition-colors">
         <div className="space-y-8">
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 bg-trust"></div>
-            <span className="font-tight text-xl font-bold tracking-tight text-charcoal">FINDYOURFIXER</span>
+            <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50">FYF</span>
           </div>
 
           <div className="pt-20">
-            <h1 className="text-5xl font-tight font-bold leading-[1.05] text-charcoal">
+            <h1 className="text-5xl font-tight font-bold leading-[1.05] text-charcoal dark:text-stone-50">
               Redefining trust in local services.
             </h1>
-            <p className="mt-8 text-lg text-graphite max-w-md leading-relaxed">
+            <p className="mt-8 text-lg text-graphite dark:text-stone-400 max-w-md leading-relaxed">
               Log in to manage your service requests and connect with the community's most reliable professionals.
             </p>
           </div>
@@ -84,16 +84,16 @@ export default function Login() {
           <div className="flex items-start gap-4">
             <FiShield className="mt-1 text-trust h-5 w-5" />
             <div>
-              <p className="text-sm font-bold text-charcoal uppercase tracking-wider">Secured Access</p>
-              <p className="text-sm text-graphite">Your data is encrypted and protected by industry-standard protocols.</p>
+              <p className="text-sm font-bold text-charcoal dark:text-stone-50 uppercase tracking-wider">Secured Access</p>
+              <p className="text-sm text-graphite dark:text-stone-400">Your data is encrypted and protected by industry-standard protocols.</p>
             </div>
           </div>
           {tinyLoc && (
             <div className="flex items-start gap-4">
               <FiCheckCircle className="mt-1 text-trust h-5 w-5" />
               <div>
-                <p className="text-sm font-bold text-charcoal uppercase tracking-wider">Localized Service</p>
-                <p className="text-sm text-graphite">Detected LGA: {tinyLoc}. You're seeing the best pros in your area.</p>
+                <p className="text-sm font-bold text-charcoal dark:text-stone-50 uppercase tracking-wider">Localized Service</p>
+                <p className="text-sm text-graphite dark:text-stone-400">Detected LGA: {tinyLoc}. You're seeing the best pros in your area.</p>
               </div>
             </div>
           )}
@@ -101,18 +101,18 @@ export default function Login() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-stone-50">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-stone-50 dark:bg-charcoal transition-colors">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-12">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 bg-trust"></div>
-              <span className="font-tight text-xl font-bold tracking-tight text-charcoal">FINDYOURFIXER</span>
+              <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50">FYF</span>
             </div>
           </div>
 
           <div className="mb-10">
-            <h2 className="text-3xl font-tight font-bold text-charcoal">Welcome back</h2>
-            <p className="mt-3 text-graphite">Enter your details to access your account.</p>
+            <h2 className="text-3xl font-tight font-bold text-charcoal dark:text-stone-50">Welcome back</h2>
+            <p className="mt-3 text-graphite dark:text-stone-400">Enter your details to access your account.</p>
           </div>
 
           <form
@@ -163,7 +163,7 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-xs text-red-800 font-medium">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs text-red-800 dark:text-red-200 font-medium">
                 {error}
               </div>
             )}
@@ -178,18 +178,18 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-10 text-center text-sm text-graphite">
+          <p className="mt-10 text-center text-sm text-graphite dark:text-stone-400">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-trust font-bold hover:underline">
+            <Link to="/signup" className="text-trust font-bold hover:underline transition-colors">
               Create an account
             </Link>
           </p>
 
-          <div className="mt-20 pt-8 border-t border-stone-200 flex items-center justify-between">
-            <p className="text-[10px] font-bold text-stone-400 tracking-widest uppercase">FINDYOURFIXER &copy; 2024</p>
+          <div className="mt-20 pt-8 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between transition-colors">
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-widest uppercase">FYF &copy; 2024</p>
             <div className="flex gap-4">
-              <Link to="/help/terms" className="text-[10px] font-bold text-stone-400 tracking-widest uppercase hover:text-graphite">Privacy</Link>
-              <Link to="/help/terms" className="text-[10px] font-bold text-stone-400 tracking-widest uppercase hover:text-graphite">Terms</Link>
+              <Link to="/help/terms" className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-widest uppercase hover:text-graphite dark:hover:text-stone-300 transition-colors">Privacy</Link>
+              <Link to="/help/terms" className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-widest uppercase hover:text-graphite dark:hover:text-stone-300 transition-colors">Terms</Link>
             </div>
           </div>
         </div>

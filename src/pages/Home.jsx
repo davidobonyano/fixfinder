@@ -219,13 +219,13 @@ const Home = () => {
         <GlobeHero
           coords={userCoords}
           headline="Find Trusted Local Service Experts"
-          subline={`Whether you need a reliable tailor, plumber, or electrician, FindYourFixer connects you to verified professionals in ${selectedCity || userCity || 'your area'}.`}
+          subline={`Whether you need a reliable tailor, plumber, or electrician, FYF connects you to verified professionals in ${selectedCity || userCity || 'your area'}.`}
           onNeedsLocation={handleGetLocation}
         />
 
         {/* 🔍 Search Bar */}
         <div className="relative z-20 px-4 md:px-0 mt-6 md:-mt-20">
-          <div className="max-w-5xl mx-auto bg-white p-4 md:p-6 rounded-xl shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+          <div className="max-w-5xl mx-auto bg-white dark:bg-charcoal p-4 md:p-6 rounded-xl shadow-xl dark:shadow-black/20 border border-gray-100 dark:border-stone-800 grid grid-cols-1 md:grid-cols-3 gap-4 items-center transition-colors">
             <ServiceSelector
               value={searchTerm}
               onChange={setSearchTerm}
@@ -236,7 +236,7 @@ const Home = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="p-3 border border-gray-300 rounded-lg w-full"
+              className="p-3 border border-gray-300 dark:border-stone-700 rounded-lg w-full bg-white dark:bg-stone-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none transition-colors"
             >
               <option value="">All Categories</option>
               {allCategories.map((cat) => (
@@ -247,10 +247,10 @@ const Home = () => {
               <button
                 type="button"
                 onClick={handleGetLocation}
-                className="p-3 border border-gray-300 rounded-lg w-full hover:bg-gray-50"
+                className="p-3 border border-gray-300 dark:border-stone-700 rounded-lg w-full hover:bg-gray-50 dark:hover:bg-stone-800 bg-white dark:bg-stone-900 text-gray-900 dark:text-gray-100 transition-colors"
               >
                 <span className="inline-flex items-center gap-2">
-                  <FaMapMarkerAlt className="text-blue-600" /> {userCity ? `Using: ${userCity}` : 'Use My Location'}
+                  <FaMapMarkerAlt className="text-blue-600 dark:text-blue-400" /> {userCity ? `Using: ${userCity}` : 'Use My Location'}
                 </span>
               </button>
             </div>
@@ -258,11 +258,11 @@ const Home = () => {
         </div>
 
         {/* 🧰 Service Cards */}
-        <div className="px-4 md:px-12 py-16 bg-white">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 text-center">
+        <div className="px-4 md:px-12 py-16 bg-white dark:bg-charcoal transition-colors">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-stone-50 mb-4 text-center transition-colors">
             Discover Your Next Local Service
           </h2>
-          <p className="text-center text-gray-500 mb-10 text-sm md:text-base">
+          <p className="text-center text-gray-500 dark:text-stone-400 mb-10 text-sm md:text-base">
             Explore top-ranking categories to connect with trusted professionals near you.
           </p>
 
@@ -298,48 +298,48 @@ const Home = () => {
         </div>
 
         {/* 📊 Stats */}
-        <div className="px-4 md:px-12 py-16 bg-white text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-gray-800">
+        <div className="px-4 md:px-12 py-16 bg-white dark:bg-charcoal text-center transition-colors">
+          <h2 className="text-3xl md:text-4xl font-bold mb-10 text-gray-800 dark:text-stone-50">
             Explore millions of services tailored to your local needs
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div ref={professionalsRef}>
-              <p className="text-4xl font-extrabold text-blue-600">{professionalsCount}+</p>
-              <p className="text-sm text-gray-600 mt-2">Verified Professionals</p>
+              <p className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">{professionalsCount}+</p>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2">Verified Professionals</p>
             </div>
             <div ref={categoriesRef}>
-              <p className="text-4xl font-extrabold text-blue-600">{categoriesCount}+</p>
-              <p className="text-sm text-gray-600 mt-2">Local Categories</p>
+              <p className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">{categoriesCount}+</p>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2">Local Categories</p>
             </div>
             <div ref={usersRef}>
-              <p className="text-4xl font-extrabold text-blue-600">{usersCount}K+</p>
-              <p className="text-sm text-gray-600 mt-2">Happy Users</p>
+              <p className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">{usersCount}K+</p>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2">Happy Users</p>
             </div>
             <div ref={citiesRef}>
-              <p className="text-4xl font-extrabold text-blue-600">{citiesCount}+</p>
-              <p className="text-sm text-gray-600 mt-2">Cities Covered</p>
+              <p className="text-4xl font-extrabold text-blue-600 dark:text-blue-400">{citiesCount}+</p>
+              <p className="text-sm text-gray-600 dark:text-stone-400 mt-2">Cities Covered</p>
             </div>
           </div>
         </div>
 
         {/* 📢 CTA Section (Upgraded) */}
-        <div className="px-4 md:px-12 py-20 relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-50 via-white to-emerald-50" />
-          <div className="absolute -top-20 -right-24 w-80 h-80 rounded-full bg-indigo-200/40 blur-3xl" />
-          <div className="absolute -bottom-28 -left-24 w-96 h-96 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="px-4 md:px-12 py-20 relative overflow-hidden transition-colors">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-50 via-white to-emerald-50 dark:from-charcoal dark:via-[#1a1a1a] dark:to-charcoal transition-colors" />
+          <div className="absolute -top-20 -right-24 w-80 h-80 rounded-full bg-indigo-200/40 dark:bg-indigo-900/10 blur-3xl transition-colors" />
+          <div className="absolute -bottom-28 -left-24 w-96 h-96 rounded-full bg-emerald-200/40 dark:bg-emerald-900/10 blur-3xl transition-colors" />
 
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-stone-50">
               Ready to find or offer a service?
             </h2>
-            <p className="text-lg text-gray-600 mt-3">
-              Join thousands using FindYourFixer to find help or grow their business.
+            <p className="text-lg text-gray-600 dark:text-stone-400 mt-3">
+              Join thousands using FYF to find help or grow their business.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {/* Find a Service Card */}
-            <div className="relative group rounded-3xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm hover:shadow-xl transition-all">
+            <div className="relative group rounded-3xl overflow-hidden border border-gray-200 dark:border-stone-800 bg-white/80 dark:bg-stone-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm hover:shadow-xl transition-all">
               <div className="h-56 relative">
                 <img
                   src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1000&h=600&fit=crop"
@@ -355,7 +355,7 @@ const Home = () => {
                 </div>
               </div>
               <div className="p-6 md:p-8">
-                <h4 className="text-lg md:text-xl font-semibold text-gray-900">How to use FindYourFixer as a User</h4>
+                <h4 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-stone-50">How to use FYF as a User</h4>
                 <div className="mt-4 space-y-4">
                   {[
                     'Search for the service you need using our search bar or browse categories',
@@ -366,7 +366,7 @@ const Home = () => {
                       <span className="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 text-white text-sm font-bold">
                         {idx + 1}
                       </span>
-                      <p className="text-gray-700 text-sm md:text-base">{step}</p>
+                      <p className="text-gray-700 dark:text-stone-300 text-sm md:text-base">{step}</p>
                     </div>
                   ))}
                 </div>
@@ -381,7 +381,7 @@ const Home = () => {
             </div>
 
             {/* Become a Provider Card */}
-            <div className="relative group rounded-3xl overflow-hidden border border-gray-200 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm hover:shadow-xl transition-all">
+            <div className="relative group rounded-3xl overflow-hidden border border-gray-200 dark:border-stone-800 bg-white/80 dark:bg-stone-900/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 shadow-sm hover:shadow-xl transition-all">
               <div className="h-56 relative">
                 <img
                   src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1000&h=600&fit=crop"
@@ -397,7 +397,7 @@ const Home = () => {
                 </div>
               </div>
               <div className="p-6 md:p-8">
-                <h4 className="text-lg md:text-xl font-semibold text-gray-900">How to use FindYourFixer as a Professional</h4>
+                <h4 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-stone-50">How to use FYF as a Professional</h4>
                 <div className="mt-4 space-y-4">
                   {[
                     'Create your professional profile with your skills and experience',
@@ -408,7 +408,7 @@ const Home = () => {
                       <span className="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-600 text-white text-sm font-bold">
                         {idx + 1}
                       </span>
-                      <p className="text-gray-700 text-sm md:text-base">{step}</p>
+                      <p className="text-gray-700 dark:text-stone-300 text-sm md:text-base">{step}</p>
                     </div>
                   ))}
                 </div>

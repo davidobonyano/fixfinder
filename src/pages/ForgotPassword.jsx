@@ -36,52 +36,52 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-charcoal transition-colors">
       {/* Brand Side */}
-      <div className="hidden md:flex w-1/2 bg-stone-50 flex-col justify-between p-16 lg:p-24 border-r border-stone-100">
+      <div className="hidden md:flex w-1/2 bg-stone-50 dark:bg-stone-900/20 flex-col justify-between p-16 lg:p-24 border-r border-stone-100 dark:border-stone-800 transition-colors">
         <div>
-          <Link to="/" className="text-2xl font-tight font-bold text-charcoal tracking-tighter">
-            FindYourFixer.
+          <Link to="/" className="text-2xl font-tight font-bold text-charcoal dark:text-stone-50 tracking-tighter">
+            FYF.
           </Link>
         </div>
 
         <div className="max-w-md">
-          <label className="label-caps mb-6 block text-trust">Account Recovery</label>
-          <h1 className="text-5xl lg:text-6xl font-tight font-bold text-charcoal leading-[1.1] mb-8">
+          <label className="label-caps mb-6 block text-trust dark:text-trust/80">Account Recovery</label>
+          <h1 className="text-5xl lg:text-6xl font-tight font-bold text-charcoal dark:text-stone-50 leading-[1.1] mb-8">
             Securing access to your ecosystem.
           </h1>
-          <p className="text-xl text-graphite leading-relaxed">
+          <p className="text-xl text-graphite dark:text-stone-400 leading-relaxed">
             Protecting your account is our highest priority. Follow the recovery steps to restore access securely.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 text-stone-400">
+        <div className="flex items-center gap-4 text-stone-400 dark:text-stone-600">
           <FiShield className="w-5 h-5" />
           <span className="text-xs font-bold uppercase tracking-widest">Enterprise Grade Security Protocols</span>
         </div>
       </div>
 
       {/* Form Side */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-paper">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-paper dark:bg-charcoal transition-colors">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="md:hidden mb-12 text-center">
-            <Link to="/" className="text-2xl font-tight font-bold text-charcoal">FindYourFixer.</Link>
+            <Link to="/" className="text-2xl font-tight font-bold text-charcoal dark:text-stone-50">FYF.</Link>
           </div>
 
-          <div className="card-premium p-10 lg:p-12 bg-white">
+          <div className="card-premium p-10 lg:p-12 bg-white dark:bg-stone-900/40 transition-colors">
             <Link
               to="/login"
-              className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-charcoal mb-8 transition-colors"
+              className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-500 hover:text-charcoal dark:hover:text-stone-200 mb-8 transition-colors"
             >
               <FiArrowLeft className="mr-2 w-3 h-3" />
               Return to Login
             </Link>
 
-            <h2 className="text-3xl font-tight font-bold text-charcoal mb-4">
+            <h2 className="text-3xl font-tight font-bold text-charcoal dark:text-stone-50 mb-4 transition-colors">
               {success ? "Recovery Initiated." : "Restore Access."}
             </h2>
-            <p className="text-graphite mb-8 leading-relaxed">
+            <p className="text-graphite dark:text-stone-400 mb-8 leading-relaxed transition-colors">
               {success
                 ? "If an account is associated with this address, you will receive instructions shortly."
                 : "Enter your registered email address to receive a secure recovery link."}
@@ -89,15 +89,15 @@ export default function ForgotPassword() {
 
             {success ? (
               <div className="space-y-8">
-                <div className="p-6 bg-stone-50 border border-stone-200">
+                <div className="p-6 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className="p-2 bg-white border border-stone-200">
-                      <FiSend className="w-4 h-4 text-trust" />
+                    <div className="p-2 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 transition-colors">
+                      <FiSend className="w-4 h-4 text-trust dark:text-trust/80" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-charcoal mb-1">Check your inbox</p>
-                      <p className="text-xs text-graphite leading-relaxed">
-                        A verification link has been sent to <span className="text-charcoal font-bold">{email}</span>.
+                      <p className="text-sm font-bold text-charcoal dark:text-stone-50 mb-1 transition-colors">Check your inbox</p>
+                      <p className="text-xs text-graphite dark:text-stone-400 leading-relaxed transition-colors">
+                        A verification link has been sent to <span className="text-charcoal dark:text-stone-50 font-bold">{email}</span>.
                         It will remain valid for the next 60 minutes.
                       </p>
                     </div>
@@ -130,8 +130,8 @@ export default function ForgotPassword() {
                 </div>
 
                 {error && (
-                  <div className="p-4 bg-clay/5 border border-clay/20">
-                    <p className="text-xs font-bold text-clay uppercase tracking-tight leading-relaxed">{error}</p>
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs text-red-800 dark:text-red-200 font-medium">
+                    <p className="text-xs font-bold uppercase tracking-tight leading-relaxed">{error}</p>
                   </div>
                 )}
 
@@ -150,9 +150,9 @@ export default function ForgotPassword() {
             )}
 
             {!success && (
-              <p className="mt-8 text-center text-xs text-graphite font-medium">
+              <p className="mt-8 text-center text-xs text-graphite dark:text-stone-500 font-medium transition-colors">
                 Remembered your credentials?{" "}
-                <Link to="/login" className="text-trust font-bold hover:underline">
+                <Link to="/login" className="text-trust font-bold hover:underline transition-colors">
                   SIGN IN
                 </Link>
               </p>

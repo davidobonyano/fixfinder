@@ -59,20 +59,20 @@ export default function Signup() {
   };
 
   return (
-    <div className="flex min-h-screen bg-stone-50 font-sans selection:bg-trust/10">
+    <div className="flex min-h-screen bg-stone-50 dark:bg-charcoal font-sans selection:bg-trust/10 transition-colors">
       {/* Left Panel - Brand Promise */}
-      <div className="hidden lg:flex w-1/2 bg-stone-100 flex-col justify-between p-16 border-r border-stone-200">
+      <div className="hidden lg:flex w-1/2 bg-stone-100 dark:bg-stone-900/20 flex-col justify-between p-16 border-r border-stone-200 dark:border-stone-800 transition-colors">
         <div className="space-y-8">
           <div className="flex items-center gap-2">
             <div className="h-4 w-4 bg-trust"></div>
-            <span className="font-tight text-xl font-bold tracking-tight text-charcoal">FINDYOURFIXER</span>
+            <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50">FYF</span>
           </div>
 
           <div className="pt-20">
-            <h1 className="text-5xl font-tight font-bold leading-[1.05] text-charcoal">
+            <h1 className="text-5xl font-tight font-bold leading-[1.05] text-charcoal dark:text-stone-50">
               A community built on verified quality.
             </h1>
-            <p className="mt-8 text-lg text-graphite max-w-md leading-relaxed">
+            <p className="mt-8 text-lg text-graphite dark:text-stone-400 max-w-md leading-relaxed">
               Create an account to discover verified local professionals and manage your service requests with ease.
             </p>
           </div>
@@ -82,33 +82,33 @@ export default function Signup() {
           <div className="flex items-start gap-4">
             <FiShield className="mt-1 text-trust h-5 w-5" />
             <div>
-              <p className="text-sm font-bold text-charcoal uppercase tracking-wider">Quality Assured</p>
-              <p className="text-sm text-graphite">We verify every professional to ensure they meet our standards.</p>
+              <p className="text-sm font-bold text-charcoal dark:text-stone-50 uppercase tracking-wider">Quality Assured</p>
+              <p className="text-sm text-graphite dark:text-stone-400">We verify every professional to ensure they meet our standards.</p>
             </div>
           </div>
           <div className="flex items-start gap-4">
             <FiBriefcase className="mt-1 text-trust h-5 w-5" />
             <div>
-              <p className="text-sm font-bold text-charcoal uppercase tracking-wider">Pro Dashboard</p>
-              <p className="text-sm text-graphite">Are you a service provider? <Link to="/join" className="text-trust underline">Join as a professional</Link> instead.</p>
+              <p className="text-sm font-bold text-charcoal dark:text-stone-50 uppercase tracking-wider">Pro Dashboard</p>
+              <p className="text-sm text-graphite dark:text-stone-400">Are you a service provider? <Link to="/join" className="text-trust underline">Join as a professional</Link> instead.</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Right Panel - Signup Form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-stone-50">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-stone-50 dark:bg-charcoal transition-colors">
         <div className="w-full max-w-md">
           <div className="lg:hidden mb-12">
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 bg-trust"></div>
-              <span className="font-tight text-xl font-bold tracking-tight text-charcoal">FINDYOURFIXER</span>
+              <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50">FYF</span>
             </div>
           </div>
 
           <div className="mb-10">
-            <h2 className="text-3xl font-tight font-bold text-charcoal">Join FindYourFixer</h2>
-            <p className="mt-3 text-graphite">Connect with the best local artisans today.</p>
+            <h2 className="text-3xl font-tight font-bold text-charcoal dark:text-stone-50">Join FYF</h2>
+            <p className="mt-3 text-graphite dark:text-stone-400">Connect with the best local artisans today.</p>
           </div>
 
           <form
@@ -164,7 +164,7 @@ export default function Signup() {
             </div>
 
             {error && (
-              <div className="p-4 bg-red-50 border border-red-200 text-xs text-red-800 font-medium">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-xs text-red-800 dark:text-red-200 font-medium">
                 {error}
               </div>
             )}
@@ -179,23 +179,23 @@ export default function Signup() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-graphite leading-relaxed">
+          <p className="mt-6 text-center text-xs text-graphite dark:text-stone-400 leading-relaxed transition-colors">
             By signing up, you agree to our{" "}
-            <Link to="/help/terms" className="text-trust font-bold">Terms of Service</Link> and{" "}
-            <Link to="/help/terms" className="text-trust font-bold">Privacy Policy</Link>.
+            <Link to="/help/terms" className="text-trust font-bold transition-colors">Terms of Service</Link> and{" "}
+            <Link to="/help/terms" className="text-trust font-bold transition-colors">Privacy Policy</Link>.
           </p>
 
-          <p className="mt-10 text-center text-sm text-graphite">
+          <p className="mt-10 text-center text-sm text-graphite dark:text-stone-400 transition-colors">
             Already have an account?{" "}
-            <Link to="/login" className="text-trust font-bold hover:underline">
+            <Link to="/login" className="text-trust font-bold hover:underline transition-colors">
               Sign in
             </Link>
           </p>
 
-          <div className="mt-20 pt-8 border-t border-stone-200 flex items-center justify-between">
-            <p className="text-[10px] font-bold text-stone-400 tracking-widest uppercase">FINDYOURFIXER &copy; 2024</p>
+          <div className="mt-20 pt-8 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between transition-colors">
+            <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-widest uppercase">FYF &copy; 2024</p>
             {tinyLoc && (
-              <p className="text-[10px] font-bold text-stone-400 tracking-widest uppercase">{tinyLoc}</p>
+              <p className="text-[10px] font-bold text-stone-400 dark:text-stone-500 tracking-widest uppercase">{tinyLoc}</p>
             )}
           </div>
         </div>

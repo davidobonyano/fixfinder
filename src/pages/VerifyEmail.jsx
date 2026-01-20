@@ -27,7 +27,7 @@ export default function VerifyEmail() {
 
         if (response.success) {
           setStatus('success');
-          setMessage('Email verified successfully! You can now use all features of FindYourFixer.');
+          setMessage('Email verified successfully! You can now use all features of FYF.');
           // Send to dedicated success page
           navigate('/verify-email/success', { replace: true });
         } else {
@@ -53,22 +53,22 @@ export default function VerifyEmail() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-charcoal flex items-center justify-center px-4 transition-colors">
+      <div className="max-w-md w-full bg-white dark:bg-stone-900 rounded-lg shadow-lg p-8 text-center transition-colors">
         {status === 'verifying' && (
           <>
             <FaSpinner className="w-16 h-16 text-blue-600 animate-spin mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Verifying Email</h1>
-            <p className="text-gray-600">Please wait while we verify your email address...</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-stone-50 mb-2">Verifying Email</h1>
+            <p className="text-gray-600 dark:text-stone-400">Please wait while we verify your email address...</p>
           </>
         )}
 
         {status === 'success' && (
           <>
             <FaCheck className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Email Verified!</h1>
-            <p className="text-gray-600 mb-4">{message}</p>
-            <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-stone-50 mb-2">Email Verified!</h1>
+            <p className="text-gray-600 dark:text-stone-400 mb-4">{message}</p>
+            <p className="text-sm text-gray-500 dark:text-stone-500">Redirecting to dashboard...</p>
           </>
         )}
 

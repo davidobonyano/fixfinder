@@ -470,9 +470,9 @@ export default function GlobeHero({ coords, headline = 'Find trusted pros near y
       {/* Content grid: left text, right story icon */}
       <div className="pointer-events-auto absolute inset-0 grid grid-cols-1 md:grid-cols-2 items-center">
         <div className="order-2 md:order-1 flex items-center justify-center md:justify-start p-6 md:p-12">
-          <div id="hero-text" className="text-white space-y-6 max-w-xl">
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg">{headline}</h1>
-            {subline && <p className="text-lg md:text-xl text-gray-300">{subline}</p>}
+          <div id="hero-text" className="space-y-6 max-w-xl">
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight drop-shadow-lg text-white">{headline}</h1>
+            {subline && <p className="text-lg md:text-xl text-gray-100/90">{subline}</p>}
           </div>
         </div>
         <div className="order-1 md:order-2 flex items-center justify-center p-6 md:p-12" />

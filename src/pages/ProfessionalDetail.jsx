@@ -104,20 +104,20 @@ const ProfessionalDetail = () => {
       raw.location && typeof raw.location === 'object'
         ? raw.location
         : {
-            address: raw.address || raw.city || raw.state,
-            city: raw.city,
-            state: raw.state,
-            coordinates: raw.coordinates || raw.location?.coordinates
-          };
+          address: raw.address || raw.city || raw.state,
+          city: raw.city,
+          state: raw.state,
+          coordinates: raw.coordinates || raw.location?.coordinates
+        };
 
     const userObj =
       typeof raw.user === 'object'
         ? raw.user
         : raw.user
-        ? { _id: raw.user }
-        : raw.owner
-        ? { _id: raw.owner }
-        : null;
+          ? { _id: raw.user }
+          : raw.owner
+            ? { _id: raw.owner }
+            : null;
 
     const resolvedPhotos = photos.map((p) => resolveMediaUrl(p));
     const resolvedVideos = videos.map((v) => resolveMediaUrl(v));
@@ -165,12 +165,12 @@ const ProfessionalDetail = () => {
       ),
       image: resolveMediaUrl(
         raw.profilePicture ||
-          raw.avatar ||
-          raw.avatarUrl ||
-          raw.image ||
-          raw.user?.profilePicture ||
-          raw.user?.avatarUrl ||
-          resolvedPhotos[0]
+        raw.avatar ||
+        raw.avatarUrl ||
+        raw.image ||
+        raw.user?.profilePicture ||
+        raw.user?.avatarUrl ||
+        resolvedPhotos[0]
       )
     };
   };
@@ -277,7 +277,7 @@ const ProfessionalDetail = () => {
       (pos) => {
         setUserLocation([pos.coords.latitude, pos.coords.longitude]);
       },
-      () => {},
+      () => { },
       { timeout: 10000, maximumAge: 300000 }
     );
   }, []);
@@ -312,7 +312,7 @@ const ProfessionalDetail = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const d = R * c;
     setDistanceKm(Math.round(d * 10) / 10);
@@ -359,8 +359,8 @@ const ProfessionalDetail = () => {
               rev.user && typeof rev.user === 'object'
                 ? rev.user
                 : rev.user
-                ? { name: typeof rev.user === 'string' ? rev.user : reviewerName }
-                : { name: reviewerName };
+                  ? { name: typeof rev.user === 'string' ? rev.user : reviewerName }
+                  : { name: reviewerName };
 
             return {
               ...rev,
@@ -398,8 +398,8 @@ const ProfessionalDetail = () => {
   const baseReviews = reviews.length
     ? reviews
     : Array.isArray(professional?.reviews)
-    ? professional.reviews
-    : [];
+      ? professional.reviews
+      : [];
   const reviewCount =
     baseReviews.length ||
     professional?.ratingCount ||
@@ -604,11 +604,11 @@ const ProfessionalDetail = () => {
     for (let i = 0; i < fullStars; i++) {
       stars.push(<FaStar key={i} className="text-amber-400" />);
     }
-    
+
     if (hasHalfStar) {
       stars.push(<FaStar key="half" className="text-amber-400 opacity-50" />);
     }
-    
+
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
       stars.push(<FaStar key={`empty-${i}`} className="text-gray-300" />);
@@ -666,11 +666,11 @@ const ProfessionalDetail = () => {
             <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <FaCheckCircle className="w-10 h-10 text-indigo-600" />
             </div>
-            
+
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
               Professional Found!
             </h1>
-            
+
             <div className="bg-gray-50 rounded-lg p-6 mb-6">
               <div className="flex items-center justify-center mb-4">
                 <img
@@ -688,7 +688,7 @@ const ProfessionalDetail = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="text-center">
                 <p className="text-lg font-semibold text-indigo-600">
                   ₦{professional.hourlyRate?.toLocaleString() || '2,000'}/hour
@@ -699,11 +699,11 @@ const ProfessionalDetail = () => {
                 </p>
               </div>
             </div>
-            
+
             <p className="text-gray-600 mb-6">
               Sign up or log in to view full professional details, contact information, and book services.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/auth/register"
@@ -718,10 +718,10 @@ const ProfessionalDetail = () => {
                 Log In
               </Link>
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-500">
-                Join thousands of users who trust FindYourFixer for their professional service needs
+                Join thousands of users who trust FYF for their professional service needs
               </p>
             </div>
           </div>
@@ -760,8 +760,8 @@ const ProfessionalDetail = () => {
   const primaryActionLabel = connectionRequestPending
     ? 'Request pending'
     : isConnected
-    ? 'Connected'
-    : 'Connect';
+      ? 'Connected'
+      : 'Connect';
   const primaryActionDisabled = checkingConnection || connectionRequestPending || isConnected || isOwner;
 
   return (
@@ -869,20 +869,20 @@ const ProfessionalDetail = () => {
                         {availabilityLabel}
                       </span>
                     </div>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    {emailVerified && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-emerald-700">
-                        <FaCheckCircle className="w-3 h-3" />
-                        Email verified
-                      </span>
-                    )}
-                    {faceVerified && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-sky-700">
-                        <FaShieldAlt className="w-3 h-3" />
-                        Face verified
-                      </span>
-                    )}
-                  </div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {emailVerified && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-emerald-700">
+                          <FaCheckCircle className="w-3 h-3" />
+                          Email verified
+                        </span>
+                      )}
+                      {faceVerified && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-50 px-2.5 py-1 font-semibold uppercase tracking-wide text-sky-700">
+                          <FaShieldAlt className="w-3 h-3" />
+                          Face verified
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     {!isOwner && (
@@ -890,11 +890,10 @@ const ProfessionalDetail = () => {
                         type="button"
                         onClick={handleConnect}
                         disabled={primaryActionDisabled}
-                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
-                          primaryActionDisabled
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${primaryActionDisabled
                             ? 'bg-indigo-100 text-indigo-400 cursor-not-allowed'
                             : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        }`}
+                          }`}
                       >
                         <FaCalendar className="w-4 h-4" />
                         {primaryActionLabel}
@@ -904,11 +903,10 @@ const ProfessionalDetail = () => {
                       type="button"
                       onClick={handleStartChat}
                       disabled={!isConnected}
-                      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
-                        isConnected
+                      className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${isConnected
                           ? 'bg-white text-indigo-600 border border-indigo-100 hover:bg-indigo-50'
                           : 'bg-white text-gray-400 border border-gray-200 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       <FaComments className="w-4 h-4" />
                       Message
@@ -924,11 +922,10 @@ const ProfessionalDetail = () => {
                           }
                         }}
                         disabled={checkingConnection || (!isConnected && !connectionRequestPending)}
-                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
-                          isConnected || connectionRequestPending
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm ${isConnected || connectionRequestPending
                             ? 'bg-white text-red-600 border border-red-100 hover:bg-red-50'
                             : 'bg-white text-gray-400 border border-gray-200 cursor-not-allowed'
-                        }`}
+                          }`}
                       >
                         <FaTimes className="w-4 h-4" />
                         {isConnected ? 'Unfriend' : 'Cancel request'}
@@ -1084,9 +1081,8 @@ const ProfessionalDetail = () => {
                           {[...Array(5)].map((_, i) => (
                             <FaStar
                               key={i}
-                              className={`w-4 h-4 ${
-                                i < Number(review.rating || 0) ? '' : 'text-gray-300'
-                              }`}
+                              className={`w-4 h-4 ${i < Number(review.rating || 0) ? '' : 'text-gray-300'
+                                }`}
                             />
                           ))}
                           <span className="text-sm font-medium text-gray-600 ml-2">

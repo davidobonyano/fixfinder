@@ -391,7 +391,7 @@ export default function Verify() {
   };
 
   const stepItems = [
-    { id: 1, label: "Create a FindYourFixer Pro account", completed: Boolean(user) },
+    { id: 1, label: "Create a FYF Pro account", completed: Boolean(user) },
     { id: 2, label: "Verify your email address", completed: emailVerified },
     { id: 3, label: "Scan face inside Pro Dashboard", completed: faceVerified },
     { id: 4, label: "Earn the Verified Pro badge", completed: showVerifiedBadge },
@@ -412,7 +412,7 @@ export default function Verify() {
           <p className="uppercase text-xs tracking-wide text-indigo-500 font-semibold">Pro Identity</p>
           <h1 className="text-3xl font-bold text-slate-900">Face Verification</h1>
           <p className="text-slate-600 mt-2">
-            FindYourFixer uses face-api.js to capture an encrypted face descriptor after you verify your email. Complete both steps to
+            FYF uses face-api.js to capture an encrypted face descriptor after you verify your email. Complete both steps to
             unlock the Verified Pro badge and rank higher in search results.
           </p>
         </div>
@@ -618,8 +618,8 @@ export default function Verify() {
                       onClick={() => handleReferenceSelection(option)}
                       disabled={isLoading}
                       className={`relative flex flex-col gap-2 rounded-2xl border p-3 text-left transition ${isActive
-                          ? "border-emerald-500 bg-emerald-50/60"
-                          : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                        ? "border-emerald-500 bg-emerald-50/60"
+                        : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
                         }`}
                     >
                       <img src={option.url} alt={option.label} className="w-full h-28 object-cover rounded-xl" />

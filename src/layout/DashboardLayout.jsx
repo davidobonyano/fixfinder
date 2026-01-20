@@ -75,7 +75,7 @@ const DashboardLayout = ({ userType = 'user' }) => {
         <div className="p-8 border-b border-stone-200 dark:border-stone-800">
           <Link to="/" className="flex items-center gap-2 group">
             <div className="h-4 w-4 bg-trust group-hover:scale-110 transition-transform"></div>
-            <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50 uppercase">FINDYOURFIXER</span>
+            <span className="font-tight text-xl font-bold tracking-tight text-charcoal dark:text-stone-50 uppercase">FYF</span>
           </Link>
           <p className="mt-2 text-[10px] font-bold text-stone-400 tracking-widest uppercase">
             {userType === 'professional' ? 'Professional Portal' : 'Customer Console'}
